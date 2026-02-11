@@ -27,12 +27,16 @@
 
 ## 2. Installation Guide
 
-1. Obtain the plugin distribution package (ZIP archive containing the `amcr_viewer` directory).
+1. Obtain the [plugin distribution package](https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/archive/refs/heads/main.zip) (ZIP archive containing the `amcr_viewer` directory).
 2. Launch QGIS.
 3. Navigate to **Plugins**  **Manage and Install Plugins...**
 4. Select the **Install from ZIP** tab.
 5. Locate the source ZIP file and click **Install Plugin**.
-6. Upon successful installation, the AMCR download button (load AMCR data) will appear in the interface.
+6. Upon successful installation, the AMCR download button (load AMCR data) will appear in the interface.  
+
+**OR**  
+
+Install the plugin from QGIS plugin repository.
 
 ---
 

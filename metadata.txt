@@ -6,14 +6,14 @@
 name=AMČR Viewer
 qgisMinimumVersion=3.4
 description=Viewing and downloading the AMČR data.
-version=0.1.1
+version=1
 author=David Spáčil
 email=spacil@arub.cz
 
 about=This plugin is intended for downloading the data (Fieldwork events data only, at the time) from the Digiarchive of the Archaeological Map of the Czech Republic (AMCR). As of now, only publicly accessible data can be downloaded.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/issues
+repository=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,7 +25,7 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python,AMCR,AIS CR,archaeology,PIAN,AMČR
 
-homepage=http://homepage
+homepage=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
 category=Vector
 icon=download.png
 # experimental flag
