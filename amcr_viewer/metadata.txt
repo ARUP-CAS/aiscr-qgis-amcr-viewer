@@ -29,7 +29,7 @@ homepage=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
 category=Vector
 icon=download.png
 # experimental flag
-experimental=True
+experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
