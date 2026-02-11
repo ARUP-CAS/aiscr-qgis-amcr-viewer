@@ -6,7 +6,7 @@
 name=AMČR Viewer
 qgisMinimumVersion=3.4
 description=Viewing and downloading the AMČR data.
-version=1
+version=1.0.1
 author=David Spáčil
 email=spacil@arub.cz
 
