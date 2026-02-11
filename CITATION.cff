@@ -15,6 +15,9 @@ authors:
     affiliation: >-
       Czech Academy of Sciences, Institute of Archaeology,
       Brno
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.18609813
 repository-code: 'https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer'
 abstract: >-
   This QGIS plugin is intended for downloading the data
