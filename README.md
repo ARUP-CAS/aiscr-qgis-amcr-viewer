@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**Version:** 1
+**Version:** 1.0.1
 
 **Platform:** QGIS 3.4.x
 

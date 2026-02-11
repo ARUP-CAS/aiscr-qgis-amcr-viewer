@@ -26,5 +26,5 @@ abstract: >-
   Republic (AMCR). As of now, only publicly accessible data
   can be downloaded.
 license: GPL-3.0
-version: '1.0'
+version: '1.0.1'
 date-released: '2026-02-11'
