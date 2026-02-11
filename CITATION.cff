@@ -1,0 +1,27 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: AMCR Viewer
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: David
+    family-names: Spáčil
+    email: spacil@arub.cz
+    orcid: 'https://orcid.org/0009-0002-8856-2501'
+    affiliation: >-
+      Czech Academy of Sciences, Institute of Archaeology,
+      Brno
+repository-code: 'https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer'
+abstract: >-
+  This QGIS plugin is intended for downloading the data
+  (Fieldwork events data only, at the time) from the
+  Digiarchive of the Archaeological Map of the Czech
+  Republic (AMCR). As of now, only publicly accessible data
+  can be downloaded.
+license: GPL-3.0
+version: '1.0'
+date-released: '2026-02-11'
