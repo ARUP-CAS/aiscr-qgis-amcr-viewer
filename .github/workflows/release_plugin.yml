@@ -1,0 +1,30 @@
+name: Release QGIS Plugin
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Stáhne kód z repozitáře
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # 2. Vytvoří ZIP (předpokládá, že kód je ve složce 'amcr_viewer')
+      - name: Zip Plugin
+        run: |
+          # Zabalíme složku amcr_viewer do souboru amcr_viewer.zip
+          # -r = rekurzivně, -x = ignorovat skryté git soubory
+          zip -r amcr_viewer.zip amcr_viewer -x "*.git*"
+
+      # 3. Nahraje ZIP k Releasu
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: amcr_viewer.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
