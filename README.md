@@ -1,6 +1,6 @@
 # AMCR Viewer: QGIS Plugin Documentation
 
-**Version:** 0.1.1
+**Version:** 1
 
 **Platform:** QGIS 3.4.x
 
