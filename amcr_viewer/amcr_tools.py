@@ -52,20 +52,11 @@ def load_amcr_data(canvas, bb, filters=None):
         # A) METADATA (Fieldwork event)
         # ===================
         
-        # Field list
-        fl_akce = [
-            "ident_cely", "akce_typ", "akce_hlavni_vedouci", "akce_datum_zahajeni", "az_dj_pian", "akce_datum_ukonceni", "loc", "az_okres", 
-            "katastr", "az_chranene_udaje", "akce_organizace", "akce_specifikace_data", 
-            "akce_hlavni_typ", "akce_vedlejsi_typ", "akce_chranene_udaje", 
-            "akce_je_nz", "pristupnost", "dj_negativni_jednotka"
-        ]
-
         base_params = {
             "mapa": "true",
             #"isExport": "true",
             "entity": "akce",
-            "sort": "ident_cely asc", 
-            "fl": ",".join(fl_akce)
+            "sort": "ident_cely asc"
         }
 
         if bb == "true": 
@@ -137,6 +128,7 @@ def load_amcr_data(canvas, bb, filters=None):
         pian_lookup = {}
         target_pian_ids = set()
         actions_with_geom = 0
+        negative_dj_pian_ids = set()
         
         for akce in docs_akce:
             piani = akce.get('az_dj_pian', [])
@@ -152,7 +144,16 @@ def load_amcr_data(canvas, bb, filters=None):
                         # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
                         pian_obj = dj.get('dj_pian')
                         if pian_obj and isinstance(pian_obj, dict):
-                            negative_pians.add(pian_obj.get('id'))
+                            negative_pians.add(pian_obj.get('id'))            
+
+            djs = akce.get('az_dokumentacni_jednotka', [])
+            for dj in djs:
+                is_negative = dj.get('dj_negativni_jednotka')
+                if is_negative is True or str(is_negative).lower() == 'true':
+                    # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
+                    pian_obj = dj.get('dj_pian')
+                    if pian_obj and isinstance(pian_obj, dict):
+                        negative_dj_pian_ids.add(pian_obj.get('id'))
 
             actions_with_geom += 1
             
@@ -267,6 +268,7 @@ def load_amcr_data(canvas, bb, filters=None):
             QgsField("Datum ukončení", QVariant.String),
             QgsField("Hlavní typ", QVariant.String),
             QgsField("Vedlejší typ", QVariant.String),
+            QgsField("Zjištění", QVariant.String),
             QgsField("Akce – lokalizace", QVariant.String),
             QgsField("Akce - nahrazuje NZ", QVariant.String),
             QgsField("Přístupnost", QVariant.String)
@@ -297,6 +299,7 @@ def load_amcr_data(canvas, bb, filters=None):
                 # PIAN attributes
                 pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
                 pian_typ = tr_code(str(doc.get('pian_typ', '')))
+                dj_negativni = "Negativní" if pid in negative_dj_pian_ids else "Pozitivní"
 
                 if wkt:
                     geom = QgsGeometry.fromWkt(wkt)
@@ -320,6 +323,7 @@ def load_amcr_data(canvas, bb, filters=None):
                             meta['akce_datum_ukonceni'],
                             meta['akce_hlavni_typ'],
                             meta['akce_vedlejsi_typ'],
+                            dj_negativni,
                             meta['lokalizace_okolnosti'],
                             meta['akce_je_nz'],
                             meta['pristupnost']
