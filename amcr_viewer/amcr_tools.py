@@ -132,27 +132,6 @@ def load_amcr_data(canvas, bb, filters=None):
         for akce in docs_akce:
             piani = akce.get('az_dj_pian', [])
             if not piani: continue
-            
-            # negative_pians = set()
-            # # Pokud je aktivní filtr 'posevidence', projdeme dokumentační jednotky
-            # if filters and filters.get('posevidence') == 'true':
-            #     djs = akce.get('az_dokumentacni_jednotka', [])
-            #     for dj in djs:
-            #         # Pokud je jednotka negativní
-            #         if dj.get('dj_negativni_jednotka') is True:
-            #             # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
-            #             pian_obj = dj.get('dj_pian')
-            #             if pian_obj and isinstance(pian_obj, dict):
-            #                 negative_pians.add(pian_obj.get('id'))            
-
-            # djs = akce.get('az_dokumentacni_jednotka', [])
-            # for dj in djs:
-            #     is_negative = dj.get('dj_negativni_jednotka')
-            #     if is_negative is True or str(is_negative).lower() == 'true':
-            #         # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
-            #         pian_obj = dj.get('dj_pian')
-            #         if pian_obj and isinstance(pian_obj, dict):
-            #             negative_dj_pian_ids.add(pian_obj.get('id'))
 
             actions_with_geom += 1
             
@@ -204,17 +183,22 @@ def load_amcr_data(canvas, bb, filters=None):
             #     pian_lookup[pid] = meta
             #     target_pian_ids.add(pid)
         
-            djs = akce.get('az_dokumentacni_jednotka')
+            djs = akce.get('az_dokumentacni_jednotka', [])
 
             for dj in djs:
-                meta['dj_id'] = dj.get('ident_cely')
+                if filters and filters.get('posevidence') == 'true' and dj.get('dj_negativni_jednotka') is True:
+                    continue
+                dj_meta = meta.copy()
+                dj_meta['dj_id'] = dj.get('ident_cely')
                 dj_typ = dj.get('dj_typ')
-                meta['dj_typ_value'] = dj_typ.get('value')
-                meta['dj_negativni'] = "Negativní" if dj.get('dj_negativni_jednotka') is True else "Pozitivní"
+                dj_meta['dj_typ_value'] = dj_typ.get('value') if dj_typ else ""
+                dj_meta['dj_negativni'] = "Negativní" if dj.get('dj_negativni_jednotka') is True else "Pozitivní"
                 dj_pian = dj.get('dj_pian')
-                dj_pian_value = dj_pian.get('value')
-                target_pian_ids.add(dj_pian_value)
-                pian_lookup[dj_pian_value] = meta
+                if dj_pian:
+                    dj_pian_value = dj_pian.get('id')
+                    if dj_pian_value:
+                        target_pian_ids.add(dj_pian_value)
+                        pian_lookup[dj_pian_value] = dj_meta
 
         if not target_pian_ids:
             iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs_akce)} akcí, ale žádná nemá geometrii.", level=1)
