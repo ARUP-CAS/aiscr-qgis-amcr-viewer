@@ -17,7 +17,8 @@ TRANSLATIONS = {}
 # Download Digiarchive's vocabulary
 def load_translations():
     global TRANSLATIONS
-    if TRANSLATIONS: return 
+    if TRANSLATIONS:
+         return 
     
     url = "https://digiarchiv.aiscr.cz/api/assets/i18n/cs.json"
     try:
@@ -28,7 +29,8 @@ def load_translations():
         print(f"Chyba při stahování hesláře: {e}")
 
 def tr_code(code):
-    if not code: return ""
+    if not code: 
+        return ""
     return TRANSLATIONS.get(code, code)
 
 def load_amcr_data(canvas, bb, filters=None):
@@ -64,7 +66,8 @@ def load_amcr_data(canvas, bb, filters=None):
         # Apply filters
         if filters:
             for key, value in filters.items():
-                if not value: continue
+                if not value:
+                    continue
                 if isinstance(value, list):
                     base_params[key] = [f"{v}:or" for v in value]
                 else:
@@ -127,22 +130,24 @@ def load_amcr_data(canvas, bb, filters=None):
         pian_lookup = {}
         target_pian_ids = set()
         actions_with_geom = 0
-        negative_dj_pian_ids = set()
         
         for akce in docs_akce:
             piani = akce.get('az_dj_pian', [])
-            if not piani: continue
+            if not piani:
+                continue
 
             actions_with_geom += 1
             
             def g(key, default=""): 
                 val = akce.get(key)
-                if isinstance(val, list): return str(val[0]) if val else default
+                if isinstance(val, list):
+                    return str(val[0]) if val else default
                 return str(val) if val is not None else default
 
             def g_list(key, translate=False):
                 val = akce.get(key, [])
-                if not isinstance(val, list): val = [val] if val else []
+                if not isinstance(val, list):
+                    val = [val] if val else []
                 if translate:
                     return ", ".join([tr_code(str(x)) for x in val if x])
                 return ", ".join([str(x) for x in val if x])
@@ -177,12 +182,6 @@ def load_amcr_data(canvas, bb, filters=None):
                 "loc": g_list('loc')
             }
             
-            # for pid in piani:
-            #     if pid in negative_pians:
-            #         continue
-            #     pian_lookup[pid] = meta
-            #     target_pian_ids.add(pid)
-        
             djs = akce.get('az_dokumentacni_jednotka', [])
 
             for dj in djs:
@@ -281,18 +280,22 @@ def load_amcr_data(canvas, bb, filters=None):
         for doc in docs_pian:
             try:
                 pid = doc.get('ident_cely', '')
-                if pid not in pian_lookup: continue 
+                if pid not in pian_lookup:
+                    continue 
                 
                 meta = pian_lookup[pid]
                 
                 # Geometry processing
                 raw = doc.get('pian_chranene_udaje')
-                if isinstance(raw, list) and raw: raw = raw[0]
+                if isinstance(raw, list) and raw:
+                    raw = raw[0]
                 jdata = json.loads(raw) if isinstance(raw, str) else (raw if isinstance(raw, dict) else {})
                 
                 wkt = None
-                if jdata.get('geom_sjtsk_wkt'): wkt = jdata['geom_sjtsk_wkt'].get('value')
-                elif jdata.get('geom_wkt'): wkt = jdata['geom_wkt'].get('value')
+                if jdata.get('geom_sjtsk_wkt'):
+                    wkt = jdata['geom_sjtsk_wkt'].get('value')
+                elif jdata.get('geom_wkt'):
+                    wkt = jdata['geom_wkt'].get('value')
                 
                 # PIAN attributes
                 pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
@@ -328,9 +331,12 @@ def load_amcr_data(canvas, bb, filters=None):
                             meta['pristupnost']
                         ])
                         t = geom.type()
-                        if t == QgsWkbTypes.PolygonGeometry: feats_p.append(feat)
-                        elif t == QgsWkbTypes.LineGeometry: feats_l.append(feat)
-                        elif t == QgsWkbTypes.PointGeometry: feats_pt.append(feat)
+                        if t == QgsWkbTypes.PolygonGeometry:
+                            feats_p.append(feat)
+                        elif t == QgsWkbTypes.LineGeometry:
+                            feats_l.append(feat)
+                        elif t == QgsWkbTypes.PointGeometry:
+                            feats_pt.append(feat)
             except Exception as ex:
                 print(f"Chyba při tvorbě feature: {ex}")
                 pass
