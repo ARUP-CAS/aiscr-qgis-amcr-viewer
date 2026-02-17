@@ -54,7 +54,6 @@ def load_amcr_data(canvas, bb, filters=None):
         
         base_params = {
             "mapa": "true",
-            #"isExport": "true",
             "entity": "akce",
             "sort": "ident_cely asc"
         }
@@ -134,26 +133,26 @@ def load_amcr_data(canvas, bb, filters=None):
             piani = akce.get('az_dj_pian', [])
             if not piani: continue
             
-            negative_pians = set()
-            # Pokud je aktivní filtr 'posevidence', projdeme dokumentační jednotky
-            if filters and filters.get('posevidence') == 'true':
-                djs = akce.get('az_dokumentacni_jednotka', [])
-                for dj in djs:
-                    # Pokud je jednotka negativní
-                    if dj.get('dj_negativni_jednotka') is True:
-                        # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
-                        pian_obj = dj.get('dj_pian')
-                        if pian_obj and isinstance(pian_obj, dict):
-                            negative_pians.add(pian_obj.get('id'))            
+            # negative_pians = set()
+            # # Pokud je aktivní filtr 'posevidence', projdeme dokumentační jednotky
+            # if filters and filters.get('posevidence') == 'true':
+            #     djs = akce.get('az_dokumentacni_jednotka', [])
+            #     for dj in djs:
+            #         # Pokud je jednotka negativní
+            #         if dj.get('dj_negativni_jednotka') is True:
+            #             # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
+            #             pian_obj = dj.get('dj_pian')
+            #             if pian_obj and isinstance(pian_obj, dict):
+            #                 negative_pians.add(pian_obj.get('id'))            
 
-            djs = akce.get('az_dokumentacni_jednotka', [])
-            for dj in djs:
-                is_negative = dj.get('dj_negativni_jednotka')
-                if is_negative is True or str(is_negative).lower() == 'true':
-                    # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
-                    pian_obj = dj.get('dj_pian')
-                    if pian_obj and isinstance(pian_obj, dict):
-                        negative_dj_pian_ids.add(pian_obj.get('id'))
+            # djs = akce.get('az_dokumentacni_jednotka', [])
+            # for dj in djs:
+            #     is_negative = dj.get('dj_negativni_jednotka')
+            #     if is_negative is True or str(is_negative).lower() == 'true':
+            #         # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
+            #         pian_obj = dj.get('dj_pian')
+            #         if pian_obj and isinstance(pian_obj, dict):
+            #             negative_dj_pian_ids.add(pian_obj.get('id'))
 
             actions_with_geom += 1
             
@@ -199,15 +198,28 @@ def load_amcr_data(canvas, bb, filters=None):
                 "loc": g_list('loc')
             }
             
-            for pid in piani:
-                if pid in negative_pians:
-                    continue
-                pian_lookup[pid] = meta
-                target_pian_ids.add(pid)
+            # for pid in piani:
+            #     if pid in negative_pians:
+            #         continue
+            #     pian_lookup[pid] = meta
+            #     target_pian_ids.add(pid)
+        
+            djs = akce.get('az_dokumentacni_jednotka')
+
+            for dj in djs:
+                meta['dj_id'] = dj.get('ident_cely')
+                dj_typ = dj.get('dj_typ')
+                meta['dj_typ_value'] = dj_typ.get('value')
+                meta['dj_negativni'] = "Negativní" if dj.get('dj_negativni_jednotka') is True else "Pozitivní"
+                dj_pian = dj.get('dj_pian')
+                dj_pian_value = dj_pian.get('value')
+                target_pian_ids.add(dj_pian_value)
+                pian_lookup[dj_pian_value] = meta
 
         if not target_pian_ids:
             iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs_akce)} akcí, ale žádná nemá geometrii.", level=1)
-            return
+            return        
+
 
         # ==========================================
         # B) Geometry (PIAN)
@@ -255,8 +267,10 @@ def load_amcr_data(canvas, bb, filters=None):
             QgsField("PIAN", QVariant.String),
             QgsField("Přesnost", QVariant.String),
             QgsField("PIAN – typ", QVariant.String),
+            QgsField("Dokumentační jednotka", QVariant.String),
+            QgsField("Typ dokumentační jednotky", QVariant.String),
             QgsField("Definiční bod(y) (WGS-84)", QVariant.String),
-            QgsField("Identifikátor", QVariant.String),
+            QgsField("Akce", QVariant.String),
             QgsField("Odkaz do Digiarchivu", QVariant.String),
             QgsField("Okres", QVariant.String),
             QgsField("Katastr", QVariant.String),
@@ -299,7 +313,7 @@ def load_amcr_data(canvas, bb, filters=None):
                 # PIAN attributes
                 pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
                 pian_typ = tr_code(str(doc.get('pian_typ', '')))
-                dj_negativni = "Negativní" if pid in negative_dj_pian_ids else "Pozitivní"
+                # dj_negativni = "Negativní" if pid in negative_dj_pian_ids else "Pozitivní"
 
                 if wkt:
                     geom = QgsGeometry.fromWkt(wkt)
@@ -310,9 +324,11 @@ def load_amcr_data(canvas, bb, filters=None):
                             pid, 
                             pian_presnost,
                             pian_typ,
+                            meta['dj_id'],
+                            meta['dj_typ_value'],
                             meta['loc'],
                             meta['ident_cely'],
-                            "https://digiarchiv.aiscr.cz/id/" + meta['ident_cely'],
+                            "https://digiarchiv.aiscr.cz/id/" + meta['dj_id'],
                             meta['az_okres'],
                             meta['katastr'],
                             meta['dalsi_katastr'],
@@ -323,7 +339,7 @@ def load_amcr_data(canvas, bb, filters=None):
                             meta['akce_datum_ukonceni'],
                             meta['akce_hlavni_typ'],
                             meta['akce_vedlejsi_typ'],
-                            dj_negativni,
+                            meta['dj_negativni'],
                             meta['lokalizace_okolnosti'],
                             meta['akce_je_nz'],
                             meta['pristupnost']
