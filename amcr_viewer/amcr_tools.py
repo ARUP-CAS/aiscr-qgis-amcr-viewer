@@ -313,7 +313,6 @@ def load_amcr_data(canvas, bb, filters=None):
                 # PIAN attributes
                 pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
                 pian_typ = tr_code(str(doc.get('pian_typ', '')))
-                # dj_negativni = "Negativní" if pid in negative_dj_pian_ids else "Pozitivní"
 
                 if wkt:
                     geom = QgsGeometry.fromWkt(wkt)
@@ -371,68 +370,3 @@ def load_amcr_data(canvas, bb, filters=None):
         iface.messageBar().pushMessage("Chyba", str(e), level=2)
     finally:
         QApplication.restoreOverrideCursor()
-
-# class AmcrIdentifyTool(QgsMapToolIdentifyFeature):
-#     def __init__(self, canvas):
-#         super().__init__(canvas)
-#         self.canvas = canvas
-#         self.setCursor(Qt.CrossCursor)
-
-#     def canvasReleaseEvent(self, event):
-#         results = self.identify(event.x(), event.y(), self.IdentifyMode.TopDownStopAtFirst, self.VectorLayer)
-#         if not results: return
-#         feature = results[0].mFeature
-#         akce_id = None
-#         # Změna: hledáme 'ident_cely' (ID akce)
-#         idx = feature.fieldNameIndex('ident_cely')
-#         if idx != -1:
-#             akce_id = feature.attributes()[idx]
-        
-#         # Fallback na starší názvy polí, kdyby něco
-#         if not akce_id:
-#              for col in ['akce_id', 'ident_cely', 'pian_id']:
-#                 if col in feature.fields().names():
-#                     akce_id = feature[col]
-#                     break
-        
-#         if not akce_id: return
-
-#         full_id = akce_id if "api.aiscr.cz" in str(akce_id) else f"https://api.aiscr.cz/id/{akce_id}"
-#         url = f"https://api.aiscr.cz/2.2/oai?verb=GetRecord&metadataPrefix=oai_amcr&identifier={full_id}"
-        
-#         iface.messageBar().pushMessage("AMCR", f"Detail: {akce_id}...", level=1)
-#         QApplication.setOverrideCursor(Qt.WaitCursor)
-#         try:
-#             r = requests.get(url, timeout=5)
-#             if r.status_code == 200: self.show_detail(akce_id, r.text)
-#         except Exception as e:
-#             iface.messageBar().pushMessage("Chyba", str(e), level=2)
-#         finally:
-#             QApplication.restoreOverrideCursor()
-
-#     def show_detail(self, title, raw_xml):
-#         xml = re.sub(r'\sxmlns="[^"]+"', '', raw_xml, count=1)
-#         xml = re.sub(r'<(/?)[a-zA-Z0-9]+:', r'<\1', xml)
-#         info = ""
-#         try:
-#             root = ET.fromstring(xml)
-#             rec = root.find('.//archeologicky_zaznam')
-#             if not rec: info = "Zadna data."
-#             else:
-#                 kat = rec.find('.//hlavni_katastr')
-#                 info += f"<h3>{kat.text if kat is not None else '?'}</h3>"
-#                 for dj in rec.findall('.//dokumentacni_jednotka'):
-#                     pn = dj.find('pian')
-#                     p_txt = pn.text if pn is not None else ""
-#                     info += f"<hr><b>PIAN: {p_txt}</b><ul>"
-#                     for k in dj.findall('komponenta'):
-#                         ob = k.find('obdobi').text or "?"
-#                         ar = k.find('areal').text or "?"
-#                         info += f"<li>{ob} ({ar})</li>"
-#                     info += "</ul>"
-#             dlg = QMessageBox()
-#             dlg.setWindowTitle(str(title))
-#             dlg.setText(info)
-#             dlg.setTextFormat(Qt.RichText)
-#             dlg.exec_()
-#         except: pass
