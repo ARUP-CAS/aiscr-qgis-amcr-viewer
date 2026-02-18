@@ -3,7 +3,7 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
-from .amcr_tools import load_amcr_data#, AmcrIdentifyTool
+from .amcr_tools import load_amcr_data
 from .amcr_dialog import AmcrFilterDialog
 from .resources import *
 import os.path
@@ -61,7 +61,6 @@ class AmcrViewer:
 
         icon = QIcon(os.path.join(plugin_dir, 'download.png'))
         
-        # icon_info = QIcon(os.path.join(plugin_dir, 'info.png'))
 
         # Download data button 
         self.action_download = self.add_action(
@@ -70,14 +69,6 @@ class AmcrViewer:
             callback=self.run_download,
             parent=self.iface.mainWindow())
         
-        # # Info button (Checkable / Toggle)
-        # self.action_tool = self.add_action(
-        #     icon_info,
-        #     text=self.tr(u'Výpis údajů záznamu'),
-        #     callback=self.run_tool,
-        #     parent=self.iface.mainWindow())
-        # self.action_tool.setCheckable(True) # Toto tlačítko se zamačkává
-
         self.first_start = True
 
     def unload(self):
@@ -100,20 +91,3 @@ class AmcrViewer:
             
             canvas = self.iface.mapCanvas()
             load_amcr_data(canvas, bbox, filters)
-
-    # --- Info button toggle ---
-    # def run_tool(self):
-        
-    #     if self.action_tool.isChecked():
-    #         canvas = self.iface.mapCanvas()
-            
-    #         if not hasattr(self, 'tool'):
-    #             self.tool = AmcrIdentifyTool(canvas)
-    #             self.tool.deactivated.connect(lambda: self.action_tool.setChecked(False))
-            
-    #         canvas.setMapTool(self.tool)
-    #         self.iface.messageBar().pushMessage("AMČR", "Info nástroj aktivní.", level=0)
-            
-    #     else:
-    #         if self.iface.mapCanvas().mapTool() == getattr(self, 'tool', None):
-    #             self.iface.mapCanvas().unsetMapTool(self.tool)

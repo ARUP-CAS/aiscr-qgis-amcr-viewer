@@ -17,7 +17,8 @@ TRANSLATIONS = {}
 # Download Digiarchive's vocabulary
 def load_translations():
     global TRANSLATIONS
-    if TRANSLATIONS: return 
+    if TRANSLATIONS:
+         return 
     
     url = "https://digiarchiv.aiscr.cz/api/assets/i18n/cs.json"
     try:
@@ -28,7 +29,8 @@ def load_translations():
         print(f"Chyba při stahování hesláře: {e}")
 
 def tr_code(code):
-    if not code: return ""
+    if not code: 
+        return ""
     return TRANSLATIONS.get(code, code)
 
 def load_amcr_data(canvas, bb, filters=None):
@@ -54,7 +56,6 @@ def load_amcr_data(canvas, bb, filters=None):
         
         base_params = {
             "mapa": "true",
-            #"isExport": "true",
             "entity": "akce",
             "sort": "ident_cely asc"
         }
@@ -65,7 +66,8 @@ def load_amcr_data(canvas, bb, filters=None):
         # Apply filters
         if filters:
             for key, value in filters.items():
-                if not value: continue
+                if not value:
+                    continue
                 if isinstance(value, list):
                     base_params[key] = [f"{v}:or" for v in value]
                 else:
@@ -128,43 +130,24 @@ def load_amcr_data(canvas, bb, filters=None):
         pian_lookup = {}
         target_pian_ids = set()
         actions_with_geom = 0
-        negative_dj_pian_ids = set()
         
         for akce in docs_akce:
             piani = akce.get('az_dj_pian', [])
-            if not piani: continue
-            
-            negative_pians = set()
-            # Pokud je aktivní filtr 'posevidence', projdeme dokumentační jednotky
-            if filters and filters.get('posevidence') == 'true':
-                djs = akce.get('az_dokumentacni_jednotka', [])
-                for dj in djs:
-                    # Pokud je jednotka negativní
-                    if dj.get('dj_negativni_jednotka') is True:
-                        # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
-                        pian_obj = dj.get('dj_pian')
-                        if pian_obj and isinstance(pian_obj, dict):
-                            negative_pians.add(pian_obj.get('id'))            
-
-            djs = akce.get('az_dokumentacni_jednotka', [])
-            for dj in djs:
-                is_negative = dj.get('dj_negativni_jednotka')
-                if is_negative is True or str(is_negative).lower() == 'true':
-                    # Získáme ID pianu z objektu (např. {"id": "P-...", "value": "..."})
-                    pian_obj = dj.get('dj_pian')
-                    if pian_obj and isinstance(pian_obj, dict):
-                        negative_dj_pian_ids.add(pian_obj.get('id'))
+            if not piani:
+                continue
 
             actions_with_geom += 1
             
             def g(key, default=""): 
                 val = akce.get(key)
-                if isinstance(val, list): return str(val[0]) if val else default
+                if isinstance(val, list):
+                    return str(val[0]) if val else default
                 return str(val) if val is not None else default
 
             def g_list(key, translate=False):
                 val = akce.get(key, [])
-                if not isinstance(val, list): val = [val] if val else []
+                if not isinstance(val, list):
+                    val = [val] if val else []
                 if translate:
                     return ", ".join([tr_code(str(x)) for x in val if x])
                 return ", ".join([str(x) for x in val if x])
@@ -199,15 +182,27 @@ def load_amcr_data(canvas, bb, filters=None):
                 "loc": g_list('loc')
             }
             
-            for pid in piani:
-                if pid in negative_pians:
+            djs = akce.get('az_dokumentacni_jednotka', [])
+
+            for dj in djs:
+                if filters and filters.get('posevidence') == 'true' and dj.get('dj_negativni_jednotka') is True:
                     continue
-                pian_lookup[pid] = meta
-                target_pian_ids.add(pid)
+                dj_meta = meta.copy()
+                dj_meta['dj_id'] = dj.get('ident_cely')
+                dj_typ = dj.get('dj_typ')
+                dj_meta['dj_typ_value'] = dj_typ.get('value') if dj_typ else ""
+                dj_meta['dj_negativni'] = "Negativní" if dj.get('dj_negativni_jednotka') is True else "Pozitivní"
+                dj_pian = dj.get('dj_pian')
+                if dj_pian:
+                    dj_pian_value = dj_pian.get('id')
+                    if dj_pian_value:
+                        target_pian_ids.add(dj_pian_value)
+                        pian_lookup[dj_pian_value] = dj_meta
 
         if not target_pian_ids:
             iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs_akce)} akcí, ale žádná nemá geometrii.", level=1)
-            return
+            return        
+
 
         # ==========================================
         # B) Geometry (PIAN)
@@ -255,9 +250,11 @@ def load_amcr_data(canvas, bb, filters=None):
             QgsField("PIAN", QVariant.String),
             QgsField("Přesnost", QVariant.String),
             QgsField("PIAN – typ", QVariant.String),
+            QgsField("Dokumentační jednotka", QVariant.String),
+            QgsField("Typ dokumentační jednotky", QVariant.String),
             QgsField("Definiční bod(y) (WGS-84)", QVariant.String),
-            QgsField("Identifikátor", QVariant.String),
-            QgsField("Odkaz do Digiarchivu", QVariant.String),
+            QgsField("Akce", QVariant.String),
+            QgsField("Odkaz do Digitálního archivu AMČR", QVariant.String),
             QgsField("Okres", QVariant.String),
             QgsField("Katastr", QVariant.String),
             QgsField("Další katastry", QVariant.String),
@@ -270,7 +267,7 @@ def load_amcr_data(canvas, bb, filters=None):
             QgsField("Vedlejší typ", QVariant.String),
             QgsField("Zjištění", QVariant.String),
             QgsField("Akce – lokalizace", QVariant.String),
-            QgsField("Akce - nahrazuje NZ", QVariant.String),
+            QgsField("Akce – nahrazuje NZ", QVariant.String),
             QgsField("Přístupnost", QVariant.String)
         ]
 
@@ -283,23 +280,26 @@ def load_amcr_data(canvas, bb, filters=None):
         for doc in docs_pian:
             try:
                 pid = doc.get('ident_cely', '')
-                if pid not in pian_lookup: continue 
+                if pid not in pian_lookup:
+                    continue 
                 
                 meta = pian_lookup[pid]
                 
                 # Geometry processing
                 raw = doc.get('pian_chranene_udaje')
-                if isinstance(raw, list) and raw: raw = raw[0]
+                if isinstance(raw, list) and raw:
+                    raw = raw[0]
                 jdata = json.loads(raw) if isinstance(raw, str) else (raw if isinstance(raw, dict) else {})
                 
                 wkt = None
-                if jdata.get('geom_sjtsk_wkt'): wkt = jdata['geom_sjtsk_wkt'].get('value')
-                elif jdata.get('geom_wkt'): wkt = jdata['geom_wkt'].get('value')
+                if jdata.get('geom_sjtsk_wkt'):
+                    wkt = jdata['geom_sjtsk_wkt'].get('value')
+                elif jdata.get('geom_wkt'):
+                    wkt = jdata['geom_wkt'].get('value')
                 
                 # PIAN attributes
                 pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
                 pian_typ = tr_code(str(doc.get('pian_typ', '')))
-                dj_negativni = "Negativní" if pid in negative_dj_pian_ids else "Pozitivní"
 
                 if wkt:
                     geom = QgsGeometry.fromWkt(wkt)
@@ -310,6 +310,8 @@ def load_amcr_data(canvas, bb, filters=None):
                             pid, 
                             pian_presnost,
                             pian_typ,
+                            meta['dj_id'],
+                            meta['dj_typ_value'],
                             meta['loc'],
                             meta['ident_cely'],
                             "https://digiarchiv.aiscr.cz/id/" + meta['ident_cely'],
@@ -323,15 +325,18 @@ def load_amcr_data(canvas, bb, filters=None):
                             meta['akce_datum_ukonceni'],
                             meta['akce_hlavni_typ'],
                             meta['akce_vedlejsi_typ'],
-                            dj_negativni,
+                            meta['dj_negativni'],
                             meta['lokalizace_okolnosti'],
                             meta['akce_je_nz'],
                             meta['pristupnost']
                         ])
                         t = geom.type()
-                        if t == QgsWkbTypes.PolygonGeometry: feats_p.append(feat)
-                        elif t == QgsWkbTypes.LineGeometry: feats_l.append(feat)
-                        elif t == QgsWkbTypes.PointGeometry: feats_pt.append(feat)
+                        if t == QgsWkbTypes.PolygonGeometry:
+                            feats_p.append(feat)
+                        elif t == QgsWkbTypes.LineGeometry:
+                            feats_l.append(feat)
+                        elif t == QgsWkbTypes.PointGeometry:
+                            feats_pt.append(feat)
             except Exception as ex:
                 print(f"Chyba při tvorbě feature: {ex}")
                 pass
@@ -355,68 +360,3 @@ def load_amcr_data(canvas, bb, filters=None):
         iface.messageBar().pushMessage("Chyba", str(e), level=2)
     finally:
         QApplication.restoreOverrideCursor()
-
-# class AmcrIdentifyTool(QgsMapToolIdentifyFeature):
-#     def __init__(self, canvas):
-#         super().__init__(canvas)
-#         self.canvas = canvas
-#         self.setCursor(Qt.CrossCursor)
-
-#     def canvasReleaseEvent(self, event):
-#         results = self.identify(event.x(), event.y(), self.IdentifyMode.TopDownStopAtFirst, self.VectorLayer)
-#         if not results: return
-#         feature = results[0].mFeature
-#         akce_id = None
-#         # Změna: hledáme 'ident_cely' (ID akce)
-#         idx = feature.fieldNameIndex('ident_cely')
-#         if idx != -1:
-#             akce_id = feature.attributes()[idx]
-        
-#         # Fallback na starší názvy polí, kdyby něco
-#         if not akce_id:
-#              for col in ['akce_id', 'ident_cely', 'pian_id']:
-#                 if col in feature.fields().names():
-#                     akce_id = feature[col]
-#                     break
-        
-#         if not akce_id: return
-
-#         full_id = akce_id if "api.aiscr.cz" in str(akce_id) else f"https://api.aiscr.cz/id/{akce_id}"
-#         url = f"https://api.aiscr.cz/2.2/oai?verb=GetRecord&metadataPrefix=oai_amcr&identifier={full_id}"
-        
-#         iface.messageBar().pushMessage("AMCR", f"Detail: {akce_id}...", level=1)
-#         QApplication.setOverrideCursor(Qt.WaitCursor)
-#         try:
-#             r = requests.get(url, timeout=5)
-#             if r.status_code == 200: self.show_detail(akce_id, r.text)
-#         except Exception as e:
-#             iface.messageBar().pushMessage("Chyba", str(e), level=2)
-#         finally:
-#             QApplication.restoreOverrideCursor()
-
-#     def show_detail(self, title, raw_xml):
-#         xml = re.sub(r'\sxmlns="[^"]+"', '', raw_xml, count=1)
-#         xml = re.sub(r'<(/?)[a-zA-Z0-9]+:', r'<\1', xml)
-#         info = ""
-#         try:
-#             root = ET.fromstring(xml)
-#             rec = root.find('.//archeologicky_zaznam')
-#             if not rec: info = "Zadna data."
-#             else:
-#                 kat = rec.find('.//hlavni_katastr')
-#                 info += f"<h3>{kat.text if kat is not None else '?'}</h3>"
-#                 for dj in rec.findall('.//dokumentacni_jednotka'):
-#                     pn = dj.find('pian')
-#                     p_txt = pn.text if pn is not None else ""
-#                     info += f"<hr><b>PIAN: {p_txt}</b><ul>"
-#                     for k in dj.findall('komponenta'):
-#                         ob = k.find('obdobi').text or "?"
-#                         ar = k.find('areal').text or "?"
-#                         info += f"<li>{ob} ({ar})</li>"
-#                     info += "</ul>"
-#             dlg = QMessageBox()
-#             dlg.setWindowTitle(str(title))
-#             dlg.setText(info)
-#             dlg.setTextFormat(Qt.RichText)
-#             dlg.exec_()
-#         except: pass
