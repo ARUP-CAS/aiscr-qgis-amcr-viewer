@@ -13614,3 +13614,7 @@ Zvotoky;Zvotoky;katastr
 Žumberk u Nových Hradů;Žumberk u Nových Hradů;katastr
 Županovice;Županovice;katastr
 Županovice u Dešné;Županovice u Dešné;katastr
+odchylka jednotky metrů;HES-000861;pian_presnost
+odchylka desítky metrů;HES-000862;pian_presnost
+odchylka stovky metrů;HES-000863;pian_presnost
+poloha podle katastru;HES-000864;pian_presnost
