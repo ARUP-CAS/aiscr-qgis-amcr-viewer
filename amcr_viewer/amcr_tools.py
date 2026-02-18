@@ -254,7 +254,7 @@ def load_amcr_data(canvas, bb, filters=None):
             QgsField("Typ dokumentační jednotky", QVariant.String),
             QgsField("Definiční bod(y) (WGS-84)", QVariant.String),
             QgsField("Akce", QVariant.String),
-            QgsField("Odkaz do Digiarchivu", QVariant.String),
+            QgsField("Odkaz do Digitálního archivu AMČR", QVariant.String),
             QgsField("Okres", QVariant.String),
             QgsField("Katastr", QVariant.String),
             QgsField("Další katastry", QVariant.String),
@@ -267,7 +267,7 @@ def load_amcr_data(canvas, bb, filters=None):
             QgsField("Vedlejší typ", QVariant.String),
             QgsField("Zjištění", QVariant.String),
             QgsField("Akce – lokalizace", QVariant.String),
-            QgsField("Akce - nahrazuje NZ", QVariant.String),
+            QgsField("Akce – nahrazuje NZ", QVariant.String),
             QgsField("Přístupnost", QVariant.String)
         ]
 
@@ -314,7 +314,7 @@ def load_amcr_data(canvas, bb, filters=None):
                             meta['dj_typ_value'],
                             meta['loc'],
                             meta['ident_cely'],
-                            "https://digiarchiv.aiscr.cz/id/" + meta['dj_id'],
+                            "https://digiarchiv.aiscr.cz/id/" + meta['ident_cely'],
                             meta['az_okres'],
                             meta['katastr'],
                             meta['dalsi_katastr'],
