@@ -187,6 +187,7 @@ def load_amcr_data(canvas, bb, filters=None):
             for dj in djs:
                 if filters and filters.get('posevidence') == 'true' and dj.get('dj_negativni_jednotka') is True:
                     continue
+
                 dj_meta = meta.copy()
                 dj_meta['dj_id'] = dj.get('ident_cely')
                 dj_typ = dj.get('dj_typ')
@@ -282,7 +283,7 @@ def load_amcr_data(canvas, bb, filters=None):
                 pid = doc.get('ident_cely', '')
                 if pid not in pian_lookup:
                     continue 
-                
+                                
                 meta = pian_lookup[pid]
                 
                 # Geometry processing
@@ -300,6 +301,9 @@ def load_amcr_data(canvas, bb, filters=None):
                 # PIAN attributes
                 pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
                 pian_typ = tr_code(str(doc.get('pian_typ', '')))
+
+                if filters and filters.get('f_pian_presnost') and doc.get('pian_presnost') not in filters.get('f_pian_presnost'):
+                    continue
 
                 if wkt:
                     geom = QgsGeometry.fromWkt(wkt)

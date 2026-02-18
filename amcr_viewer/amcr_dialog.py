@@ -6,7 +6,7 @@ from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QFormLayout,
                                  QLabel, QMessageBox, QApplication, QWidget)
 from qgis.PyQt.QtCore import Qt
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE, 
-                             OKRESY, KATASTRY, VEDOUCI, 
+                             OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST,
                              download_vedouci, refresh_vedouci_cache)
 
 class FilterableSelectionDialog(QDialog):
@@ -37,16 +37,20 @@ class FilterableSelectionDialog(QDialog):
             item = QListWidgetItem(name)
             item.setData(Qt.UserRole, code)
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            if code in self.preselected: item.setCheckState(Qt.Checked)
-            else: item.setCheckState(Qt.Unchecked)
+            if code in self.preselected:
+                item.setCheckState(Qt.Checked)
+            else:
+                item.setCheckState(Qt.Unchecked)
             self.list_widget.addItem(item)
 
     def filter_list(self, text):
         search_text = text.lower()
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
-            if search_text not in item.text().lower(): item.setHidden(True)
-            else: item.setHidden(False)
+            if search_text not in item.text().lower():
+                item.setHidden(True)
+            else:
+                item.setHidden(False)
 
     def get_selected_codes(self):
         codes = []
@@ -69,7 +73,7 @@ class AmcrFilterDialog(QDialog):
         # Cache for filtering
         self.selection_cache = {
             'organizace': [], 'kraj': [], 'obdobi': [], 'areal': [], 
-            'typ_akce': [], 'okres': [], 'katastr': [], 'vedouci': []
+            'typ_akce': [], 'okres': [], 'katastr': [], 'vedouci': [], 'pian_presnost': []
         }
         
         layout = QVBoxLayout()
@@ -103,9 +107,15 @@ class AmcrFilterDialog(QDialog):
                 if dlg.exec_() == QDialog.Accepted:
                     codes, labels = dlg.get_selected_codes()
                     self.selection_cache[cache_key] = codes
-                    if labels: display_field.setText(", ".join(labels))
-                    else: display_field.clear()
+                    if labels:
+                        display_field.setText(", ".join(labels))
+                    else:
+                        display_field.clear()
             
+            if cache_key == 'pian_presnost':
+                display_field.setText("odchylka jednotky metrů, odchylka desítky metrů, odchylka stovky metrů")
+                self.selection_cache[cache_key] = ['HES-000861', 'HES-000862', 'HES-000863']
+
             btn.clicked.connect(open_dialog)
             
             row_layout.addWidget(display_field)
@@ -146,6 +156,9 @@ class AmcrFilterDialog(QDialog):
         self.picker_typ = setup_picker("Typ výzkumu", 'typ_akce', TYP_AKCE)
         layout.addWidget(self.picker_typ)
 
+        self.picker_presnost = setup_picker("PIAN – přesnost", 'pian_presnost', PIAN_PRESNOST)
+        layout.addWidget(self.picker_presnost)
+
         layout.addStretch(1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -175,16 +188,27 @@ class AmcrFilterDialog(QDialog):
         
     def get_filters(self):
         filters = {}
-        if self.chk_posevidence.isChecked(): filters['posevidence'] = 'true'
+        if self.chk_posevidence.isChecked():
+            filters['posevidence'] = 'true'
         
         # Loading from cache
-        if self.selection_cache['organizace']: filters['f_organizace'] = self.selection_cache['organizace']
-        if self.selection_cache['kraj']: filters['f_kraj'] = self.selection_cache['kraj']
-        if self.selection_cache['okres']: filters['f_okres'] = self.selection_cache['okres']
-        if self.selection_cache['katastr']: filters['f_katastr'] = self.selection_cache['katastr']
-        if self.selection_cache['obdobi']: filters['f_obdobi'] = self.selection_cache['obdobi']
-        if self.selection_cache['areal']: filters['f_areal'] = self.selection_cache['areal']
-        if self.selection_cache['typ_akce']: filters['f_typ_vyzkumu'] = self.selection_cache['typ_akce']
-        if self.selection_cache['vedouci']: filters['f_vedouci'] = self.selection_cache['vedouci']
+        if self.selection_cache['organizace']:
+            filters['f_organizace'] = self.selection_cache['organizace']
+        if self.selection_cache['kraj']:
+            filters['f_kraj'] = self.selection_cache['kraj']
+        if self.selection_cache['okres']:
+            filters['f_okres'] = self.selection_cache['okres']
+        if self.selection_cache['katastr']:
+            filters['f_katastr'] = self.selection_cache['katastr']
+        if self.selection_cache['obdobi']:
+            filters['f_obdobi'] = self.selection_cache['obdobi']
+        if self.selection_cache['areal']:
+            filters['f_areal'] = self.selection_cache['areal']
+        if self.selection_cache['typ_akce']:
+            filters['f_typ_vyzkumu'] = self.selection_cache['typ_akce']
+        if self.selection_cache['vedouci']:
+            filters['f_vedouci'] = self.selection_cache['vedouci']
+        if self.selection_cache['pian_presnost']:
+            filters['f_pian_presnost'] = self.selection_cache['pian_presnost']    
             
         return filters
