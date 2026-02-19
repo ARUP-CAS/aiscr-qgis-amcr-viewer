@@ -51,7 +51,7 @@ To initiate a search query, click the **Load AMCR Data** icon. The filter dialog
 
 
 * **Attribute Filters:**
-  * The dialog utilizes "Picker" widgets for controlled vocabularies (Region, District, Cadastral area, Organisation, Period, Activity Area).
+  * The dialog utilizes "Picker" widgets for controlled vocabularies (Region, District, Cadastral area, Organisation, Period, Activity Area, PIAN accuracy.
   * Click **Select...** to open a searchable selection window. Multiple values can be selected simultaneously (Logic: OR).
 
 
@@ -70,13 +70,7 @@ Upon successful retrieval, the plugin generates three temporary memory layers:
 2. **AMČR Linie (Lines)**
 3. **AMČR Body (Points)**
 
-The Attribute Table includes standardized fields such as:
-
-* **Identification:** `Identifikátor` (Fieldwork event ID), `PIAN` (PIAN ID).
-* **Classification:** `Hlavní typ` (Main Fieldwork event Type), `Vedlejší typ` (Secondary Fieldwork event Type), `PIAN – typ` (PIAN Type).
-* **Administration:** `Vedoucí akce` (Fieldwork Manager), `Organizace` (Organization), `Datum zahájeni`/`Datum ukončení` (Dates of start and end of the Fieldwork event).
-* **Location:** `Katastr` (Main Cadastral area), `Další katastry` (Other Cadastral areas), `Okres` (District), `Definiční bod(y)` (PIAN point localization).
-* **Links:** `Odkaz do Digiarchivu` (Direct URL to the DigiArchive record).
+The Attribute Table includes standardized fields with important metadata.
 
 ---
 
@@ -98,7 +92,7 @@ The plugin interacts with three primary endpoints of the AIS CR infrastructure:
 1. **Search API (Solr):**
 * Endpoint: `https://digiarchiv.aiscr.cz/api/search/query`
 * Method: `GET`
-* Parameters: `entity=akce`, `fl` (field list), `q` (query), `rows/page` (pagination).
+* Parameters: `entity=akce`, `rows/page` (pagination).
 * Logic: The plugin implements a `while True` loop to handle pagination, processing data in batches of 500 records to ensure stability.
 
 
@@ -115,7 +109,7 @@ The plugin interacts with three primary endpoints of the AIS CR infrastructure:
 
 ### 4.4 Constraints
 
-* **Record Limit:** A safety cap of 20,000 records is enforced to prevent memory overflow in QGIS.
+* **Record Limit:** A safety cap of 20,000 records is enforced.
 * **Batch Processing:** Geometry fetching is batched (50 IDs per request) to comply with URL length limitations and server load balancing.
 
 ## 6. Links and resources
