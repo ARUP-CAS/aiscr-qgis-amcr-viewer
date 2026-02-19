@@ -79,6 +79,7 @@ def load_amcr_data(canvas, bb, filters=None):
         MAX_LIMIT = 20000 
         
         seen_ids = set()
+        target_pian_ids_count = 0
         
         while True:
             base_params['rows'] = BATCH_AKCE
@@ -198,7 +199,10 @@ def load_amcr_data(canvas, bb, filters=None):
                     dj_pian_value = dj_pian.get('id')
                     if dj_pian_value:
                         target_pian_ids.add(dj_pian_value)
-                        pian_lookup[dj_pian_value] = dj_meta
+                        target_pian_ids_count = target_pian_ids_count+1
+                        if dj_pian_value not in pian_lookup:
+                            pian_lookup[dj_pian_value] = []
+                        pian_lookup[dj_pian_value].append(dj_meta)
 
         if not target_pian_ids:
             iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs_akce)} akcí, ale žádná nemá geometrii.", level=1)
@@ -213,7 +217,7 @@ def load_amcr_data(canvas, bb, filters=None):
         docs_pian = []
         BATCH_PIAN = 50 
         
-        iface.messageBar().pushMessage("AMCR", f"Akcí: {len(docs_akce)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} geometrií...", level=1)
+        iface.messageBar().pushMessage("AMCR", f"Akcí: {len(docs_akce)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} unikátních geometrií, vykresluji {target_pian_ids_count} geometrií...", level=1)
         
         # Seznam polí pro PIAN
         fl_pian = ["ident_cely", "pian_typ", "pian_chranene_udaje", "pian_presnost"]
@@ -284,7 +288,7 @@ def load_amcr_data(canvas, bb, filters=None):
                 if pid not in pian_lookup:
                     continue 
                                 
-                meta = pian_lookup[pid]
+                metas = pian_lookup[pid]
                 
                 # Geometry processing
                 raw = doc.get('pian_chranene_udaje')
@@ -308,39 +312,41 @@ def load_amcr_data(canvas, bb, filters=None):
                 if wkt:
                     geom = QgsGeometry.fromWkt(wkt)
                     if geom.isGeosValid():
-                        feat = QgsFeature()
-                        feat.setGeometry(geom)
-                        feat.setAttributes([
-                            pid, 
-                            pian_presnost,
-                            pian_typ,
-                            meta['dj_id'],
-                            meta['dj_typ_value'],
-                            meta['loc'],
-                            meta['ident_cely'],
-                            "https://digiarchiv.aiscr.cz/id/" + meta['ident_cely'],
-                            meta['az_okres'],
-                            meta['katastr'],
-                            meta['dalsi_katastr'],
-                            meta['akce_hlavni_vedouci'],
-                            meta['akce_organizace'],
-                            meta['akce_specifikace_data'],
-                            meta['akce_datum_zahajeni'],
-                            meta['akce_datum_ukonceni'],
-                            meta['akce_hlavni_typ'],
-                            meta['akce_vedlejsi_typ'],
-                            meta['dj_negativni'],
-                            meta['lokalizace_okolnosti'],
-                            meta['akce_je_nz'],
-                            meta['pristupnost']
-                        ])
-                        t = geom.type()
-                        if t == QgsWkbTypes.PolygonGeometry:
-                            feats_p.append(feat)
-                        elif t == QgsWkbTypes.LineGeometry:
-                            feats_l.append(feat)
-                        elif t == QgsWkbTypes.PointGeometry:
-                            feats_pt.append(feat)
+
+                        for meta in metas:
+                            feat = QgsFeature()
+                            feat.setGeometry(geom)
+                            feat.setAttributes([
+                                pid, 
+                                pian_presnost,
+                                pian_typ,
+                                meta['dj_id'],
+                                meta['dj_typ_value'],
+                                meta['loc'],
+                                meta['ident_cely'],
+                                "https://digiarchiv.aiscr.cz/id/" + meta['ident_cely'],
+                                meta['az_okres'],
+                                meta['katastr'],
+                                meta['dalsi_katastr'],
+                                meta['akce_hlavni_vedouci'],
+                                meta['akce_organizace'],
+                                meta['akce_specifikace_data'],
+                                meta['akce_datum_zahajeni'],
+                                meta['akce_datum_ukonceni'],
+                                meta['akce_hlavni_typ'],
+                                meta['akce_vedlejsi_typ'],
+                                meta['dj_negativni'],
+                                meta['lokalizace_okolnosti'],
+                                meta['akce_je_nz'],
+                                meta['pristupnost']
+                            ])
+                            t = geom.type()
+                            if t == QgsWkbTypes.PolygonGeometry:
+                                feats_p.append(feat)
+                            elif t == QgsWkbTypes.LineGeometry:
+                                feats_l.append(feat)
+                            elif t == QgsWkbTypes.PointGeometry:
+                                feats_pt.append(feat)
             except Exception as ex:
                 print(f"Chyba při tvorbě feature: {ex}")
                 pass
