@@ -25,7 +25,7 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python,AMCR,AIS CR,archaeology,PIAN,AMČR
 
-homepage=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
+homepage=https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html
 category=Vector
 icon=download.png
 # experimental flag
