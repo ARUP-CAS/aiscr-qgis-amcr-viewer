@@ -33,7 +33,7 @@ def tr_code(code):
         return ""
     return TRANSLATIONS.get(code, code)
 
-def load_amcr_data(canvas, bb, filters=None):
+def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
     load_translations()
 
     # 1. Bounding box
@@ -51,14 +51,15 @@ def load_amcr_data(canvas, bb, filters=None):
     
     try:
         # ===================
-        # A) METADATA (Fieldwork event)
+        # A) METADATA (Fieldwork event/Site)
         # ===================
         
         base_params = {
             "mapa": "true",
-            "entity": "akce",
             "sort": "ident_cely asc"
         }
+
+        base_params["entity"] = typ_dat
 
         if bb == "true": 
             base_params["loc_rpt"] = bbox_str

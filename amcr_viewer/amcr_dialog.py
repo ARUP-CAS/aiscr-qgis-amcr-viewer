@@ -6,7 +6,8 @@ from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QFormLayout,
                                  QLabel, QMessageBox, QApplication, QWidget)
 from qgis.PyQt.QtCore import Qt
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE, 
-                             OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST,
+                             OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST, TYP_LOKALITY,
+                             DRUH_LOKALITY, JISTOTA, LOKALITA_ZACHOVALOST,
                              download_vedouci, refresh_vedouci_cache)
 
 class FilterableSelectionDialog(QDialog):
@@ -65,15 +66,19 @@ class FilterableSelectionDialog(QDialog):
 
 # --- Main window ---
 class AmcrFilterDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, typ_dat, parent=None):
+        super(AmcrFilterDialog, self).__init__(parent)
         self.setWindowTitle("Filtr AMČR")
         self.resize(500, 750)
+        self.typ_dat = typ_dat
+
+        
         
         # Cache for filtering
         self.selection_cache = {
             'organizace': [], 'kraj': [], 'obdobi': [], 'areal': [], 
-            'typ_akce': [], 'okres': [], 'katastr': [], 'vedouci': [], 'pian_presnost': []
+            'typ_akce': [], 'okres': [], 'katastr': [], 'vedouci': [], 'pian_presnost': [],
+            'typ_lokality': [], 'druh_lokality': [], 'jistota': [], 'lokalita_zachovalost': []
         }
         
         layout = QVBoxLayout()
@@ -82,8 +87,11 @@ class AmcrFilterDialog(QDialog):
         self.chk_bbox.setChecked(True)
         layout.addWidget(self.chk_bbox)
 
-        self.chk_posevidence = QCheckBox("Pouze pozitivní zjištění")
-        layout.addWidget(self.chk_posevidence)
+        # Positive/negative evidence – valid for Akce
+
+        if self.typ_dat == "akce":
+            self.chk_posevidence = QCheckBox("Pouze pozitivní zjištění")
+            layout.addWidget(self.chk_posevidence)
         
         layout.addSpacing(10)
 
@@ -127,6 +135,8 @@ class AmcrFilterDialog(QDialog):
             row_widget.setLayout(row_layout)
             return row_widget
 
+        # Spatial information – valid for all
+
         self.picker_kraj = setup_picker("Kraj", 'kraj', KRAJE)
         layout.addWidget(self.picker_kraj)
 
@@ -136,28 +146,52 @@ class AmcrFilterDialog(QDialog):
         self.picker_katastr = setup_picker("Katastr", 'katastr', KATASTRY)
         layout.addWidget(self.picker_katastr)
 
-        self.picker_org = setup_picker("Organizace", 'organizace', ORGANIZACE)
-        layout.addWidget(self.picker_org)
+        self.picker_presnost = setup_picker("PIAN – přesnost", 'pian_presnost', PIAN_PRESNOST)
+        layout.addWidget(self.picker_presnost)
 
-        self.btn_update_vedouci = QPushButton("🔄")
-        self.btn_update_vedouci.setToolTip("Aktualizovat seznam vedoucích z API")
-        self.btn_update_vedouci.setFixedWidth(30)
-        self.btn_update_vedouci.clicked.connect(self.action_update_vedouci)
+        # Filters valid for Akce
+
+        if self.typ_dat == "akce":
+            self.picker_org = setup_picker("Organizace", 'organizace', ORGANIZACE)
+            layout.addWidget(self.picker_org)
+
+            self.btn_update_vedouci = QPushButton("🔄")
+            self.btn_update_vedouci.setToolTip("Aktualizovat seznam vedoucích z API")
+            self.btn_update_vedouci.setFixedWidth(30)
+            self.btn_update_vedouci.clicked.connect(self.action_update_vedouci)
         
-        self.picker_vedouci = setup_picker("Vedoucí výzkumu", 'vedouci', VEDOUCI, extra_btn=self.btn_update_vedouci)
-        layout.addWidget(self.picker_vedouci)
+            self.picker_vedouci = setup_picker("Vedoucí výzkumu", 'vedouci', VEDOUCI, extra_btn=self.btn_update_vedouci)
+            layout.addWidget(self.picker_vedouci)
+
+            # Type of event
+
+            self.picker_typ = setup_picker("Typ výzkumu", 'typ_akce', TYP_AKCE)
+            layout.addWidget(self.picker_typ)
+
+        # Filters valid for Lokality
+
+        if self.typ_dat == "lokalita":
+            self.picker_typ_lokality = setup_picker("Lokalita – typ", 'typ_lokality', TYP_LOKALITY)
+            layout.addWidget(self.picker_typ_lokality)
+
+            self.picker_druh_lokality = setup_picker("Lokalita – druh", 'druh_lokality', DRUH_LOKALITY)
+            layout.addWidget(self.picker_druh_lokality)
+
+            self.picker_jistota = setup_picker("Lokalita – jistota určení", 'jistota', JISTOTA)
+            layout.addWidget(self.picker_jistota)
+            
+            self.picker_lokalita_zachovalost = setup_picker("Lokalita - stav dochování", 'lokalita_zachovalost', LOKALITA_ZACHOVALOST)
+            layout.addWidget(self.picker_lokalita_zachovalost)
+
+        # Contextual information
 
         self.picker_obdobi = setup_picker("Období", 'obdobi', OBDOBI)
         layout.addWidget(self.picker_obdobi)
         
-        self.picker_areal = setup_picker("Areál / Druh", 'areal', AREAL)
+        self.picker_areal = setup_picker("Areál", 'areal', AREAL)
         layout.addWidget(self.picker_areal)
         
-        self.picker_typ = setup_picker("Typ výzkumu", 'typ_akce', TYP_AKCE)
-        layout.addWidget(self.picker_typ)
-
-        self.picker_presnost = setup_picker("PIAN – přesnost", 'pian_presnost', PIAN_PRESNOST)
-        layout.addWidget(self.picker_presnost)
+        
 
         layout.addStretch(1)
 
@@ -188,12 +222,7 @@ class AmcrFilterDialog(QDialog):
         
     def get_filters(self):
         filters = {}
-        if self.chk_posevidence.isChecked():
-            filters['posevidence'] = 'true'
-        
-        # Loading from cache
-        if self.selection_cache['organizace']:
-            filters['f_organizace'] = self.selection_cache['organizace']
+
         if self.selection_cache['kraj']:
             filters['f_kraj'] = self.selection_cache['kraj']
         if self.selection_cache['okres']:
@@ -204,11 +233,27 @@ class AmcrFilterDialog(QDialog):
             filters['f_obdobi'] = self.selection_cache['obdobi']
         if self.selection_cache['areal']:
             filters['f_areal'] = self.selection_cache['areal']
-        if self.selection_cache['typ_akce']:
-            filters['f_typ_vyzkumu'] = self.selection_cache['typ_akce']
-        if self.selection_cache['vedouci']:
-            filters['f_vedouci'] = self.selection_cache['vedouci']
         if self.selection_cache['pian_presnost']:
-            filters['f_pian_presnost'] = self.selection_cache['pian_presnost']    
+            filters['f_pian_presnost'] = self.selection_cache['pian_presnost']  
             
+        if self.typ_dat == "akce":
+            if self.chk_posevidence.isChecked():
+                filters['posevidence'] = 'true'
+            if self.selection_cache['organizace']:
+                filters['f_organizace'] = self.selection_cache['organizace']
+            if self.selection_cache['typ_akce']:
+                filters['f_typ_vyzkumu'] = self.selection_cache['typ_akce']
+            if self.selection_cache['vedouci']:
+                filters['f_vedouci'] = self.selection_cache['vedouci']
+
+        if self.typ_dat == "lokalita":
+            if self.selection_cache['typ_lokality']:
+                filters['f_typ_lokality'] = self.selection_cache['typ_lokality']
+            if self.selection_cache['druh_lokality']:
+                filters['f_druh_lokality'] = self.selection_cache['druh_lokality']
+            if self.selection_cache['jistota']:
+                filters['f_jistota'] = self.selection_cache['jistota']
+            if self.selection_cache['lokalita_zachovalost']:
+                filters['f_lokalita_zachovalost'] = self.selection_cache['lokalita_zachovalost']
+        
         return filters

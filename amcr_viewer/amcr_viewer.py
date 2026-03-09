@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QMenu, QAction, QToolButton
 
 from .amcr_tools import load_amcr_data
 from .amcr_dialog import AmcrFilterDialog
@@ -58,16 +58,47 @@ class AmcrViewer:
        
         import os
         plugin_dir = os.path.dirname(__file__)
+        icon_akce_path = os.path.join(plugin_dir, 'akce.png')
+        icon_lokality_path = os.path.join(plugin_dir, 'lokality.png')
 
-        icon = QIcon(os.path.join(plugin_dir, 'download.png'))
+        # 1. Vytvoření společného menu
+        self.plugin_menu = QMenu()
+
+        # 2. Vytvoření akcí (bez automatického přidání do lišty a menu)
+        self.action_download_akce = self.add_action(
+            icon_path=icon_akce_path,
+            text=self.tr(u'Stáhnout data akcí | AMČR Viewer'),
+            callback=lambda checked=False: self.run_download('akce'),
+            parent=self.iface.mainWindow(),
+            add_to_menu=False,
+            add_to_toolbar=False
+        )
+        self.plugin_menu.addAction(self.action_download_akce)
+
+        self.action_download_lokality = self.add_action(
+            icon_path=icon_lokality_path,
+            text=self.tr(u'Stáhnout data lokalit | AMČR Viewer'),
+            callback=lambda checked=False: self.run_download('lokalita'), 
+            parent=self.iface.mainWindow(),
+            add_to_menu=False,
+            add_to_toolbar=False
+        )
+        self.plugin_menu.addAction(self.action_download_lokality)
+
+        # 3. Přidání rozbalovacího menu do hlavního menu QGIS
+        main_icon = QIcon(icon_akce_path)
+        self.main_action = QAction(main_icon, 'AMČR Viewer', self.iface.mainWindow())
+        self.main_action.setMenu(self.plugin_menu)
+        self.iface.addPluginToMenu(self.menu, self.main_action)
+
+        # 4. Přidání rozevíracího tlačítka do nástrojové lišty (Toolbar)
+        self.tool_button = QToolButton()
+        self.tool_button.setMenu(self.plugin_menu)
+        self.tool_button.setDefaultAction(self.action_download_akce)
+        self.tool_button.setPopupMode(QToolButton.MenuButtonPopup)
         
-
-        # Download data button 
-        self.action_download = self.add_action(
-            icon,
-            text=self.tr(u'Načíst data z AMČR'),
-            callback=self.run_download,
-            parent=self.iface.mainWindow())
+        # Vložení vytvořeného tlačítka do QGIS rozhraní
+        self.iface.addToolBarWidget(self.tool_button)
         
         self.first_start = True
 
@@ -80,9 +111,9 @@ class AmcrViewer:
             self.iface.mapCanvas().unsetMapTool(self.tool)
 
     # --- Data downloading ---
-    def run_download(self):
+    def run_download(self, typ_dat):
         
-        dlg = AmcrFilterDialog()
+        dlg = AmcrFilterDialog(typ_dat)
         result = dlg.exec_()
         
         if result == 1:
@@ -90,4 +121,4 @@ class AmcrViewer:
             bbox = dlg.get_bbox()
             
             canvas = self.iface.mapCanvas()
-            load_amcr_data(canvas, bbox, filters)
+            load_amcr_data(canvas, bbox, filters, typ_dat)
