@@ -33,7 +33,7 @@ def tr_code(code):
         return ""
     return TRANSLATIONS.get(code, code)
 
-def load_amcr_data(canvas, bb, filters=None):
+def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
     load_translations()
 
     # 1. Bounding box
@@ -46,19 +46,20 @@ def load_amcr_data(canvas, bb, filters=None):
     
     url = "https://digiarchiv.aiscr.cz/api/search/query"
     
-    iface.messageBar().pushMessage("AMCR", "Hledám akce...", level=1)
+    iface.messageBar().pushMessage("AMCR", "Hledám záznamy...", level=1)
     QApplication.setOverrideCursor(Qt.WaitCursor)
     
     try:
         # ===================
-        # A) METADATA (Fieldwork event)
+        # A) METADATA (Fieldwork event/Site)
         # ===================
         
         base_params = {
             "mapa": "true",
-            "entity": "akce",
             "sort": "ident_cely asc"
         }
+
+        base_params["entity"] = typ_dat
 
         if bb == "true": 
             base_params["loc_rpt"] = bbox_str
@@ -73,24 +74,24 @@ def load_amcr_data(canvas, bb, filters=None):
                 else:
                     base_params[key] = str(value).strip()
 
-        docs_akce = []
+        docs = []
         current_page = 0 
-        BATCH_AKCE = 500
+        BATCH_DOCS = 500
         MAX_LIMIT = 20000 
         
         seen_ids = set()
         target_pian_ids_count = 0
         
         while True:
-            base_params['rows'] = BATCH_AKCE
+            base_params['rows'] = BATCH_DOCS
             if current_page > 0:
                 base_params['page'] = current_page
             elif 'page' in base_params:
                 del base_params['page']
             
             try:
-                resp_akce = requests.get(url, params=base_params, timeout=30)
-                resp_json = resp_akce.json()
+                resp_docs = requests.get(url, params=base_params, timeout=30)
+                resp_json = resp_docs.json()
                 data = resp_json.get('response', {})
                 batch_docs = data.get('docs', [])
                 num_found = data.get('numFound', 0) 
@@ -105,12 +106,12 @@ def load_amcr_data(canvas, bb, filters=None):
                         seen_ids.add(ident)
                         new_docs.append(d)
                 
-                docs_akce.extend(new_docs)
-                print(f"Strana {current_page} stažena. Celkem záznamů: {len(docs_akce)} / {num_found}")
+                docs.extend(new_docs)
+                print(f"Strana {current_page} stažena. Celkem záznamů: {len(docs)} / {num_found}")
 
-                if len(docs_akce) >= num_found:
+                if len(docs) >= num_found:
                     break
-                if len(docs_akce) >= MAX_LIMIT:
+                if len(docs) >= MAX_LIMIT:
                     iface.messageBar().pushMessage("AMCR", f"Limit {MAX_LIMIT} záznamů dosažen.", level=1)
                     break
                 
@@ -121,8 +122,8 @@ def load_amcr_data(canvas, bb, filters=None):
                 print(f"Chyba při stránkování na straně {current_page}: {e}")
                 break
 
-        if not docs_akce:
-             iface.messageBar().pushMessage("AMCR", "Žádné akce nenalezeny.", level=1)
+        if not docs:
+             iface.messageBar().pushMessage("AMCR", "Žádné záznamy nenalezeny.", level=1)
              return
 
         # ==========================================
@@ -132,29 +133,29 @@ def load_amcr_data(canvas, bb, filters=None):
         target_pian_ids = set()
         actions_with_geom = 0
         
-        for akce in docs_akce:
-            piani = akce.get('az_dj_pian', [])
+        for doc in docs:
+            piani = doc.get('az_dj_pian', [])
             if not piani:
                 continue
 
             actions_with_geom += 1
             
             def g(key, default=""): 
-                val = akce.get(key)
+                val = doc.get(key)
                 if isinstance(val, list):
                     return str(val[0]) if val else default
                 return str(val) if val is not None else default
 
             def g_list(key, translate=False):
-                val = akce.get(key, [])
+                val = doc.get(key, [])
                 if not isinstance(val, list):
                     val = [val] if val else []
                 if translate:
                     return ", ".join([tr_code(str(x)) for x in val if x])
                 return ", ".join([str(x) for x in val if x])
 
-            az_chranene = akce.get('az_chranene_udaje', {})
-            akce_chranene = akce.get('akce_chranene_udaje', {})
+            az_chranene = doc.get('az_chranene_udaje', {})
+            chranene = doc.get('akce_chranene_udaje') or doc.get('lokalita_chranene_udaje') or {}
             
             dalsi_kat = az_chranene.get('dalsi_katastr', [])
             dalsi_kat_str = ""
@@ -162,28 +163,43 @@ def load_amcr_data(canvas, bb, filters=None):
                 items = [x.get('value', '') if isinstance(x, dict) else str(x) for x in dalsi_kat]
                 dalsi_kat_str = ", ".join([i for i in items if i])
 
-            lokalizace = akce_chranene.get('lokalizace_okolnosti', "")
+            lokalizace = chranene.get('lokalizace_okolnosti', "")
+            lokalita_nazev = chranene.get('nazev', "")
+            lokalita_popis = chranene.get('popis', "")
 
-            # Prepate metadata for fieldwork event
+            # Prepate common metadata
             meta = {
-                "ident_cely": akce.get('ident_cely', ''),
+                "ident_cely": doc.get('ident_cely', ''),
                 "az_okres": g('az_okres'),
                 "katastr": g_list('katastr'),
-                "dalsi_katastr": dalsi_kat_str,
-                "akce_hlavni_vedouci": g('akce_hlavni_vedouci'),
-                "akce_organizace": tr_code(g('akce_organizace')),
-                "akce_specifikace_data": tr_code(g('akce_specifikace_data')),
-                "akce_datum_zahajeni": g('akce_datum_zahajeni'),
-                "akce_datum_ukonceni": g('akce_datum_ukonceni'),
-                "akce_hlavni_typ": tr_code(g('akce_hlavni_typ')),
-                "akce_vedlejsi_typ": g_list('akce_vedlejsi_typ', translate=True),
-                "lokalizace_okolnosti": str(lokalizace) if lokalizace else "",
-                "akce_je_nz": "Ano" if akce.get('akce_je_nz') is True else "Ne",
+                "dalsi_katastr": dalsi_kat_str,                
                 "pristupnost": g('pristupnost'),
                 "loc": g_list('loc')
             }
+
+            if typ_dat == "akce":
+                meta.update({
+                    "akce_hlavni_vedouci": g('akce_hlavni_vedouci'),
+                    "akce_organizace": tr_code(g('akce_organizace')),
+                    "akce_specifikace_data": tr_code(g('akce_specifikace_data')),
+                    "akce_datum_zahajeni": g('akce_datum_zahajeni'),
+                    "akce_datum_ukonceni": g('akce_datum_ukonceni'),
+                    "akce_hlavni_typ": tr_code(g('akce_hlavni_typ')),
+                    "akce_vedlejsi_typ": g_list('akce_vedlejsi_typ', translate=True),
+                    "lokalizace_okolnosti": str(lokalizace) if lokalizace else "",
+                    "akce_je_nz": "Ano" if doc.get('akce_je_nz') is True else "Ne",
+                })
+
+            elif typ_dat == "lokalita":
+                meta.update({
+                    "lokalita_nazev": lokalita_nazev,
+                    "lokalita_popis": lokalita_popis,
+                    "lokalita_zachovalost": tr_code(g('lokalita_zachovalost')),
+                    "lokalita_druh": tr_code(g('lokalita_druh')),
+                    "lokalita_typ": tr_code(g('lokalita_typ_lokality')),
+                })
             
-            djs = akce.get('az_dokumentacni_jednotka', [])
+            djs = doc.get('az_dokumentacni_jednotka', [])
 
             for dj in djs:
                 if filters and filters.get('posevidence') == 'true' and dj.get('dj_negativni_jednotka') is True:
@@ -205,7 +221,7 @@ def load_amcr_data(canvas, bb, filters=None):
                         pian_lookup[dj_pian_value].append(dj_meta)
 
         if not target_pian_ids:
-            iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs_akce)} akcí, ale žádná nemá geometrii.", level=1)
+            iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.", level=1)
             return        
 
 
@@ -217,7 +233,7 @@ def load_amcr_data(canvas, bb, filters=None):
         docs_pian = []
         BATCH_PIAN = 50 
         
-        iface.messageBar().pushMessage("AMCR", f"Akcí: {len(docs_akce)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} unikátních geometrií, vykresluji {target_pian_ids_count} geometrií...", level=1)
+        iface.messageBar().pushMessage("AMCR", f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} unikátních geometrií, vykresluji {target_pian_ids_count} geometrií...", level=1)
         
         # Seznam polí pro PIAN
         fl_pian = ["ident_cely", "pian_typ", "pian_chranene_udaje", "pian_presnost"]
@@ -250,6 +266,11 @@ def load_amcr_data(canvas, bb, filters=None):
         vl_point = QgsVectorLayer("Point?crs=epsg:5514", "AMCR Body", "memory")
         layers = [vl_poly, vl_line, vl_point]
         
+        if typ_dat == "akce":
+            archeologicky_zaznam = "Akce"
+        elif typ_dat == "lokalita":
+            archeologicky_zaznam = "Lokalita"
+
         # Definice sloupců atributové tabulky
         cols = [
             QgsField("PIAN", QVariant.String),
@@ -258,23 +279,36 @@ def load_amcr_data(canvas, bb, filters=None):
             QgsField("Dokumentační jednotka", QVariant.String),
             QgsField("Typ dokumentační jednotky", QVariant.String),
             QgsField("Definiční bod(y) (WGS-84)", QVariant.String),
-            QgsField("Akce", QVariant.String),
+            QgsField(archeologicky_zaznam, QVariant.String),
             QgsField("Odkaz do Digitálního archivu AMČR", QVariant.String),
             QgsField("Okres", QVariant.String),
             QgsField("Katastr", QVariant.String),
-            QgsField("Další katastry", QVariant.String),
-            QgsField("Vedoucí akce", QVariant.String),
-            QgsField("Organizace", QVariant.String),
-            QgsField("Specifikace data", QVariant.String),
-            QgsField("Datum zahájeni", QVariant.String),
-            QgsField("Datum ukončení", QVariant.String),
-            QgsField("Hlavní typ", QVariant.String),
-            QgsField("Vedlejší typ", QVariant.String),
-            QgsField("Zjištění", QVariant.String),
-            QgsField("Akce – lokalizace", QVariant.String),
-            QgsField("Akce – nahrazuje NZ", QVariant.String),
-            QgsField("Přístupnost", QVariant.String)
+            QgsField("Další katastry", QVariant.String)
         ]
+
+        if typ_dat == "akce":
+            cols += [
+                QgsField("Vedoucí akce", QVariant.String),
+                QgsField("Organizace", QVariant.String),
+                QgsField("Specifikace data", QVariant.String),
+                QgsField("Datum zahájeni", QVariant.String),
+                QgsField("Datum ukončení", QVariant.String),
+                QgsField("Hlavní typ", QVariant.String),
+                QgsField("Vedlejší typ", QVariant.String),
+                QgsField("Zjištění", QVariant.String),
+                QgsField("Akce – lokalizace", QVariant.String),
+                QgsField("Akce – nahrazuje NZ", QVariant.String),
+            ]
+        elif typ_dat == "lokalita":
+            cols += [
+                QgsField("Název lokality", QVariant.String),
+                QgsField("Popis lokality", QVariant.String),
+                QgsField("Typ lokality", QVariant.String),
+                QgsField("Druh lokality", QVariant.String),
+                QgsField("Zachovalost", QVariant.String)
+            ]
+        
+        cols.append(QgsField("Přístupnost", QVariant.String))
 
         for vl in layers:
             vl.dataProvider().addAttributes(cols)
@@ -316,7 +350,7 @@ def load_amcr_data(canvas, bb, filters=None):
                         for meta in metas:
                             feat = QgsFeature()
                             feat.setGeometry(geom)
-                            feat.setAttributes([
+                            atributy = [
                                 pid, 
                                 pian_presnost,
                                 pian_typ,
@@ -327,19 +361,35 @@ def load_amcr_data(canvas, bb, filters=None):
                                 "https://digiarchiv.aiscr.cz/id/" + meta['ident_cely'],
                                 meta['az_okres'],
                                 meta['katastr'],
-                                meta['dalsi_katastr'],
-                                meta['akce_hlavni_vedouci'],
-                                meta['akce_organizace'],
-                                meta['akce_specifikace_data'],
-                                meta['akce_datum_zahajeni'],
-                                meta['akce_datum_ukonceni'],
-                                meta['akce_hlavni_typ'],
-                                meta['akce_vedlejsi_typ'],
-                                meta['dj_negativni'],
-                                meta['lokalizace_okolnosti'],
-                                meta['akce_je_nz'],
-                                meta['pristupnost']
-                            ])
+                                meta['dalsi_katastr']
+                            ]
+                            if typ_dat == "akce":
+                                atributy += [
+                                    meta['akce_hlavni_vedouci'],
+                                    meta['akce_organizace'],
+                                    meta['akce_specifikace_data'],
+                                    meta['akce_datum_zahajeni'],
+                                    meta['akce_datum_ukonceni'],
+                                    meta['akce_hlavni_typ'],
+                                    meta['akce_vedlejsi_typ'],
+                                    meta['dj_negativni'],
+                                    meta['lokalizace_okolnosti'],
+                                    meta['akce_je_nz']
+                                ]
+
+                            elif typ_dat == "lokalita":
+                                atributy += [
+                                    meta['lokalita_nazev'],
+                                    meta['lokalita_popis'],
+                                    meta['lokalita_typ'],
+                                    meta['lokalita_druh'],
+                                    meta['lokalita_zachovalost']
+                                ]
+
+                            atributy.append(meta['pristupnost'])
+
+                            feat.setAttributes(atributy)
+
                             t = geom.type()
                             if t == QgsWkbTypes.PolygonGeometry:
                                 feats_p.append(feat)
@@ -362,7 +412,7 @@ def load_amcr_data(canvas, bb, filters=None):
                 added += len(f)
         
         if added > 0:
-            iface.messageBar().pushMessage("AMCR", f"Hotovo. Akcí: {len(docs_akce)} (s geom: {actions_with_geom}). Vykresleno: {added} prvků.", level=0)
+            iface.messageBar().pushMessage("AMCR", f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). Vykresleno: {added} prvků.", level=0)
         else:
             iface.messageBar().pushMessage("AMCR", "Žádná data k zobrazení.", level=1)
 

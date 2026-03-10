@@ -13618,3 +13618,30 @@ odchylka jednotky metrů;HES-000861;pian_presnost
 odchylka desítky metrů;HES-000862;pian_presnost
 odchylka stovky metrů;HES-000863;pian_presnost
 poloha podle katastru;HES-000864;pian_presnost
+nemovitá památka;HES-001122;typ_lokality
+polygon průzkumu;HES-001123;typ_lokality
+krajina;HES-001124;typ_lokality
+polygon leteckého průzkumu;HES-000111;druh_lokality
+osídlený skalní prostor;HES-000112;druh_lokality
+krajina;HES-000117;druh_lokality
+pomník/památník;HES-000128;druh_lokality
+muzeum/skanzen;HES-000129;druh_lokality
+pozůstatek mohylníku;HES-001430;druh_lokality
+pozůstatek ohrazení;HES-001431;druh_lokality
+pozůstatek represe;HES-001432;druh_lokality
+pozůstatek kultu;HES-001433;druh_lokality
+pozůstatek sídla elity;HES-001434;druh_lokality
+pozůstatek sídliště;HES-001435;druh_lokality
+pozůstatek těžby;HES-001436;druh_lokality
+pozůstatek vojenství;HES-001437;druh_lokality
+pozůstatek výroby;HES-001438;druh_lokality
+pozůstatek komunikace;HES-001429;druh_lokality
+jisté (> 95 %);HES-001449;jistota
+nejisté (50–95 %);HES-001450;jistota
+domnělé (5–50 %);HES-001451;jistota
+pseudolokalita (< 5 %);HES-001452;jistota
+zaniklá lokalita;HES-001453;lokalita_zachovalost
+lokalita pod zástavbou;HES-001454;lokalita_zachovalost
+nadzemní relikty;HES-001455;lokalita_zachovalost
+ruina;HES-001456;lokalita_zachovalost
+historická budova/komplex;HES-001457;lokalita_zachovalost

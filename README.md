@@ -12,14 +12,13 @@
 
 ## 1. Overview
 
-**AMCR Viewer** is a QGIS plugin designed to facilitate direct access to the Digital Archive of the Archaeological Map of the Czech Republic (AMČR). It allows researchers to **query, retrieve, and visualize Fieldwork events[^1] data (metadata and geometry) directly within the GIS environment**, eliminating the need to manually export data from the web interface. **Only publicly accessible data are supported at the time** (accessibility = anonymous).
+**AMCR Viewer** is a QGIS plugin designed to facilitate direct access to the Digital Archive of the Archaeological Map of the Czech Republic (AMČR). It allows researchers to **query, retrieve, and visualize *Fieldwork events* and *Sites* data (metadata and geometry) directly within the GIS environment**, eliminating the need to manually export data from the web interface. **Only publicly accessible data are supported at the time** (accessibility = anonymous).
 
-[^1]: Only Fieldwork events (Akce) are supported at the time.
 
 ### Key Features
 
 * **Spatial Querying:** Option to filter records based on the current map canvas extent (Bounding Box).
-* **Advanced Attribute Filtering:** Supports multi-criteria filtering using controlled vocabularies (Cadastral Area, District, Period, Type of Fieldwork event, Organization, Fieldwork Manager).
+* **Advanced Attribute Filtering:** Supports multi-criteria filtering using controlled vocabularies.
 * **Dynamic Geometry Retrieval:** Automatically downloads and categorizes spatial data into Point, Line, and Polygon layers.
 * **Semantic Interoperability:** Automatically translates internal system codes into human-readable labels using the AIS CR API.
 
@@ -44,14 +43,14 @@
 
 ### 3.1 Data Retrieval
 
-To initiate a search query, click the **Load AMCR Data** icon. The filter dialog provides the following options:
+To initiate a search query, click either the **Stáhnout data akcí** or the **Stáhnout data lokalit** icon from the dropdown menu. The filter dialog provides the following options. Shown options vary based on the choosed tool.
 
 * **Spatial Filter:** *Checkbox "Limit search to current map extent":* If checked, the query is restricted to the geographical area currently visible in the QGIS canvas. If unchecked, the query searches the entire database (use with caution regarding data volume).
-* It is possible to view only those Fieldwork events with positive outcome, if "Positive findings only" is checked. Only PIANs marked as (or rather PIANs belonging to Documentation units marked as) "Type of evidence" = "positive" are rendered.
+* It is possible to view only those Fieldwork events with positive outcome, if "Positive findings only" is checked. Only *PIANs* marked as (or rather *PIANs* belonging to Documentation units marked as) "Type of evidence" = "positive" are rendered.
 
 
 * **Attribute Filters:**
-  * The dialog utilizes "Picker" widgets for controlled vocabularies (Region, District, Cadastral area, Organisation, Period, Activity Area, PIAN accuracy.
+  * The dialog utilizes "Picker" widgets for controlled vocabularies (common: Region, District, Cadastral area, Period, Activity Area, *PIAN* accuracy; *events* related: Organisation, Researcher, Event type; *sites* related: Site type and class, Level of confidence, State of preservation).
   * Click **Select...** to open a searchable selection window. Multiple values can be selected simultaneously (Logic: OR).
 
 
@@ -104,7 +103,7 @@ The plugin interacts with three primary endpoints of the AIS CR infrastructure:
 ### 4.3 Data Persistence
 
 * **Vocabularies:** Static vocabularies (e.g., Periods, Regions) are stored in `codelists/heslar.csv`.
-* **Dynamic Data:** The list of investigators is downloaded on-demand and cached in `codelists/vedouci.csv`.
+* **Dynamic Data:** The list of researchers is downloaded on-demand and cached in `codelists/vedouci.csv`.
 * **Layers:** Output layers are created as `memory` layers. They are non-persistent and will be lost if QGIS is closed without saving.
 
 ### 4.4 Constraints
@@ -115,3 +114,4 @@ The plugin interacts with three primary endpoints of the AIS CR infrastructure:
 ## 6. Links and resources
 
 * [AMCR/Digiarchive Documentation](https://amcr-help.aiscr.cz/) (only in Czech).
+* [AMCR Viewer tutorial](https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html) (only in Czech).

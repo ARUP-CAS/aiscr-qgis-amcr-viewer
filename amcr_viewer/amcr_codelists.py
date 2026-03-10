@@ -62,7 +62,8 @@ def load_all_data():
     categorized_data = {
         'obdobi': {}, 'typ_akce': {}, 'areal': {}, 
         'kraj': {}, 'organizace': {}, 'okres': {}, 'katastr': {},
-        'vedouci': {}, 'pian_presnost': {} 
+        'vedouci': {}, 'pian_presnost': {}, 'typ_lokality': {}, 'druh_lokality': {},
+        'jistota': {}, 'lokalita_zachovalost': {}
     }
     
     # Funkce pro roztřídění načteného slovníku (tohle je trochu redundance, ale pro zachování logiky)
@@ -156,8 +157,12 @@ KRAJE = _DATA['kraj']
 ORGANIZACE = _DATA['organizace']
 OKRESY = _DATA['okres']
 KATASTRY = _DATA['katastr']
-VEDOUCI = _DATA['vedouci'] # Tady to bude zpočátku prázdné, pokud soubor neexistuje
+VEDOUCI = _DATA['vedouci']
 PIAN_PRESNOST = _DATA['pian_presnost']
+TYP_LOKALITY = _DATA['typ_lokality']
+DRUH_LOKALITY = _DATA['druh_lokality']
+JISTOTA = _DATA['jistota']
+LOKALITA_ZACHOVALOST = _DATA['lokalita_zachovalost']
 
 def refresh_vedouci_cache():
     """
