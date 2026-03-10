@@ -2,7 +2,7 @@
 from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.core import (QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry, 
                        QgsField, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
-                       QgsWkbTypes)
+                       QgsWkbTypes, QgsRelation, QgsEditorWidgetSetup)
 from qgis.utils import iface
 from qgis.PyQt.QtCore import QVariant, Qt
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication
@@ -33,7 +33,7 @@ def tr_code(code):
         return ""
     return TRANSLATIONS.get(code, code)
 
-def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
+def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false"):
     load_translations()
 
     # 1. Bounding box
@@ -78,6 +78,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
         current_page = 0 
         BATCH_DOCS = 500
         MAX_LIMIT = 20000 
+        feats_k = []
         
         seen_ids = set()
         target_pian_ids_count = 0
@@ -206,7 +207,8 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
                     continue
 
                 dj_meta = meta.copy()
-                dj_meta['dj_id'] = dj.get('ident_cely')
+                dj_id = dj.get('ident_cely')
+                dj_meta['dj_id'] = dj_id
                 dj_typ = dj.get('dj_typ')
                 dj_meta['dj_typ_value'] = dj_typ.get('value') if dj_typ else ""
                 dj_meta['dj_negativni'] = "Negativní" if dj.get('dj_negativni_jednotka') is True else "Pozitivní"
@@ -219,6 +221,20 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
                         if dj_pian_value not in pian_lookup:
                             pian_lookup[dj_pian_value] = []
                         pian_lookup[dj_pian_value].append(dj_meta)
+
+                        if komponenty == "true":
+                            komps = dj.get('dj_komponenta', [])
+                            for komp in komps:
+                                feat = QgsFeature()
+                                atributy = [
+                                    komp.get('ident_cely', ""),
+                                    dj_id,
+                                    # komponenta_aktivita ..?,
+                                    komp.get('komponenta_areal', {}).get('value', ""),
+                                    komp.get('komponenta_obdobi', {}).get('value', "")
+                                ]
+                                feat.setAttributes(atributy)
+                                feats_k.append(feat)
 
         if not target_pian_ids:
             iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.", level=1)
@@ -309,6 +325,23 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
             ]
         
         cols.append(QgsField("Přístupnost", QVariant.String))
+
+        if komponenty == "true":
+            vl_komponenty = QgsVectorLayer("None", "AMCR Komponenty", "memory")
+            pr = vl_komponenty.dataProvider()
+            komponenty_cols = [
+                QgsField("komponenta", QVariant.String), # ident_cely
+                QgsField("dj_id", QVariant.String),
+                # potenciálně QgsField("komponenta_aktivita", QVariant.String),
+                QgsField("komponenta_areal", QVariant.String),
+                QgsField("komponenta_obdobi", QVariant.String)
+            ]
+            pr.addAttributes(komponenty_cols)
+            vl_komponenty.updateFields()
+
+            idx_dj_id = vl_komponenty.fields().indexOf("dj_id")
+            text_setup = QgsEditorWidgetSetup("TextEdit", {})
+            vl_komponenty.setEditorWidgetSetup(idx_dj_id, text_setup)
 
         for vl in layers:
             vl.dataProvider().addAttributes(cols)
@@ -403,16 +436,50 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
 
         proj = QgsProject.instance()
         added = 0
-        for f, l, n in [(feats_p, vl_poly, "Plochy"), (feats_l, vl_line, "Linie"), (feats_pt, vl_point, "Body")]:
+        layers_to_process = [
+            (feats_p, vl_poly, "Plochy"), 
+            (feats_l, vl_line, "Linie"), 
+            (feats_pt, vl_point, "Body"),
+        ]
+
+        if komponenty == "true":
+            layers_to_process.append((feats_k, vl_komponenty, "Komponenty"))
+
+        for f, l, n in layers_to_process:
             if f:
                 l.dataProvider().addFeatures(f)
                 l.updateExtents()
                 l.setName(f"AMČR {n} (Filtrováno)") 
                 proj.addMapLayer(l)
-                added += len(f)
+                if n != "Komponenty":
+                    added += len(f)
         
         if added > 0:
             iface.messageBar().pushMessage("AMCR", f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). Vykresleno: {added} prvků.", level=0)
+
+            # Relation 
+            if komponenty == "true":
+                parent_layers = [
+                    (vl_poly, "Plochy"),
+                    (vl_line, "Linie"),
+                    (vl_point, "Body")
+                ]
+                rel_manager = proj.relationManager()
+                for parent_layer, label in parent_layers:
+                    rel = QgsRelation()
+                    #rel_id = f"rel_{parent_layer.id()}_komponenty"
+                    rel_name = f"Komponenty pro {label}"
+                    #rel.setId(rel_id)                    
+                    rel.setName(rel_name)                    
+                    rel.setReferencingLayer(vl_komponenty.id())
+                    rel.setReferencedLayer(parent_layer.id())
+                    rel.addFieldPair("dj_id", "Dokumentační jednotka") # Upravit název parent sloupce po změně názvů sloupců u vrstev akcí/lokalit
+                    rel.generateId()
+                    if rel.isValid():
+                        rel_manager.addRelation(rel)
+                    else:
+                        print(f"Relace pro {label} není validní!")
+
         else:
             iface.messageBar().pushMessage("AMCR", "Žádná data k zobrazení.", level=1)
 

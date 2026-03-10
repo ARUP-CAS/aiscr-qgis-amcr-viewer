@@ -119,6 +119,7 @@ class AmcrViewer:
         if result == 1:
             filters = dlg.get_filters()
             bbox = dlg.get_bbox()
+            komponenty = dlg.get_komponenty()
             
             canvas = self.iface.mapCanvas()
-            load_amcr_data(canvas, bbox, filters, typ_dat)
+            load_amcr_data(canvas, bbox, filters, typ_dat, komponenty)
