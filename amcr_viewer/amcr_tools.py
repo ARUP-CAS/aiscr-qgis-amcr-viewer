@@ -46,7 +46,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
     
     url = "https://digiarchiv.aiscr.cz/api/search/query"
     
-    iface.messageBar().pushMessage("AMCR", "Hledám akce...", level=1)
+    iface.messageBar().pushMessage("AMCR", "Hledám záznamy...", level=1)
     QApplication.setOverrideCursor(Qt.WaitCursor)
     
     try:
@@ -221,7 +221,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
                         pian_lookup[dj_pian_value].append(dj_meta)
 
         if not target_pian_ids:
-            iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs)} akcí, ale žádná nemá geometrii.", level=1)
+            iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.", level=1)
             return        
 
 
@@ -233,7 +233,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
         docs_pian = []
         BATCH_PIAN = 50 
         
-        iface.messageBar().pushMessage("AMCR", f"Akcí: {len(docs)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} unikátních geometrií, vykresluji {target_pian_ids_count} geometrií...", level=1)
+        iface.messageBar().pushMessage("AMCR", f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} unikátních geometrií, vykresluji {target_pian_ids_count} geometrií...", level=1)
         
         # Seznam polí pro PIAN
         fl_pian = ["ident_cely", "pian_typ", "pian_chranene_udaje", "pian_presnost"]
@@ -269,7 +269,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
         if typ_dat == "akce":
             archeologicky_zaznam = "Akce"
         elif typ_dat == "lokalita":
-            archeologicky_zaznam = "ID lokality"
+            archeologicky_zaznam = "Lokalita"
 
         # Definice sloupců atributové tabulky
         cols = [
@@ -412,7 +412,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce"):
                 added += len(f)
         
         if added > 0:
-            iface.messageBar().pushMessage("AMCR", f"Hotovo. Akcí: {len(docs)} (s geom: {actions_with_geom}). Vykresleno: {added} prvků.", level=0)
+            iface.messageBar().pushMessage("AMCR", f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). Vykresleno: {added} prvků.", level=0)
         else:
             iface.messageBar().pushMessage("AMCR", "Žádná data k zobrazení.", level=1)
 
