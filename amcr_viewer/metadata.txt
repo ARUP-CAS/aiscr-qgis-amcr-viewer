@@ -7,11 +7,11 @@
 name=AMČR Viewer
 qgisMinimumVersion=3.4
 description=Viewing and downloading the AMČR data.
-version=1.2.0
+version=1.2.0-rc.1
 author=David Spáčil
 email=spacil@arub.cz
 
-about=This plugin is intended for downloading the data (Fieldwork events data only, at the time) from the Digiarchive of the Archaeological Map of the Czech Republic (https://digiarchiv.aiscr.cz/). As of now, only publicly accessible data can be downloaded.
+about=This plugin is intended for downloading the data (Fieldwork events, Sites and their Components) from the Digiarchive of the Archaeological Map of the Czech Republic (https://digiarchiv.aiscr.cz/). As of now, only publicly accessible data can be downloaded.
 
 tracker=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/issues
 repository=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer

@@ -12,7 +12,7 @@
 
 ## 1. Overview
 
-**AMCR Viewer** is a QGIS plugin designed to facilitate direct access to the Digital Archive of the Archaeological Map of the Czech Republic (AMČR). It allows researchers to **query, retrieve, and visualize *Fieldwork events* and *Sites* data (metadata and geometry) directly within the GIS environment**, eliminating the need to manually export data from the web interface. **Only publicly accessible data are supported at the time** (accessibility = anonymous).
+**AMCR Viewer** is a QGIS plugin designed to facilitate direct access to the Digital Archive of the Archaeological Map of the Czech Republic (AMČR). It allows researchers to **query, retrieve, and visualize *Fieldwork events* and *Sites* data (metadata and geometry) directly within the GIS environment**, eliminating the need to manually export data from the web interface. Both *Fieldwork events* and *Sites* layers may be accompanied by a *Components* layer with additional information. **Only publicly accessible data are supported at the time** (accessibility = anonymous).
 
 
 ### Key Features
@@ -57,19 +57,25 @@ To initiate a search query, click either the **Stáhnout data akcí** or the **S
 * **Fieldwork Manager (Dynamic List):**
   * Due to the dynamic nature of the persons database, the list of Fieldwork Managers is retrieved from the AIS CR servers and needs to be updated the first time (and subsequently, if there is need).
   * To refresh the list from the server, click the **Refresh (🔄)** button next to the selection field. This downloads the latest list of researchers from the API.
-* If no filter is used, all accessible Fieldwork events/PIANs are returned (although the number of Fieldwork events to be loaded is capped at 20000 records; it is advisable to set at least one filter).
+
+* **Components:** The *components* data are downloaded as well upon checking the corresponding check box. This enriches the main (*Events* and *Sites*) layers with additional information (period and activity area).
+
+* If no filter is used, all accessible Fieldwork events/PIANs are returned (although the number of Fieldwork events to be loaded is capped at 20000 records; it is advisable to set at least one filter).  
+
+For a more in-depth tutorial refer to the [AMČR Documentation](https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html) (only in Czech).
 
 
 
 ### 3.2 Layer Structure & Attributes
 
-Upon successful retrieval, the plugin generates three temporary memory layers:
+Upon successful retrieval, the plugin generates four temporary memory layers:
 
 1. **AMCR Plochy (Polygons)**
 2. **AMČR Linie (Lines)**
 3. **AMČR Body (Points)**
+4. **AMČR Komponenty (*Components*/no geometry)**
 
-The Attribute Table includes standardized fields with important metadata.
+The Attribute Table includes standardized fields with important metadata. The components layer has no geometry on its own and depend solely on a relation with the other three layers.
 
 ---
 
