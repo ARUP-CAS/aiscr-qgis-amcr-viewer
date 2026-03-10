@@ -277,15 +277,17 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         # ==========================================
         # C) TVORBA VRSTEV
         # ==========================================
-        vl_poly = QgsVectorLayer("Polygon?crs=epsg:5514", "AMCR Plochy", "memory")
-        vl_line = QgsVectorLayer("LineString?crs=epsg:5514", "AMCR Linie", "memory")
-        vl_point = QgsVectorLayer("Point?crs=epsg:5514", "AMCR Body", "memory")
-        layers = [vl_poly, vl_line, vl_point]
+        
         
         if typ_dat == "akce":
             archeologicky_zaznam = "Akce"
         elif typ_dat == "lokalita":
             archeologicky_zaznam = "Lokalita"
+
+        vl_poly = QgsVectorLayer("Polygon?crs=epsg:5514", f"AMCR_{archeologicky_zaznam}_Polygony", "memory")
+        vl_line = QgsVectorLayer("LineString?crs=epsg:5514", f"AMCR_{archeologicky_zaznam}_Linie", "memory")
+        vl_point = QgsVectorLayer("Point?crs=epsg:5514", f"AMCR_{archeologicky_zaznam}_Body", "memory")
+        layers = [vl_poly, vl_line, vl_point]
 
         # Definice sloupců atributové tabulky
         cols = [
@@ -304,6 +306,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
 
         if typ_dat == "akce":
             cols += [
+                QgsField("Akce – lokalizace", QVariant.String),
                 QgsField("Vedoucí akce", QVariant.String),
                 QgsField("Organizace", QVariant.String),
                 QgsField("Specifikace data", QVariant.String),
@@ -311,20 +314,27 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 QgsField("Datum ukončení", QVariant.String),
                 QgsField("Hlavní typ", QVariant.String),
                 QgsField("Vedlejší typ", QVariant.String),
-                QgsField("Zjištění", QVariant.String),
-                QgsField("Akce – lokalizace", QVariant.String),
+                QgsField("Zjištění", QVariant.String),                
                 QgsField("Akce – nahrazuje NZ", QVariant.String),
             ]
         elif typ_dat == "lokalita":
             cols += [
-                QgsField("Název lokality", QVariant.String),
-                QgsField("Popis lokality", QVariant.String),
-                QgsField("Typ lokality", QVariant.String),
-                QgsField("Druh lokality", QVariant.String),
-                QgsField("Zachovalost", QVariant.String)
+                QgsField("nazev_lokality", QVariant.String),
+                QgsField("popis_lokality", QVariant.String),
+                QgsField("typ_lokality", QVariant.String),
+                QgsField("druh_lokality", QVariant.String),
+                QgsField("zachovalost", QVariant.String)
             ]
         
         cols.append(QgsField("Přístupnost", QVariant.String))
+
+        alias_map = { # aliasy i pro ostatní pole ve v2.0.0
+            "nazev_lokality": "Název lokality",
+            "popis_lokality": "Popis lokality",
+            "typ_lokality": "Typ lokality",
+            "druh_lokality": "Druh lokality",
+            "zachovalost": "Zachovalost"
+        }        
 
         if komponenty == "true":
             vl_komponenty = QgsVectorLayer("None", "AMCR Komponenty", "memory")
@@ -346,6 +356,10 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         for vl in layers:
             vl.dataProvider().addAttributes(cols)
             vl.updateFields()
+            for tech_name, alias in alias_map.items():
+                idx = vl.fields().lookupField(tech_name)
+                if idx != -1:
+                    vl.setFieldAlias(idx, alias)
             
         feats_p, feats_l, feats_pt = [], [], []
         
@@ -398,6 +412,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                             ]
                             if typ_dat == "akce":
                                 atributy += [
+                                    meta['lokalizace_okolnosti'],
                                     meta['akce_hlavni_vedouci'],
                                     meta['akce_organizace'],
                                     meta['akce_specifikace_data'],
@@ -405,8 +420,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                                     meta['akce_datum_ukonceni'],
                                     meta['akce_hlavni_typ'],
                                     meta['akce_vedlejsi_typ'],
-                                    meta['dj_negativni'],
-                                    meta['lokalizace_okolnosti'],
+                                    meta['dj_negativni'],                                    
                                     meta['akce_je_nz']
                                 ]
 
@@ -437,7 +451,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         proj = QgsProject.instance()
         added = 0
         layers_to_process = [
-            (feats_p, vl_poly, "Plochy"), 
+            (feats_p, vl_poly, "Polygony"), 
             (feats_l, vl_line, "Linie"), 
             (feats_pt, vl_point, "Body"),
         ]
@@ -449,7 +463,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             if f:
                 l.dataProvider().addFeatures(f)
                 l.updateExtents()
-                l.setName(f"AMČR {n} (Filtrováno)") 
+                l.setName(f"AMCR_{archeologicky_zaznam}_{n}") 
                 proj.addMapLayer(l)
                 if n != "Komponenty":
                     added += len(f)
@@ -460,7 +474,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             # Relation 
             if komponenty == "true":
                 parent_layers = [
-                    (vl_poly, "Plochy"),
+                    (vl_poly, "Polygony"),
                     (vl_line, "Linie"),
                     (vl_point, "Body")
                 ]
