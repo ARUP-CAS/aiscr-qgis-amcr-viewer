@@ -190,9 +190,10 @@ class AmcrFilterDialog(QDialog):
         
         self.picker_areal = setup_picker("Areál", 'areal', AREAL)
         layout.addWidget(self.picker_areal)
-        
-        
 
+        self.chk_komponenty = QCheckBox("Načíst komponenty")
+        layout.addWidget(self.chk_komponenty)
+        
         layout.addStretch(1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -219,6 +220,9 @@ class AmcrFilterDialog(QDialog):
 
     def get_bbox(self):
         return "true" if self.chk_bbox.isChecked() else "false"
+        
+    def get_komponenty(self):
+        return "true" if self.chk_komponenty.isChecked() else "false"
         
     def get_filters(self):
         filters = {}
