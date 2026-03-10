@@ -77,6 +77,41 @@ Upon successful retrieval, the plugin generates four temporary memory layers:
 
 The Attribute Table includes standardized fields with important metadata. The components layer has no geometry on its own and depend solely on a relation with the other three layers.
 
+| Field | Description |
+| --- | --- |
+| **Common** | |
+| PIAN |  |
+| Přesnost |  |
+| PIAN – typ |  |
+| Dokumentační jednotka |  |
+| Definiční bod(y) (WGS-84) |  |
+| Akce/Lokalita |  |
+| Odkaz do Digitálního archivu AMČR |  |
+| Okres |  |
+| Katastr |  |
+| Další katastr |  |
+| Přístupnost |  |
+| **Events** | |
+| Vedoucí akce |  |
+| Organizace |  |
+| Specifikace data |  |
+| Datum zahájení |  |
+| Datum ukončení |  |
+| Hlavní typ |  |
+| Vedlejší typ |  |
+| Zjištění |  |
+| Akce – lokalizace |  |
+| Akce – nahrazuje NZ |  |
+| **Sites** | |
+| Název lokality |  |
+| Popis lokality |  |
+| Typ lokality |  |
+| Druh lokality |  |
+| Zachovalost |  |
+
+| Field | Description |
+| --- | --- |
+
 ---
 
 ## 4. Technical Architecture
