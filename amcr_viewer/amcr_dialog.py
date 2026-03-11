@@ -13,6 +13,7 @@ from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
 class FilterableSelectionDialog(QDialog):
     """
     A custom dialog for selecting multiple items from a list with a search filter.
+    Updated for PyQt6/Qt6 compatibility.
     """
     def __init__(self, title, data_dict, preselected_codes, parent=None):
         super().__init__(parent)
@@ -37,7 +38,9 @@ class FilterableSelectionDialog(QDialog):
         layout.addWidget(self.list_widget)
         
         # Standard OK/Cancel dialog buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -52,16 +55,16 @@ class FilterableSelectionDialog(QDialog):
             item = QListWidgetItem(name)
             
             # Store the actual code (ID) hidden in the UserRole
-            item.setData(Qt.UserRole, code)
+            item.setData(Qt.ItemDataRole.UserRole, code)
             
             # Make the item checkable (adds a checkbox)
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             
             # Restore previous selection state
             if code in self.preselected:
-                item.setCheckState(Qt.Checked)
+                item.setCheckState(Qt.CheckState.Checked)
             else:
-                item.setCheckState(Qt.Unchecked)
+                item.setCheckState(Qt.CheckState.Unchecked)
                 
             self.list_widget.addItem(item)
 
@@ -70,10 +73,7 @@ class FilterableSelectionDialog(QDialog):
         search_text = text.lower()
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
-            if search_text not in item.text().lower():
-                item.setHidden(True)
-            else:
-                item.setHidden(False)
+            item.setHidden(search_text not in item.text().lower())
 
     def get_selected_codes(self):
         """Returns the hidden codes and display labels of all checked items."""
@@ -81,8 +81,8 @@ class FilterableSelectionDialog(QDialog):
         labels = []
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
-            if item.checkState() == Qt.Checked:
-                codes.append(item.data(Qt.UserRole))
+            if item.checkState() == Qt.CheckState.Checked:
+                codes.append(item.data(Qt.ItemDataRole.UserRole))
                 labels.append(item.text())
         return codes, labels
 
@@ -93,7 +93,7 @@ class AmcrFilterDialog(QDialog):
     The main filtering UI where users set criteria before downloading data.
     """
     def __init__(self, typ_dat, parent=None):
-        super(AmcrFilterDialog, self).__init__(parent)
+        super().__init__(parent)
         self.setWindowTitle("Filtr AMČR")
         self.resize(500, 750)
         
@@ -189,7 +189,9 @@ class AmcrFilterDialog(QDialog):
         layout.addStretch(1)
 
         # Main dialog OK/Cancel buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -197,60 +199,56 @@ class AmcrFilterDialog(QDialog):
         self.setLayout(layout)
 
     def setup_picker(self, label_text, cache_key, data_source, extra_btn=None):
-            """
-            Creates a reusable UI component consisting of a label, a read-only 
-            text field showing selected items, and a button to open the selection dialog.
-            """
-            row_widget = QGroupBox(label_text) 
-            # row_widget.setFlat(True)
-            
-            row_layout = QHBoxLayout()
-            row_layout.setContentsMargins(5, 5, 5, 5)
-            
-            # Read-only field displaying the names of selected items
-            display_field = QLineEdit()
-            display_field.setReadOnly(True)
-            display_field.setPlaceholderText("Nic nevybráno (vše)")
-            display_field.setStyleSheet("background-color: #f0f0f0; color: #333;")
-            
-            btn = QPushButton("Vybrat...")
-            btn.setFixedWidth(80)
-            
-            # Nested function that handles opening the dialog and saving results
-            def open_dialog():
-                dlg = FilterableSelectionDialog(label_text, data_source, self.selection_cache[cache_key], self)
-                if dlg.exec() == QDialog.Accepted:
-                    codes, labels = dlg.get_selected_codes()
-                    
-                    # Update local cache with selected IDs
-                    self.selection_cache[cache_key] = codes
-                    
-                    # Update the UI text field with selected names
-                    if labels:
-                        display_field.setText(", ".join(labels))
-                    else:
-                        display_field.clear()
-            
-            # Special case: Pre-fill specific accuracy levels by default
-            if cache_key == 'pian_presnost':
-                display_field.setText("odchylka jednotky metrů, odchylka desítky metrů, odchylka stovky metrů")
-                self.selection_cache[cache_key] = ['HES-000861', 'HES-000862', 'HES-000863']
+        """
+        Creates a reusable UI component consisting of a label, a read-only 
+        text field showing selected items, and a button to open the selection dialog.
+        """
+        row_widget = QGroupBox(label_text) 
+        row_layout = QHBoxLayout()
+        row_layout.setContentsMargins(5, 5, 5, 5)
+        
+        # Read-only field displaying the names of selected items
+        display_field = QLineEdit()
+        display_field.setReadOnly(True)
+        display_field.setPlaceholderText("Nic nevybráno (vše)")
+        display_field.setStyleSheet("background-color: #f0f0f0; color: #333;")
+        
+        btn = QPushButton("Vybrat...")
+        btn.setFixedWidth(80)
+        
+        # Nested function that handles opening the dialog and saving results
+        def open_dialog():
+            dlg = FilterableSelectionDialog(label_text, data_source, self.selection_cache[cache_key], self)
+            if dlg.exec() == QDialog.DialogCode.Accepted: # PyQt6: DialogCode
+                codes, labels = dlg.get_selected_codes()
+                # Update local cache with selected IDs
+                self.selection_cache[cache_key] = codes
+                # Update the UI text field with selected names
+                if labels:
+                    display_field.setText(", ".join(labels))
+                else:
+                    display_field.clear()
+        
+        # Special case: Pre-fill specific accuracy levels by default
+        if cache_key == 'pian_presnost':
+            display_field.setText("odchylka jednotky metrů, odchylka desítky metrů, odchylka stovky metrů")
+            self.selection_cache[cache_key] = ['HES-000861', 'HES-000862', 'HES-000863']
 
-            btn.clicked.connect(open_dialog)
+        btn.clicked.connect(open_dialog)
+        
+        row_layout.addWidget(display_field)
+        row_layout.addWidget(btn)
+        
+        # Add an optional extra button (e.g., the refresh button for leaders)
+        if extra_btn:
+            row_layout.addWidget(extra_btn)
             
-            row_layout.addWidget(display_field)
-            row_layout.addWidget(btn)
-            
-            # Add an optional extra button (e.g., the refresh button for leaders)
-            if extra_btn:
-                row_layout.addWidget(extra_btn)
-                
-            row_widget.setLayout(row_layout)
-            return row_widget
+        row_widget.setLayout(row_layout)
+        return row_widget
 
     def action_update_vedouci(self):
         # Change cursor to loading state to indicate background task
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             success, msg = download_vedouci()
             if success:

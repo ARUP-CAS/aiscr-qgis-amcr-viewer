@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QMenu, QAction, QToolButton
+from qgis.PyQt.QtWidgets import QMenu, QAction, QToolButton, QDialog
 
 from .amcr_tools import load_amcr_data
 from .amcr_dialog import AmcrFilterDialog
@@ -120,7 +120,7 @@ class AmcrViewer:
         self.tool_button = QToolButton()
         self.tool_button.setMenu(self.plugin_menu)
         self.tool_button.setDefaultAction(self.action_download_akce)
-        self.tool_button.setPopupMode(QToolButton.MenuButtonPopup)
+        self.tool_button.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         
         # Add the widget directly to the toolbar and store the reference for cleanup
         self.toolbar_action = self.iface.addToolBarWidget(self.tool_button)
@@ -161,7 +161,7 @@ class AmcrViewer:
         result = dlg.exec()
         
         # If user confirmed the dialog (OK button), gather filters and load data
-        if result == 1:
+        if result == QDialog.DialogCode.Accepted:
             filters = dlg.get_filters()
             bbox = dlg.get_bbox()
             komponenty = dlg.get_komponenty()
