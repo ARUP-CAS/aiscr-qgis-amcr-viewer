@@ -94,8 +94,76 @@ class AmcrFilterDialog(QDialog):
             layout.addWidget(self.chk_posevidence)
         
         layout.addSpacing(10)
+        
+        # Spatial information – valid for all
 
-        def setup_picker(label_text, cache_key, data_source, extra_btn=None):
+        self.picker_kraj = self.setup_picker("Kraj", 'kraj', KRAJE)
+        layout.addWidget(self.picker_kraj)
+
+        self.picker_okres = self.setup_picker("Okres", 'okres', OKRESY)
+        layout.addWidget(self.picker_okres)
+
+        self.picker_katastr = self.setup_picker("Katastr", 'katastr', KATASTRY)
+        layout.addWidget(self.picker_katastr)
+
+        self.picker_presnost = self.setup_picker("PIAN – přesnost", 'pian_presnost', PIAN_PRESNOST)
+        layout.addWidget(self.picker_presnost)
+
+        # Filters valid for Akce
+
+        if self.typ_dat == "akce":
+            self.picker_org = self.setup_picker("Organizace", 'organizace', ORGANIZACE)
+            layout.addWidget(self.picker_org)
+
+            self.btn_update_vedouci = QPushButton("🔄")
+            self.btn_update_vedouci.setToolTip("Aktualizovat seznam vedoucích z API")
+            self.btn_update_vedouci.setFixedWidth(30)
+            self.btn_update_vedouci.clicked.connect(self.action_update_vedouci)
+        
+            self.picker_vedouci = self.setup_picker("Vedoucí výzkumu", 'vedouci', VEDOUCI, extra_btn=self.btn_update_vedouci)
+            layout.addWidget(self.picker_vedouci)
+
+            # Type of event
+
+            self.picker_typ = self.setup_picker("Typ výzkumu", 'typ_akce', TYP_AKCE)
+            layout.addWidget(self.picker_typ)
+
+        # Filters valid for Lokality
+
+        if self.typ_dat == "lokalita":
+            self.picker_typ_lokality = self.setup_picker("Lokalita – typ", 'typ_lokality', TYP_LOKALITY)
+            layout.addWidget(self.picker_typ_lokality)
+
+            self.picker_druh_lokality = self.setup_picker("Lokalita – druh", 'druh_lokality', DRUH_LOKALITY)
+            layout.addWidget(self.picker_druh_lokality)
+
+            self.picker_jistota = self.setup_picker("Lokalita – jistota určení", 'jistota', JISTOTA)
+            layout.addWidget(self.picker_jistota)
+            
+            self.picker_lokalita_zachovalost = self.setup_picker("Lokalita - stav dochování", 'lokalita_zachovalost', LOKALITA_ZACHOVALOST)
+            layout.addWidget(self.picker_lokalita_zachovalost)
+
+        # Contextual information
+
+        self.picker_obdobi = self.setup_picker("Období", 'obdobi', OBDOBI)
+        layout.addWidget(self.picker_obdobi)
+        
+        self.picker_areal = self.setup_picker("Areál", 'areal', AREAL)
+        layout.addWidget(self.picker_areal)
+
+        self.chk_komponenty = QCheckBox("Načíst komponenty")
+        layout.addWidget(self.chk_komponenty)
+        
+        layout.addStretch(1)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        
+        self.setLayout(layout)
+
+    def setup_picker(self, label_text, cache_key, data_source, extra_btn=None):
             row_widget = QGroupBox(label_text) 
             # row_widget.setFlat(True)
             
@@ -112,7 +180,7 @@ class AmcrFilterDialog(QDialog):
             
             def open_dialog():
                 dlg = FilterableSelectionDialog(label_text, data_source, self.selection_cache[cache_key], self)
-                if dlg.exec_() == QDialog.Accepted:
+                if dlg.exec() == QDialog.Accepted:
                     codes, labels = dlg.get_selected_codes()
                     self.selection_cache[cache_key] = codes
                     if labels:
@@ -135,88 +203,19 @@ class AmcrFilterDialog(QDialog):
             row_widget.setLayout(row_layout)
             return row_widget
 
-        # Spatial information – valid for all
-
-        self.picker_kraj = setup_picker("Kraj", 'kraj', KRAJE)
-        layout.addWidget(self.picker_kraj)
-
-        self.picker_okres = setup_picker("Okres", 'okres', OKRESY)
-        layout.addWidget(self.picker_okres)
-
-        self.picker_katastr = setup_picker("Katastr", 'katastr', KATASTRY)
-        layout.addWidget(self.picker_katastr)
-
-        self.picker_presnost = setup_picker("PIAN – přesnost", 'pian_presnost', PIAN_PRESNOST)
-        layout.addWidget(self.picker_presnost)
-
-        # Filters valid for Akce
-
-        if self.typ_dat == "akce":
-            self.picker_org = setup_picker("Organizace", 'organizace', ORGANIZACE)
-            layout.addWidget(self.picker_org)
-
-            self.btn_update_vedouci = QPushButton("🔄")
-            self.btn_update_vedouci.setToolTip("Aktualizovat seznam vedoucích z API")
-            self.btn_update_vedouci.setFixedWidth(30)
-            self.btn_update_vedouci.clicked.connect(self.action_update_vedouci)
-        
-            self.picker_vedouci = setup_picker("Vedoucí výzkumu", 'vedouci', VEDOUCI, extra_btn=self.btn_update_vedouci)
-            layout.addWidget(self.picker_vedouci)
-
-            # Type of event
-
-            self.picker_typ = setup_picker("Typ výzkumu", 'typ_akce', TYP_AKCE)
-            layout.addWidget(self.picker_typ)
-
-        # Filters valid for Lokality
-
-        if self.typ_dat == "lokalita":
-            self.picker_typ_lokality = setup_picker("Lokalita – typ", 'typ_lokality', TYP_LOKALITY)
-            layout.addWidget(self.picker_typ_lokality)
-
-            self.picker_druh_lokality = setup_picker("Lokalita – druh", 'druh_lokality', DRUH_LOKALITY)
-            layout.addWidget(self.picker_druh_lokality)
-
-            self.picker_jistota = setup_picker("Lokalita – jistota určení", 'jistota', JISTOTA)
-            layout.addWidget(self.picker_jistota)
-            
-            self.picker_lokalita_zachovalost = setup_picker("Lokalita - stav dochování", 'lokalita_zachovalost', LOKALITA_ZACHOVALOST)
-            layout.addWidget(self.picker_lokalita_zachovalost)
-
-        # Contextual information
-
-        self.picker_obdobi = setup_picker("Období", 'obdobi', OBDOBI)
-        layout.addWidget(self.picker_obdobi)
-        
-        self.picker_areal = setup_picker("Areál", 'areal', AREAL)
-        layout.addWidget(self.picker_areal)
-
-        self.chk_komponenty = QCheckBox("Načíst komponenty")
-        layout.addWidget(self.chk_komponenty)
-        
-        layout.addStretch(1)
-
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-        
-        self.setLayout(layout)
-
     def action_update_vedouci(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             success, msg = download_vedouci()
             if success:
                 count = refresh_vedouci_cache()
-                QApplication.restoreOverrideCursor()
                 QMessageBox.information(self, "Úspěch", f"{msg}\nNyní je v paměti {count} osob.")
             else:
-                QApplication.restoreOverrideCursor()
                 QMessageBox.warning(self, "Chyba", f"Nepodařilo se stáhnout data:\n{msg}")
         except Exception as e:
-            QApplication.restoreOverrideCursor()
             QMessageBox.critical(self, "Chyba", str(e))
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def get_bbox(self):
         return "true" if self.chk_bbox.isChecked() else "false"
