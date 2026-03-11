@@ -82,6 +82,11 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         
         seen_ids = set()
         target_pian_ids_count = 0
+
+        if filters and filters.get('posevidence') == 'true':
+            skip_negativni = True
+        else:
+            skip_negativni = False
         
         while True:
             base_params['rows'] = BATCH_DOCS
@@ -134,6 +139,20 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         target_pian_ids = set()
         actions_with_geom = 0
         
+        def g(doc, key, default=""): 
+            val = doc.get(key)
+            if isinstance(val, list):
+                return str(val[0]) if val else default
+            return str(val) if val is not None else default
+
+        def g_list(doc, key, translate=False):
+            val = doc.get(key, [])
+            if not isinstance(val, list):
+                val = [val] if val else []
+            if translate:
+                return ", ".join([tr_code(str(x)) for x in val if x])
+            return ", ".join([str(x) for x in val if x])
+
         for doc in docs:
             piani = doc.get('az_dj_pian', [])
             if not piani:
@@ -141,19 +160,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
 
             actions_with_geom += 1
             
-            def g(key, default=""): 
-                val = doc.get(key)
-                if isinstance(val, list):
-                    return str(val[0]) if val else default
-                return str(val) if val is not None else default
-
-            def g_list(key, translate=False):
-                val = doc.get(key, [])
-                if not isinstance(val, list):
-                    val = [val] if val else []
-                if translate:
-                    return ", ".join([tr_code(str(x)) for x in val if x])
-                return ", ".join([str(x) for x in val if x])
+            
 
             az_chranene = doc.get('az_chranene_udaje', {})
             chranene = doc.get('akce_chranene_udaje') or doc.get('lokalita_chranene_udaje') or {}
@@ -171,22 +178,22 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             # Prepate common metadata
             meta = {
                 "ident_cely": doc.get('ident_cely', ''),
-                "az_okres": g('az_okres'),
-                "katastr": g_list('katastr'),
+                "az_okres": g(doc, 'az_okres'),
+                "katastr": g_list(doc, 'katastr'),
                 "dalsi_katastr": dalsi_kat_str,                
-                "pristupnost": g('pristupnost'),
-                "loc": g_list('loc')
+                "pristupnost": g(doc, 'pristupnost'),
+                "loc": g_list(doc, 'loc')
             }
 
             if typ_dat == "akce":
                 meta.update({
-                    "akce_hlavni_vedouci": g('akce_hlavni_vedouci'),
-                    "akce_organizace": tr_code(g('akce_organizace')),
-                    "akce_specifikace_data": tr_code(g('akce_specifikace_data')),
-                    "akce_datum_zahajeni": g('akce_datum_zahajeni'),
-                    "akce_datum_ukonceni": g('akce_datum_ukonceni'),
-                    "akce_hlavni_typ": tr_code(g('akce_hlavni_typ')),
-                    "akce_vedlejsi_typ": g_list('akce_vedlejsi_typ', translate=True),
+                    "akce_hlavni_vedouci": g(doc, 'akce_hlavni_vedouci'),
+                    "akce_organizace": tr_code(g(doc, 'akce_organizace')),
+                    "akce_specifikace_data": tr_code(g(doc, 'akce_specifikace_data')),
+                    "akce_datum_zahajeni": g(doc, 'akce_datum_zahajeni'),
+                    "akce_datum_ukonceni": g(doc, 'akce_datum_ukonceni'),
+                    "akce_hlavni_typ": tr_code(g(doc, 'akce_hlavni_typ')),
+                    "akce_vedlejsi_typ": g_list(doc, 'akce_vedlejsi_typ', translate=True),
                     "lokalizace_okolnosti": str(lokalizace) if lokalizace else "",
                     "akce_je_nz": "Ano" if doc.get('akce_je_nz') is True else "Ne",
                 })
@@ -195,23 +202,27 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 meta.update({
                     "lokalita_nazev": lokalita_nazev,
                     "lokalita_popis": lokalita_popis,
-                    "lokalita_zachovalost": tr_code(g('lokalita_zachovalost')),
-                    "lokalita_druh": tr_code(g('lokalita_druh')),
-                    "lokalita_typ": tr_code(g('lokalita_typ_lokality')),
+                    "lokalita_zachovalost": tr_code(g(doc, 'lokalita_zachovalost')),
+                    "lokalita_druh": tr_code(g(doc, 'lokalita_druh')),
+                    "lokalita_typ": tr_code(g(doc, 'lokalita_typ_lokality')),
                 })
             
             djs = doc.get('az_dokumentacni_jednotka', [])
 
             for dj in djs:
-                if filters and filters.get('posevidence') == 'true' and dj.get('dj_negativni_jednotka') is True:
+                if skip_negativni and dj.get('dj_negativni_jednotka') is True:
                     continue
 
-                dj_meta = meta.copy()
                 dj_id = dj.get('ident_cely')
-                dj_meta['dj_id'] = dj_id
                 dj_typ = dj.get('dj_typ')
-                dj_meta['dj_typ_value'] = dj_typ.get('value') if dj_typ else ""
-                dj_meta['dj_negativni'] = "Negativní" if dj.get('dj_negativni_jednotka') is True else "Pozitivní"
+
+                dj_meta = {
+                    **meta,
+                    'dj_id': dj_id,
+                    'dj_typ_value': dj_typ.get('value') if dj_typ else "",
+                    'dj_negativni': "Negativní" if dj.get('dj_negativni_jednotka') is True else "Pozitivní"
+                }
+                
                 dj_pian = dj.get('dj_pian')
                 if dj_pian:
                     dj_pian_value = dj_pian.get('id')
@@ -247,7 +258,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         ids_list = list(target_pian_ids)
         total_pians = len(ids_list)
         docs_pian = []
-        BATCH_PIAN = 50 
+        BATCH_PIAN = 200 
         
         iface.messageBar().pushMessage("AMCR", f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} unikátních geometrií, vykresluji {target_pian_ids_count} geometrií...", level=1)
         
@@ -375,13 +386,13 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 raw = doc.get('pian_chranene_udaje')
                 if isinstance(raw, list) and raw:
                     raw = raw[0]
-                jdata = json.loads(raw) if isinstance(raw, str) else (raw if isinstance(raw, dict) else {})
+                jdata = json.loads(raw) if isinstance(raw, str) else (raw or {})
                 
                 wkt = None
                 if jdata.get('geom_sjtsk_wkt'):
-                    wkt = jdata['geom_sjtsk_wkt'].get('value')
+                    wkt = jdata.get('geom_sjtsk_wkt', {}).get('value')
                 elif jdata.get('geom_wkt'):
-                    wkt = jdata['geom_wkt'].get('value')
+                    wkt = jdata.get('geom_wkt', {}).get('value')
                 
                 # PIAN attributes
                 pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
@@ -394,56 +405,50 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                     geom = QgsGeometry.fromWkt(wkt)
                     if geom.isGeosValid():
 
+                        t = geom.type()
+                        target_list = None
+                        if t == QgsWkbTypes.PolygonGeometry:
+                            target_list = feats_p
+                        elif t == QgsWkbTypes.LineGeometry:
+                            target_list = feats_l
+                        elif t == QgsWkbTypes.PointGeometry:
+                            target_list = feats_pt
+
+                        if target_list is None:
+                            continue # Neznámá geometrie, přeskočíme
+
+                        is_akce = (typ_dat == "akce")
+
                         for meta in metas:
                             feat = QgsFeature()
                             feat.setGeometry(geom)
                             atributy = [
-                                pid, 
-                                pian_presnost,
-                                pian_typ,
-                                meta['dj_id'],
-                                meta['dj_typ_value'],
-                                meta['loc'],
-                                meta['ident_cely'],
+                                pid, pian_presnost, pian_typ, meta['dj_id'],
+                                meta['dj_typ_value'], meta['loc'], meta['ident_cely'],
                                 "https://digiarchiv.aiscr.cz/id/" + meta['ident_cely'],
-                                meta['az_okres'],
-                                meta['katastr'],
-                                meta['dalsi_katastr']
+                                meta['az_okres'], meta['katastr'], meta['dalsi_katastr']
                             ]
-                            if typ_dat == "akce":
-                                atributy += [
-                                    meta['lokalizace_okolnosti'],
-                                    meta['akce_hlavni_vedouci'],
-                                    meta['akce_organizace'],
-                                    meta['akce_specifikace_data'],
-                                    meta['akce_datum_zahajeni'],
-                                    meta['akce_datum_ukonceni'],
-                                    meta['akce_hlavni_typ'],
-                                    meta['akce_vedlejsi_typ'],
-                                    meta['dj_negativni'],                                    
-                                    meta['akce_je_nz']
-                                ]
+                            if is_akce:
+                                atributy.extend([
+                                    meta['lokalizace_okolnosti'], meta['akce_hlavni_vedouci'],
+                                    meta['akce_organizace'], meta['akce_specifikace_data'],
+                                    meta['akce_datum_zahajeni'], meta['akce_datum_ukonceni'],
+                                    meta['akce_hlavni_typ'], meta['akce_vedlejsi_typ'],
+                                    meta['dj_negativni'], meta['akce_je_nz']
+                                ])
 
-                            elif typ_dat == "lokalita":
-                                atributy += [
-                                    meta['lokalita_nazev'],
-                                    meta['lokalita_popis'],
-                                    meta['lokalita_typ'],
-                                    meta['lokalita_druh'],
+                            else:
+                                atributy.extend([
+                                    meta['lokalita_nazev'], meta['lokalita_popis'],
+                                    meta['lokalita_typ'], meta['lokalita_druh'],
                                     meta['lokalita_zachovalost']
-                                ]
+                                ])
 
                             atributy.append(meta['pristupnost'])
-
                             feat.setAttributes(atributy)
 
-                            t = geom.type()
-                            if t == QgsWkbTypes.PolygonGeometry:
-                                feats_p.append(feat)
-                            elif t == QgsWkbTypes.LineGeometry:
-                                feats_l.append(feat)
-                            elif t == QgsWkbTypes.PointGeometry:
-                                feats_pt.append(feat)
+                            target_list.append(feat)
+                            
             except Exception as ex:
                 print(f"Chyba při tvorbě feature: {ex}")
                 pass
