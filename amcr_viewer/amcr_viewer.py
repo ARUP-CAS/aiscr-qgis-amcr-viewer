@@ -51,15 +51,16 @@ class AmcrViewer:
         if add_to_menu:
             self.iface.addPluginToMenu(self.menu, action)
 
-        self.actions.append(action)
+        # Uložíme jen akce, které jdou přímo do QGIS rozhraní
+        if add_to_toolbar or add_to_menu:
+            self.actions.append(action)
+            
         return action
 
     def initGui(self):
        
-        import os
-        plugin_dir = os.path.dirname(__file__)
-        icon_akce_path = os.path.join(plugin_dir, 'akce.png')
-        icon_lokality_path = os.path.join(plugin_dir, 'lokality.png')
+        icon_akce_path = os.path.join(self.plugin_dir, 'akce.png')
+        icon_lokality_path = os.path.join(self.plugin_dir, 'lokality.png')
 
         # 1. Vytvoření společného menu
         self.plugin_menu = QMenu()
@@ -103,20 +104,19 @@ class AmcrViewer:
         self.first_start = True
 
     def unload(self):
-        # 1. Odstranění vlastního rozbalovacího menu z hlavního menu
+        # 1. Odstranění vlastního rozbalovacího menu
         if hasattr(self, 'main_action'):
             self.iface.removePluginMenu(self.menu, self.main_action)
 
         # 2. Odstranění QToolButtonu z nástrojové lišty
         if hasattr(self, 'toolbar_action'):
             self.iface.removeToolBarIcon(self.toolbar_action)
-        elif hasattr(self, 'tool_button'):
-            self.tool_button.deleteLater() # Záložní řešení, pokud by chyběla toolbar_action
 
-        # 3. Odstranění běžných akcí (pokud jsou někde jinde zavěšené)
+        # 3. Odstranění ostatních běžných akcí
         for action in self.actions:
-            self.iface.removePluginMenu(self.tr(u'&AMČR Viewer'), action)
+            self.iface.removePluginMenu(self.menu, action)
             self.iface.removeToolBarIcon(action)
+        self.actions.clear()
         
         # 4. Úklid mapového nástroje
         if hasattr(self, 'tool'):
@@ -126,7 +126,7 @@ class AmcrViewer:
     def run_download(self, typ_dat):
         
         dlg = AmcrFilterDialog(typ_dat)
-        result = dlg.exec_()
+        result = dlg.exec()
         
         if result == 1:
             filters = dlg.get_filters()
