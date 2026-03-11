@@ -98,15 +98,27 @@ class AmcrViewer:
         self.tool_button.setPopupMode(QToolButton.MenuButtonPopup)
         
         # Vložení vytvořeného tlačítka do QGIS rozhraní
-        self.iface.addToolBarWidget(self.tool_button)
+        self.toolbar_action = self.iface.addToolBarWidget(self.tool_button)
         
         self.first_start = True
 
     def unload(self):
+        # 1. Odstranění vlastního rozbalovacího menu z hlavního menu
+        if hasattr(self, 'main_action'):
+            self.iface.removePluginMenu(self.menu, self.main_action)
+
+        # 2. Odstranění QToolButtonu z nástrojové lišty
+        if hasattr(self, 'toolbar_action'):
+            self.iface.removeToolBarIcon(self.toolbar_action)
+        elif hasattr(self, 'tool_button'):
+            self.tool_button.deleteLater() # Záložní řešení, pokud by chyběla toolbar_action
+
+        # 3. Odstranění běžných akcí (pokud jsou někde jinde zavěšené)
         for action in self.actions:
             self.iface.removePluginMenu(self.tr(u'&AMČR Viewer'), action)
             self.iface.removeToolBarIcon(action)
         
+        # 4. Úklid mapového nástroje
         if hasattr(self, 'tool'):
             self.iface.mapCanvas().unsetMapTool(self.tool)
 
