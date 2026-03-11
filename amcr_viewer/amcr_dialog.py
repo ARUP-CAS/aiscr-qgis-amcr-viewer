@@ -11,40 +11,62 @@ from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
                              download_vedouci, refresh_vedouci_cache)
 
 class FilterableSelectionDialog(QDialog):
+    """
+    A custom dialog for selecting multiple items from a list with a search filter.
+    """
     def __init__(self, title, data_dict, preselected_codes, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Výběr: {title}")
         self.resize(400, 500)
+        
+        # Store the source data and previously selected items
         self.data_dict = data_dict
         self.preselected = preselected_codes if preselected_codes else []
+        
         layout = QVBoxLayout()
+        
+        # Setup search input for filtering items
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Hledat v seznamu...")
         self.search_bar.textChanged.connect(self.filter_list)
         layout.addWidget(self.search_bar)
+        
+        # Main list widget for displaying selectable items
         self.list_widget = QListWidget()
         self.populate_list()
         layout.addWidget(self.list_widget)
+        
+        # Standard OK/Cancel dialog buttons
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        
         self.setLayout(layout)
 
     def populate_list(self):
+        # Sort items alphabetically by their display name
         sorted_names = sorted(self.data_dict.keys())
         for name in sorted_names:
             code = self.data_dict[name]
             item = QListWidgetItem(name)
+            
+            # Store the actual code (ID) hidden in the UserRole
             item.setData(Qt.UserRole, code)
+            
+            # Make the item checkable (adds a checkbox)
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            
+            # Restore previous selection state
             if code in self.preselected:
                 item.setCheckState(Qt.Checked)
             else:
                 item.setCheckState(Qt.Unchecked)
+                
             self.list_widget.addItem(item)
 
     def filter_list(self, text):
+        # Hide items that don't match the search text (case-insensitive)
         search_text = text.lower()
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
@@ -54,6 +76,7 @@ class FilterableSelectionDialog(QDialog):
                 item.setHidden(False)
 
     def get_selected_codes(self):
+        """Returns the hidden codes and display labels of all checked items."""
         codes = []
         labels = []
         for i in range(self.list_widget.count()):
@@ -66,15 +89,20 @@ class FilterableSelectionDialog(QDialog):
 
 # --- Main window ---
 class AmcrFilterDialog(QDialog):
+    """
+    The main filtering UI where users set criteria before downloading data.
+    """
     def __init__(self, typ_dat, parent=None):
         super(AmcrFilterDialog, self).__init__(parent)
         self.setWindowTitle("Filtr AMČR")
         self.resize(500, 750)
+        
+        # Determines if we are fetching 'akce' (projects) or 'lokalita' (locations)
         self.typ_dat = typ_dat
 
         
         
-        # Cache for filtering
+        # Cache dictionary to store selected codes for each category
         self.selection_cache = {
             'organizace': [], 'kraj': [], 'obdobi': [], 'areal': [], 
             'typ_akce': [], 'okres': [], 'katastr': [], 'vedouci': [], 'pian_presnost': [],
@@ -83,6 +111,7 @@ class AmcrFilterDialog(QDialog):
         
         layout = QVBoxLayout()
         
+        # Filter by current map canvas extent
         self.chk_bbox = QCheckBox("Omezit vyhledávání rozsahem okna")
         self.chk_bbox.setChecked(True)
         layout.addWidget(self.chk_bbox)
@@ -115,6 +144,7 @@ class AmcrFilterDialog(QDialog):
             self.picker_org = self.setup_picker("Organizace", 'organizace', ORGANIZACE)
             layout.addWidget(self.picker_org)
 
+            # Button to fetch fresh project leaders from the API
             self.btn_update_vedouci = QPushButton("🔄")
             self.btn_update_vedouci.setToolTip("Aktualizovat seznam vedoucích z API")
             self.btn_update_vedouci.setFixedWidth(30)
@@ -151,11 +181,14 @@ class AmcrFilterDialog(QDialog):
         self.picker_areal = self.setup_picker("Areál", 'areal', AREAL)
         layout.addWidget(self.picker_areal)
 
+        # Option to download related components table
         self.chk_komponenty = QCheckBox("Načíst komponenty")
         layout.addWidget(self.chk_komponenty)
         
+        # Pushes everything above to the top
         layout.addStretch(1)
 
+        # Main dialog OK/Cancel buttons
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -164,12 +197,17 @@ class AmcrFilterDialog(QDialog):
         self.setLayout(layout)
 
     def setup_picker(self, label_text, cache_key, data_source, extra_btn=None):
+            """
+            Creates a reusable UI component consisting of a label, a read-only 
+            text field showing selected items, and a button to open the selection dialog.
+            """
             row_widget = QGroupBox(label_text) 
             # row_widget.setFlat(True)
             
             row_layout = QHBoxLayout()
             row_layout.setContentsMargins(5, 5, 5, 5)
             
+            # Read-only field displaying the names of selected items
             display_field = QLineEdit()
             display_field.setReadOnly(True)
             display_field.setPlaceholderText("Nic nevybráno (vše)")
@@ -178,16 +216,22 @@ class AmcrFilterDialog(QDialog):
             btn = QPushButton("Vybrat...")
             btn.setFixedWidth(80)
             
+            # Nested function that handles opening the dialog and saving results
             def open_dialog():
                 dlg = FilterableSelectionDialog(label_text, data_source, self.selection_cache[cache_key], self)
                 if dlg.exec() == QDialog.Accepted:
                     codes, labels = dlg.get_selected_codes()
+                    
+                    # Update local cache with selected IDs
                     self.selection_cache[cache_key] = codes
+                    
+                    # Update the UI text field with selected names
                     if labels:
                         display_field.setText(", ".join(labels))
                     else:
                         display_field.clear()
             
+            # Special case: Pre-fill specific accuracy levels by default
             if cache_key == 'pian_presnost':
                 display_field.setText("odchylka jednotky metrů, odchylka desítky metrů, odchylka stovky metrů")
                 self.selection_cache[cache_key] = ['HES-000861', 'HES-000862', 'HES-000863']
@@ -197,6 +241,7 @@ class AmcrFilterDialog(QDialog):
             row_layout.addWidget(display_field)
             row_layout.addWidget(btn)
             
+            # Add an optional extra button (e.g., the refresh button for leaders)
             if extra_btn:
                 row_layout.addWidget(extra_btn)
                 
@@ -204,6 +249,7 @@ class AmcrFilterDialog(QDialog):
             return row_widget
 
     def action_update_vedouci(self):
+        # Change cursor to loading state to indicate background task
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             success, msg = download_vedouci()
@@ -215,6 +261,7 @@ class AmcrFilterDialog(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "Chyba", str(e))
         finally:
+            # Safely restore the normal cursor even if an error occurs
             QApplication.restoreOverrideCursor()
 
     def get_bbox(self):
@@ -224,6 +271,7 @@ class AmcrFilterDialog(QDialog):
         return "true" if self.chk_komponenty.isChecked() else "false"
         
     def get_filters(self):
+        """Compiles the user selections from the cache into API-ready filter parameters."""
         filters = {}
 
         if self.selection_cache['kraj']:
