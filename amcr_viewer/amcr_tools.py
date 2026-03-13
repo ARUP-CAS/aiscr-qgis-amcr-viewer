@@ -2,10 +2,11 @@
 from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.core import (QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry, 
                        QgsField, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
-                       QgsWkbTypes, QgsRelation, QgsEditorWidgetSetup)
+                       QgsWkbTypes, QgsRelation, QgsEditorWidgetSetup, Qgis)
 from qgis.utils import iface
-from qgis.PyQt.QtCore import QVariant, Qt
+from qgis.PyQt.QtCore import Qt, QMetaType
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication
+from qgis.PyQt.QtGui import QCursor
 import requests
 import json
 import xml.etree.ElementTree as ET
@@ -56,8 +57,8 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
     
     url = "https://digiarchiv.aiscr.cz/api/search/query"
     
-    iface.messageBar().pushMessage("AMCR", "Hledám záznamy...", level=1)
-    QApplication.setOverrideCursor(Qt.WaitCursor)
+    iface.messageBar().pushMessage("AMCR", "Hledám záznamy...", level=Qgis.MessageLevel.Info)
+    QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
     
     try:
         # ==========================================
@@ -128,7 +129,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 if len(docs) >= num_found:
                     break
                 if len(docs) >= MAX_LIMIT:
-                    iface.messageBar().pushMessage("AMCR", f"Limit {MAX_LIMIT} záznamů dosažen.", level=1)
+                    iface.messageBar().pushMessage("AMCR", f"Limit {MAX_LIMIT} záznamů dosažen.", level=Qgis.MessageLevel.Warning)
                     break
                 
                 current_page += 1
@@ -139,7 +140,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 break
 
         if not docs:
-             iface.messageBar().pushMessage("AMCR", "Žádné záznamy nenalezeny.", level=1)
+             iface.messageBar().pushMessage("AMCR", "Žádné záznamy nenalezeny.", level=Qgis.MessageLevel.Warning)
              return
 
         # ==========================================
@@ -268,7 +269,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                                 feats_k.append(feat)
 
         if not target_pian_ids:
-            iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.", level=1)
+            iface.messageBar().pushMessage("AMCR", f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.", level=Qgis.MessageLevel.Warning)
             return        
 
 
@@ -280,7 +281,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         docs_pian = []
         BATCH_PIAN = 200 # Geometry requests are batch-processed to stay under URL length limits
         
-        iface.messageBar().pushMessage("AMCR", f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} unikátních geometrií, vykresluji {target_pian_ids_count} geometrií...", level=1)
+        iface.messageBar().pushMessage("AMCR", f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). Stahuji {total_pians} unikátních geometrií, vykresluji {target_pian_ids_count} geometrií...", level=Qgis.MessageLevel.Info)
         
         fl_pian = ["ident_cely", "pian_typ", "pian_chranene_udaje", "pian_presnost"]
 
@@ -318,43 +319,43 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
 
         # Define attribute table structure
         cols = [
-            QgsField("PIAN", QVariant.String),
-            QgsField("Přesnost", QVariant.String),
-            QgsField("PIAN – typ", QVariant.String),
-            QgsField("Dokumentační jednotka", QVariant.String),
-            QgsField("Typ dokumentační jednotky", QVariant.String),
-            QgsField("Definiční bod(y) (WGS-84)", QVariant.String),
-            QgsField(archeologicky_zaznam, QVariant.String),
-            QgsField("Odkaz do Digitálního archivu AMČR", QVariant.String),
-            QgsField("Okres", QVariant.String),
-            QgsField("Katastr", QVariant.String),
-            QgsField("Další katastry", QVariant.String)
+            QgsField("PIAN", QMetaType.Type.QString),
+            QgsField("Přesnost", QMetaType.Type.QString),
+            QgsField("PIAN – typ", QMetaType.Type.QString),
+            QgsField("Dokumentační jednotka", QMetaType.Type.QString),
+            QgsField("Typ dokumentační jednotky", QMetaType.Type.QString),
+            QgsField("Definiční bod(y) (WGS-84)", QMetaType.Type.QString),
+            QgsField(archeologicky_zaznam, QMetaType.Type.QString),
+            QgsField("Odkaz do Digitálního archivu AMČR", QMetaType.Type.QString),
+            QgsField("Okres", QMetaType.Type.QString),
+            QgsField("Katastr", QMetaType.Type.QString),
+            QgsField("Další katastry", QMetaType.Type.QString)
         ]
 
         # Extend table based on data type
         if typ_dat == "akce":
             cols += [
-                QgsField("Akce – lokalizace", QVariant.String),
-                QgsField("Vedoucí akce", QVariant.String),
-                QgsField("Organizace", QVariant.String),
-                QgsField("Specifikace data", QVariant.String),
-                QgsField("Datum zahájeni", QVariant.String),
-                QgsField("Datum ukončení", QVariant.String),
-                QgsField("Hlavní typ", QVariant.String),
-                QgsField("Vedlejší typ", QVariant.String),
-                QgsField("Zjištění", QVariant.String),                
-                QgsField("Akce – nahrazuje NZ", QVariant.String),
+                QgsField("Akce – lokalizace", QMetaType.Type.QString),
+                QgsField("Vedoucí akce", QMetaType.Type.QString),
+                QgsField("Organizace", QMetaType.Type.QString),
+                QgsField("Specifikace data", QMetaType.Type.QString),
+                QgsField("Datum zahájeni", QMetaType.Type.QString),
+                QgsField("Datum ukončení", QMetaType.Type.QString),
+                QgsField("Hlavní typ", QMetaType.Type.QString),
+                QgsField("Vedlejší typ", QMetaType.Type.QString),
+                QgsField("Zjištění", QMetaType.Type.QString),                
+                QgsField("Akce – nahrazuje NZ", QMetaType.Type.QString),
             ]
         elif typ_dat == "lokalita":
             cols += [
-                QgsField("nazev_lokality", QVariant.String),
-                QgsField("popis_lokality", QVariant.String),
-                QgsField("typ_lokality", QVariant.String),
-                QgsField("druh_lokality", QVariant.String),
-                QgsField("zachovalost", QVariant.String)
+                QgsField("nazev_lokality", QMetaType.Type.QString),
+                QgsField("popis_lokality", QMetaType.Type.QString),
+                QgsField("typ_lokality", QMetaType.Type.QString),
+                QgsField("druh_lokality", QMetaType.Type.QString),
+                QgsField("zachovalost", QMetaType.Type.QString)
             ]
         
-        cols.append(QgsField("Přístupnost", QVariant.String))
+        cols.append(QgsField("Přístupnost", QMetaType.Type.QString))
 
         # Use aliases for technical field names
         alias_map = {
@@ -370,10 +371,10 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             vl_komponenty = QgsVectorLayer("None", "AMCR Komponenty", "memory")
             pr = vl_komponenty.dataProvider()
             komponenty_cols = [
-                QgsField("komponenta", QVariant.String),
-                QgsField("dj_id", QVariant.String),
-                QgsField("komponenta_areal", QVariant.String),
-                QgsField("komponenta_obdobi", QVariant.String)
+                QgsField("komponenta", QMetaType.Type.QString),
+                QgsField("dj_id", QMetaType.Type.QString),
+                QgsField("komponenta_areal", QMetaType.Type.QString),
+                QgsField("komponenta_obdobi", QMetaType.Type.QString)
             ]
             pr.addAttributes(komponenty_cols)
             vl_komponenty.updateFields()
@@ -493,7 +494,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                     added += len(f)
         
         if added > 0:
-            iface.messageBar().pushMessage("AMCR", f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). Vykresleno: {added} prvků.", level=0)
+            iface.messageBar().pushMessage("AMCR", f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). Vykresleno: {added} prvků.", level=Qgis.MessageLevel.Success)
 
             # --- RELATIONSHIP MANAGEMENT ---
             # Set up automatic links between spatial layers and the component table
@@ -518,10 +519,10 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                         print(f"Relace pro {label} není validní!")
 
         else:
-            iface.messageBar().pushMessage("AMCR", "Žádná data k zobrazení.", level=1)
+            iface.messageBar().pushMessage("AMCR", "Žádná data k zobrazení.", level=Qgis.MessageLevel.Info)
 
     except Exception as e:
-        iface.messageBar().pushMessage("Chyba", str(e), level=2)
+        iface.messageBar().pushMessage("Chyba", str(e), level=Qgis.MessageLevel.Critical)
     finally:
         # Always restore cursor, even after failure
         QApplication.restoreOverrideCursor()
