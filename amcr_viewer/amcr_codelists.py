@@ -1,64 +1,60 @@
 ﻿# -*- coding: utf-8 -*-
 import os
 import csv
-import codecs
 import requests
-import json
 
-# Cesta k adresáři pluginu
+# Define paths for the plugin and its codelists directory
 PLUGIN_DIR = os.path.dirname(__file__)
 CODELISTS_DIR = os.path.join(PLUGIN_DIR, 'codelists')
 
 def ensure_codelists_dir():
+    """Creates the codelists directory if it does not exist."""
     if not os.path.exists(CODELISTS_DIR):
         os.makedirs(CODELISTS_DIR)
 
-# --- 1. NAČÍTÁNÍ DAT ---
-
-def load_csv_data(filename):
-    """Obecná funkce pro načtení CSV souboru do slovníku"""
-    data = {}
+def parse_codelist_file(filename, target_dict=None):
+    """Reads a CSV codelist file and populates the target dictionary grouped by categories."""
+    if target_dict is None:
+        target_dict = {}
+        
     path = os.path.join(CODELISTS_DIR, filename)
-    if not os.path.exists(path):
-        return data
-
+    
+    # Return early if the file doesn't exist to avoid missing file errors
+    if not os.path.exists(path): 
+        return target_dict
+        
     try:
-        with codecs.open(path, 'r', 'utf-8') as f:
+        # Open the file using standard UTF-8 encoding
+        with open(path, 'r', encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
-            # Zkusíme přeskočit hlavičku, pokud tam je
-            first_row = next(reader, None)
             
-            # Pokud soubor není prázdný, zpracujeme ho
-            if first_row:
-                # Pokud první řádek vypadá jako data (neobsahuje slovo "Název"), vrátíme ho do hry
-                # Ale my budeme generovat soubory s hlavičkou, takže OK.
-                pass 
-
+            # Skip the CSV header row
+            next(reader, None) 
+            
+            # Iterate through rows and extract label, code, and category
             for row in reader:
                 if len(row) >= 3:
                     label = row[0].strip()
                     code = row[1].strip()
-                    category = row[2].strip()
+                    cat = row[2].strip()
+                    clean = code if code else None
                     
-                    # Tady můžeme filtrovat podle kategorie, 
-                    # nebo prostě vrátit všechno jako {label: code}
-                    # Pro jednoduchost vracíme {label: code}
-                    clean_code = code if code else None
-                    data[label] = clean_code
+                    # Initialize a new dictionary for a category if encountered for the first time
+                    if cat not in target_dict:
+                        target_dict[cat] = {}
+                        
+                    # Assign the extracted code to the corresponding label within the category
+                    target_dict[cat][label] = clean
     except Exception as e:
-        print(f"AMČR Chyba čtení {filename}: {e}")
+        print(f"AMČR Codelist Read Error for {filename}: {e}")
         
-    return data
+    return target_dict
 
 def load_all_data():
-    """
-    Načte statický heslář I dynamický heslář vedoucích.
-    Vrací slovník slovníků.
-    """
+    """Loads all static and dynamic codelists during plugin startup."""
     ensure_codelists_dir()
     
-    # 1. Načteme hlavní statický heslář
-    # Musíme ho rozparsovat podle kategorií, tak jak to bylo předtím
+    # Initialize the base structure with empty dictionaries for all expected categories
     categorized_data = {
         'obdobi': {}, 'typ_akce': {}, 'areal': {}, 
         'kraj': {}, 'organizace': {}, 'okres': {}, 'katastr': {},
@@ -66,77 +62,50 @@ def load_all_data():
         'jistota': {}, 'lokalita_zachovalost': {}
     }
     
-    # Funkce pro roztřídění načteného slovníku (tohle je trochu redundance, ale pro zachování logiky)
-    def parse_file(filename):
-        path = os.path.join(CODELISTS_DIR, filename)
-        if not os.path.exists(path): return
-        
-        try:
-            with codecs.open(path, 'r', 'utf-8') as f:
-                reader = csv.reader(f, delimiter=';')
-                next(reader, None) # Skip header
-                for row in reader:
-                    if len(row) >= 3:
-                        label = row[0].strip()
-                        code = row[1].strip()
-                        cat = row[2].strip()
-                        clean = code if code else None
-                        
-                        if cat in categorized_data:
-                            categorized_data[cat][label] = clean
-        except: pass
-
-    # Načteme soubory
-    parse_file('heslar.csv') # Statické
-    parse_file('vedouci.csv') # Dynamické (pokud existuje)
+    # Parse the default static codelist and the dynamically generated leaders codelist
+    parse_codelist_file('heslar.csv', categorized_data)
+    parse_codelist_file('vedouci.csv', categorized_data)
     
     return categorized_data
 
-# --- 2. AKTUALIZACE DAT (DOWNLOAD) ---
-
 def download_vedouci():
-    """
-    Stáhne seznam vedoucích z API (pomocí onlyFacets) a uloží do codelists/vedouci.csv.
-    """
+    """Fetches the list of leaders from the AMČR API and saves it to a CSV file."""
     ensure_codelists_dir()
     
-    # Tvá URL + pojistka, abychom dostali všechny záznamy (limit -1)
+    # API endpoint for fetching facet data for leaders
     url = "https://digiarchiv.aiscr.cz/api/search/query?entity=akce&sort=datestamp%20desc&page=0&onlyFacets=True&rows=0"
     
     try:
-        r = requests.get(url, timeout=20) # Raději delší timeout pro velký seznam
+        # Execute the GET request with a 20-second timeout
+        r = requests.get(url, timeout=20)
         r.raise_for_status()
         data = r.json()
         
-        # Cesta k datům dle tvého JSONu:
-        # {"facet_counts": { "f_vedouci": [ {"name": "Novák", ...}, ... ] }}
+        # Extract the leaders list from the JSON response using safe dict getters
         vedouci_list = data.get('facet_counts', {}).get('f_vedouci', [])
-        
         if not vedouci_list:
-             # Zkusíme ještě alternativní cestu, kdyby API vrátilo standardní Solr strukturu
-             # (facet_counts -> facet_fields -> f_vedouci)
              vedouci_list = data.get('facet_counts', {}).get('facet_fields', {}).get('f_vedouci', [])
 
         csv_path = os.path.join(CODELISTS_DIR, 'vedouci.csv')
         
         count = 0
-        with codecs.open(csv_path, 'w', 'utf-8') as f:
+        
+        # Open the target CSV file for writing without extra blank lines
+        with open(csv_path, 'w', encoding='utf-8', newline='') as f:
             writer = csv.writer(f, delimiter=';')
+            
+            # Write the standard header required by the parser function
             writer.writerow(['Název', 'Kód', 'Kategorie'])
             
-            # NOVÁ LOGIKA PARSOVÁNÍ
+            # Iterate through the API results and format them for the CSV
             for item in vedouci_list:
                 name = None
-                
-                # Varianta A: Položka je slovník {"name": "Jan Novák", "value": 10}
                 if isinstance(item, dict):
                     name = item.get('name')
-                
-                # Varianta B: Položka je jen string (kdyby se API vrátilo k plochému seznamu)
                 elif isinstance(item, str):
                     name = item
                 
-                # Pokud máme jméno a není to číslo (count), zapíšeme
+                # Ignore pure numbers (which are usually counts) and write valid names
                 if name and not str(name).isdigit():
                     writer.writerow([name, name, 'vedouci'])
                     count += 1
@@ -146,33 +115,32 @@ def download_vedouci():
     except Exception as e:
         return False, str(e)
 
-# --- GLOBAL DATA ---
-# Toto se načte při startu QGISu
+# Initialize global codelist data when the module is imported
 _DATA = load_all_data()
 
-OBDOBI = _DATA['obdobi']
-TYP_AKCE = _DATA['typ_akce']
-AREAL = _DATA['areal']
-KRAJE = _DATA['kraj']
-ORGANIZACE = _DATA['organizace']
-OKRESY = _DATA['okres']
-KATASTRY = _DATA['katastr']
-VEDOUCI = _DATA['vedouci']
-PIAN_PRESNOST = _DATA['pian_presnost']
-TYP_LOKALITY = _DATA['typ_lokality']
-DRUH_LOKALITY = _DATA['druh_lokality']
-JISTOTA = _DATA['jistota']
-LOKALITA_ZACHOVALOST = _DATA['lokalita_zachovalost']
+# Safely extract individual categories into global variables for easy access across the plugin
+OBDOBI = _DATA.get('obdobi', {})
+TYP_AKCE = _DATA.get('typ_akce', {})
+AREAL = _DATA.get('areal', {})
+KRAJE = _DATA.get('kraj', {})
+ORGANIZACE = _DATA.get('organizace', {})
+OKRESY = _DATA.get('okres', {})
+KATASTRY = _DATA.get('katastr', {})
+VEDOUCI = _DATA.get('vedouci', {})
+PIAN_PRESNOST = _DATA.get('pian_presnost', {})
+TYP_LOKALITY = _DATA.get('typ_lokality', {})
+DRUH_LOKALITY = _DATA.get('druh_lokality', {})
+JISTOTA = _DATA.get('jistota', {})
+LOKALITA_ZACHOVALOST = _DATA.get('lokalita_zachovalost', {})
 
 def refresh_vedouci_cache():
-    """
-    Znovu načte soubor vedouci.csv a aktualizuje globální proměnnou VEDOUCI.
-    Použijeme 'update', aby se zachovala reference na objekt (pokud ho dialog už používá).
-    """
-    temp_data = load_all_data()
-    new_vedouci = temp_data['vedouci']
+    """Reloads only the 'vedouci.csv' file to quickly update the cache without full initialization."""
+    # Parse only the targeted file containing the updated leaders
+    temp_data = parse_codelist_file('vedouci.csv')
+    new_vedouci = temp_data.get('vedouci', {})
     
-    # Vyčistíme a naplníme existující slovník (in-place update)
+    # Clear the existing global dictionary and update it with the fresh data
     VEDOUCI.clear()
     VEDOUCI.update(new_vedouci)
+    
     return len(VEDOUCI)
