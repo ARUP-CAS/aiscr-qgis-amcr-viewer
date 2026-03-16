@@ -1,16 +1,13 @@
 ﻿# -*- coding: utf-8 -*-
-from qgis.gui import QgsMapToolIdentifyFeature
 from qgis.core import (QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry, 
                        QgsField, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
-                       QgsWkbTypes, QgsRelation, QgsPolymorphicRelation, QgsEditorWidgetSetup, Qgis)
+                       QgsWkbTypes, QgsPolymorphicRelation, QgsEditorWidgetSetup, Qgis)
 from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt, QMetaType
-from qgis.PyQt.QtWidgets import QMessageBox, QApplication
+from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtGui import QCursor
 import requests
 import json
-import xml.etree.ElementTree as ET
-import re
 
 # Global cache to store translated terms from the Digital Archive
 TRANSLATIONS = {}
