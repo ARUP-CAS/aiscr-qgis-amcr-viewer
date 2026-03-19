@@ -516,17 +516,25 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             # --- RELATIONSHIP MANAGEMENT ---
             # Set up automatic links between spatial layers and the component table
             if komponenty == "true":
-                parent_layers_ids = [vl_poly.id(), vl_line.id(), vl_point.id()]
+                parent_layers_ids = []
+                if feats_p:
+                    parent_layers_ids.append(vl_poly.id())
+                if feats_l:
+                    parent_layers_ids.append(vl_line.id())
+                if feats_pt:
+                    parent_layers_ids.append(vl_point.id())
+
                 rel_manager = proj.relationManager()
                 
                 rel = QgsPolymorphicRelation()
-                rel.setId(f"rel_komponenty_{archeologicky_zaznam}") 
+                # rel.setId(f"rel_komponenty_{archeologicky_zaznam}") 
                 rel.setName("Komponenty")                    
                 rel.setReferencingLayer(vl_komponenty.id())
                 rel.setReferencedLayerExpression("@layer_id")
                 rel.setReferencedLayerField("vrstva")
                 rel.setReferencedLayerIds(parent_layers_ids)
                 rel.addFieldPair("dj_id", "Dokumentační jednotka")
+                rel.generateId() 
                 
                 if rel.isValid():
                     rel_manager.addPolymorphicRelation(rel)
