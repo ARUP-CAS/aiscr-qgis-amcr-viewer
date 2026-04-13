@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**Platform:** QGIS 3.4.x
+**Platform:** QGIS 3.4.0–4.99.0
 
 **Module Type:** Data Acquisition & Visualization
 
@@ -22,8 +22,6 @@
 * **Dynamic Geometry Retrieval:** Automatically downloads and categorizes spatial data into Point, Line, and Polygon layers.
 * **Semantic Interoperability:** Automatically translates internal system codes into human-readable labels using the AIS CR API.
 
----
-
 ## 2. Installation Guide
 
 **Install the plugin from QGIS plugin repository.**  
@@ -36,8 +34,6 @@
 *4. Select the Install from ZIP tab.*  
 *5. Locate the source ZIP file and click Install Plugin.*  
 *6. Upon successful installation, the AMCR download button (load AMCR data) will appear in the interface.*  
-
----
 
 ## 3. User Manual
 
@@ -64,8 +60,6 @@ To initiate a search query, click either the **Stáhnout data akcí** or the **S
 
 For a more in-depth tutorial refer to the [AMČR Documentation](https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html) (only in Czech).
 
-
-
 ### 3.2 Layer Structure & Attributes
 
 Upon successful retrieval, the plugin generates four temporary memory layers:
@@ -77,46 +71,63 @@ Upon successful retrieval, the plugin generates four temporary memory layers:
 
 The Attribute Table includes standardized fields with important metadata. The components layer has no geometry on its own and depend solely on a relation with the other three layers.
 
-| Field | Description |
-| --- | --- |
-| **Common** | |
-| PIAN |  |
-| Přesnost |  |
-| PIAN – typ |  |
-| Dokumentační jednotka |  |
-| Definiční bod(y) (WGS-84) |  |
-| Akce/Lokalita |  |
-| Odkaz do Digitálního archivu AMČR |  |
-| Okres |  |
-| Katastr |  |
-| Další katastr |  |
-| Přístupnost |  |
-| **Events** | |
-| Vedoucí akce |  |
-| Organizace |  |
-| Specifikace data |  |
-| Datum zahájení |  |
-| Datum ukončení |  |
-| Hlavní typ |  |
-| Vedlejší typ |  |
-| Zjištění |  |
-| Akce – lokalizace |  |
-| Akce – nahrazuje NZ |  |
-| **Sites** | |
-| Název lokality |  |
-| Popis lokality |  |
-| Typ lokality |  |
-| Druh lokality |  |
-| Zachovalost |  |
+#### 3.2.1 Fields of the layers with geometry
 
 | Field | Description |
 | --- | --- |
+| PIAN | PIAN (spatial identifier) ID |
+| Přesnost | spatial deviation [in units/tens/hundreds of meters/defined by cadastre] |
+| PIAN – typ | [point/line/polygon] |
+| Dokumentační jednotka | Documentation unit ID |
+| Typ dokumentační jednotky | [trench/event part/whole event/cadastral territory] |
+| Definiční bod(y) (WGS-84) | feature centroid in WGS-84 coordinate system |
+| Akce/Lokalita | Event/Site ID |
+| Odkaz do Digitálního archivu AMČR | link to the Event/Site record in the Digital Archive |
+| Okres | district |
+| Katastr | main cadastre |
+| Další katastr | other cadastres, if the event extends beyond the main cadastre |
+| Přístupnost | record accessibility [A/B/C/D] |  
 
----
+> Common fields
+
+| Field | Description |
+| --- | --- |
+| Vedoucí akce | main fieldwork manager |
+| Organizace | organization conducting the research |
+| Specifikace data | [exact date/exact years/sometime in years] |
+| Datum zahájení | Event start date |
+| Datum ukončení | Event end date |
+| Hlavní typ | primary research method [total excavation/pit trench/surface collection survey/…] |
+| Vedlejší typ | secondary research method [same options as in Hlavní typ] |
+| Zjištění | did the research reveal archaeological contexts? [positive/negative] |
+| Akce – lokalizace | verbal description of the event location |
+| Akce – nahrazuje NZ | replaces a fieldwork report? [yes/no] |  
+
+> Fields related to *Fieldwork events*  
+
+| Field | Description |
+| --- | --- |
+| nazev_lokality | site name |
+| popis_lokality | site description |
+| typ_lokality | site classification by definition method [survey polygon/heritage site/landscape] |
+| druh_lokality | site classification by the nature of identified field relics [aerial survey polygon/landscape/remains of settlement/…] |
+| zachovalost | site preservation state [buried site/ruin/aboveground remains/…] |
+
+> Fields related to *Sites*
+
+#### 3.2.2 Fields of the *Components* layer
+
+| Field | Description |
+| --- | --- |
+| komponenta | Component ID |
+| dj_id | parent Documentation unit ID |
+| komponenta_areal | Activity area [settlement/burial area/field/…] |
+| komponenta_obdobi | Period [Neolithic/High Middle Ages–Modern Period/Middle La Tène (LtB–C1)/…] |
+| vrstva | system value linking to a specific geometry table with the corresponding documentation unit |
 
 ## 4. Technical Architecture
 
-The plugin is developed in **Python 3** using the **PyQt5** framework for the GUI and the **Requests** library for HTTP communication.
+The plugin is developed in **Python 3** using the **PyQt6** framework for the GUI and the **Requests** library for HTTP communication.
 
 ### 4.1 File Structure
 
@@ -135,11 +146,9 @@ The plugin interacts with three primary endpoints of the AIS CR infrastructure:
 * Parameters: `entity=akce`, `rows/page` (pagination).
 * Logic: The plugin implements a `while True` loop to handle pagination, processing data in batches of 500 records to ensure stability.
 
-
 2. **Translation API:**
 * Endpoint: `https://digiarchiv.aiscr.cz/api/assets/i18n/cs.json`
 * Function: Retrieves the mapping between system codes (e.g., `HES-xxxx`) and Czech labels. This dictionary is cached in memory during the session.
-
 
 ### 4.3 Data Persistence
 
@@ -152,7 +161,10 @@ The plugin interacts with three primary endpoints of the AIS CR infrastructure:
 * **Record Limit:** A safety cap of 20,000 records is enforced.
 * **Batch Processing:** Geometry fetching is batched (50 IDs per request) to comply with URL length limitations and server load balancing.
 
-## 6. Links and resources
+### 4.5 Relational Data Linking
+The plugin automatically utilizes advanced QGIS features for data relationship management, specifically Polymorphic Relations. The *Components* layer is dynamically linked within the project to the spatial layers of events and sites via the documentation unit identifier (dj_id). This allows users to immediately see all *components* belonging to a given geometry (point, line, or polygon) directly in the attribute form or the identify features tool, without the need to manually filter or join the data.
+
+## 5. Links and resources
 
 * [AMCR/Digiarchive Documentation](https://amcr-help.aiscr.cz/) (only in Czech).
 * [AMCR Viewer tutorial](https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html) (only in Czech).
