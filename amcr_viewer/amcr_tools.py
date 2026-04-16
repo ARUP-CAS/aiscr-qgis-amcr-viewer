@@ -317,32 +317,32 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
 
         # Define attribute table structure
         cols = [
-            QgsField("PIAN", QMetaType.Type.QString),
-            QgsField("Přesnost", QMetaType.Type.QString),
-            QgsField("PIAN – typ", QMetaType.Type.QString),
-            QgsField("Dokumentační jednotka", QMetaType.Type.QString),
-            QgsField("Typ dokumentační jednotky", QMetaType.Type.QString),
-            QgsField("Definiční bod(y) (WGS-84)", QMetaType.Type.QString),
-            QgsField(archeologicky_zaznam, QMetaType.Type.QString),
-            QgsField("Odkaz do Digitálního archivu AMČR", QMetaType.Type.QString),
-            QgsField("Okres", QMetaType.Type.QString),
-            QgsField("Katastr", QMetaType.Type.QString),
-            QgsField("Další katastry", QMetaType.Type.QString)
+            QgsField("pian", QMetaType.Type.QString),
+            QgsField("presnost", QMetaType.Type.QString),
+            QgsField("pian_typ", QMetaType.Type.QString),
+            QgsField("dj", QMetaType.Type.QString),
+            QgsField("typ_dj", QMetaType.Type.QString),
+            QgsField("definicni_body", QMetaType.Type.QString),
+            QgsField(typ_dat, QMetaType.Type.QString),
+            QgsField("odkaz_do_digiarchivu", QMetaType.Type.QString),
+            QgsField("okres", QMetaType.Type.QString),
+            QgsField("katastr", QMetaType.Type.QString),
+            QgsField("dalsi_katastry", QMetaType.Type.QString)
         ]
 
         # Extend table based on data type
         if typ_dat == "akce":
             cols += [
-                QgsField("Akce – lokalizace", QMetaType.Type.QString),
-                QgsField("Vedoucí akce", QMetaType.Type.QString),
-                QgsField("Organizace", QMetaType.Type.QString),
-                QgsField("Specifikace data", QMetaType.Type.QString),
-                QgsField("Datum zahájeni", QMetaType.Type.QString),
-                QgsField("Datum ukončení", QMetaType.Type.QString),
-                QgsField("Hlavní typ", QMetaType.Type.QString),
-                QgsField("Vedlejší typ", QMetaType.Type.QString),
-                QgsField("Zjištění", QMetaType.Type.QString),                
-                QgsField("Akce – nahrazuje NZ", QMetaType.Type.QString),
+                QgsField("akce_lokalizace", QMetaType.Type.QString),
+                QgsField("vedouci", QMetaType.Type.QString),
+                QgsField("organizace", QMetaType.Type.QString),
+                QgsField("specifikace_data", QMetaType.Type.QString),
+                QgsField("zahajeni", QMetaType.Type.QString),
+                QgsField("ukonceni", QMetaType.Type.QString),
+                QgsField("hlavni_typ", QMetaType.Type.QString),
+                QgsField("vedlejsi_typ", QMetaType.Type.QString),
+                QgsField("zjisteni", QMetaType.Type.QString),                
+                QgsField("nahrazuje_NZ", QMetaType.Type.QString),
             ]
         elif typ_dat == "lokalita":
             cols += [
@@ -357,6 +357,27 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
 
         # Use aliases for technical field names
         alias_map = {
+            "pian": "PIAN",
+            "presnost": "Přesnost",
+            "pian_typ": "PIAN – typ",
+            "dj": "Dokumentační jednotka",
+            "typ_dj": "Typ dokumentační jednotky",
+            "definicni_body": "Definiční bod(y) (WGS-84)",
+            typ_dat: archeologicky_zaznam,
+            "odkaz_do_digiarchivu": "Odkaz do Digitálního archivu AMČR",
+            "okres": "Okres",
+            "katastr": "Katastr",
+            "dalsi_katastry": "Další katastry",
+            "akce_lokalizace": "Akce – lokalizace",
+            "vedouci": "Vedoucí akce",
+            "organizace": "Organizace",
+            "specifikace_data": "Specifikace data",
+            "zahajeni": "Datum zahájeni",
+            "ukonceni": "Datum ukončení",
+            "hlavni_typ": "Hlavní typ",
+            "vedlejsi_typ": "Vedlejší typ",
+            "zjisteni": "Zjištění",
+            "nahrazuje_NZ": "Akce – nahrazuje NZ",
             "nazev_lokality": "Název lokality",
             "popis_lokality": "Popis lokality",
             "typ_lokality": "Typ lokality",
