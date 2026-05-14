@@ -1,9 +1,9 @@
 ﻿# -*- coding: utf-8 -*-
-from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, 
+from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, 
                                  QLineEdit, QDialogButtonBox, 
                                  QCheckBox, QGroupBox, QPushButton,
                                  QListWidget, QListWidgetItem, QHBoxLayout,
-                                 QLabel, QMessageBox, QApplication, QWidget)
+                                 QMessageBox)
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsTask, QgsApplication, QgsMessageLog, Qgis
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE, 

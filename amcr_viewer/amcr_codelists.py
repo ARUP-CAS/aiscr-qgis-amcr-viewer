@@ -185,23 +185,46 @@ def refresh_globals():
     
     data = load_all_data()
     
-    OBDOBI.clear(); OBDOBI.update(data.get('obdobi', {}))
-    TYP_AKCE.clear(); TYP_AKCE.update(data.get('typ_akce', {}))
-    AREAL.clear(); AREAL.update(data.get('areal', {}))
-    KRAJE.clear(); KRAJE.update(data.get('kraj', {}))
-    ORGANIZACE.clear(); ORGANIZACE.update(data.get('organizace', {}))
-    OKRESY.clear(); OKRESY.update(data.get('okres', {}))
-    KATASTRY.clear(); KATASTRY.update(data.get('katastr', {}))
-    VEDOUCI.clear(); VEDOUCI.update(data.get('vedouci', {}))
-    PIAN_PRESNOST.clear(); PIAN_PRESNOST.update(data.get('pian_presnost', {}))
-    TYP_LOKALITY.clear(); TYP_LOKALITY.update(data.get('typ_lokality', {}))
-    DRUH_LOKALITY.clear(); DRUH_LOKALITY.update(data.get('druh_lokality', {}))
-    JISTOTA.clear(); JISTOTA.update(data.get('jistota', {}))
-    LOKALITA_ZACHOVALOST.clear(); LOKALITA_ZACHOVALOST.update(data.get('lokalita_zachovalost', {}))
+    OBDOBI.clear()
+    OBDOBI.update(data.get('obdobi', {}))
+    TYP_AKCE.clear()
+    TYP_AKCE.update(data.get('typ_akce', {}))
+    AREAL.clear()
+    AREAL.update(data.get('areal', {}))
+    KRAJE.clear()
+    KRAJE.update(data.get('kraj', {}))
+    ORGANIZACE.clear()
+    ORGANIZACE.update(data.get('organizace', {}))
+    OKRESY.clear()
+    OKRESY.update(data.get('okres', {}))
+    KATASTRY.clear()
+    KATASTRY.update(data.get('katastr', {}))
+    VEDOUCI.clear()
+    VEDOUCI.update(data.get('vedouci', {}))
+    PIAN_PRESNOST.clear()
+    PIAN_PRESNOST.update(data.get('pian_presnost', {}))
+    TYP_LOKALITY.clear()
+    TYP_LOKALITY.update(data.get('typ_lokality', {}))
+    DRUH_LOKALITY.clear()
+    DRUH_LOKALITY.update(data.get('druh_lokality', {}))
+    JISTOTA.clear()
+    JISTOTA.update(data.get('jistota', {}))
+    LOKALITA_ZACHOVALOST.clear()
+    LOKALITA_ZACHOVALOST.update(data.get('lokalita_zachovalost', {}))
 
 # Inicializace prázdných diktů, které se naplní hned pod tím
-OBDOBI = {}; TYP_AKCE = {}; AREAL = {}; KRAJE = {}; ORGANIZACE = {}
-OKRESY = {}; KATASTRY = {}; VEDOUCI = {}; PIAN_PRESNOST = {}
-TYP_LOKALITY = {}; DRUH_LOKALITY = {}; JISTOTA = {}; LOKALITA_ZACHOVALOST = {}
+OBDOBI = {}
+TYP_AKCE = {}
+AREAL = {}
+KRAJE = {}
+ORGANIZACE = {}
+OKRESY = {}
+KATASTRY = {}
+VEDOUCI = {}
+PIAN_PRESNOST = {}
+TYP_LOKALITY = {}
+DRUH_LOKALITY = {}
+JISTOTA = {}
+LOKALITA_ZACHOVALOST = {}
 
 refresh_globals()
