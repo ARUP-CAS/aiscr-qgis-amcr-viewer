@@ -4,6 +4,7 @@ import csv
 import requests
 import xml.etree.ElementTree as ET
 import time
+from qgis.core import QgsMessageLog, Qgis
 
 # Define paths for the plugin and its codelists directory
 PLUGIN_DIR = os.path.dirname(__file__)
@@ -72,28 +73,18 @@ def parse_codelist_file(filename, target_dict=None):
                     # Assign the extracted code to the corresponding label within the category
                     target_dict[cat][label] = clean
     except Exception as e:
-        print(f"AMČR Codelist Read Error for {filename}: {e}")
+        QgsMessageLog.logMessage(f"AMČR Codelist Read Error for {filename}: {e}", "AMČR", Qgis.Critical)
         
     return target_dict
 
 def load_all_data():
     """Loads all static and dynamic codelists during plugin startup."""
     ensure_codelists_dir()
-    
-    # Initialize the base structure with empty dictionaries for all expected categories
-    categorized_data = {
-        'obdobi': {}, 'typ_akce': {}, 'areal': {}, 
-        'kraj': {}, 'organizace': {}, 'okres': {}, 'katastr': {},
-        'vedouci': {}, 'pian_presnost': {}, 'typ_lokality': {}, 'druh_lokality': {},
-        'jistota': {}, 'lokalita_zachovalost': {}
-    }
-    
-    # Parse the codelist
+    categorized_data = {k: {} for k in slovnicek.keys()}
     parse_codelist_file('heslar.csv', categorized_data)
-    
     return categorized_data
 
-def fetch_set(internal_name, api_set):
+def fetch_set(internal_name, api_set, task=None):
     dataset = []
     params = {
         "verb": "ListRecords",
@@ -102,6 +93,10 @@ def fetch_set(internal_name, api_set):
     }
     
     while True:
+        # Kontrola zrušení v každém kroku
+        if task and task.isCanceled():
+            return None
+
         try:
             response = requests.get(BASE_URL, params=params, timeout=30)
             response.raise_for_status()
@@ -143,7 +138,7 @@ def fetch_set(internal_name, api_set):
                 break
                 
         except Exception as e:
-            print(f"Chyba u setu {api_set}: {e}")
+            QgsMessageLog.logMessage(f"Chyba u setu {api_set}: {e}", "AMČR", Qgis.Warning)
             break
             
     return dataset
@@ -159,8 +154,14 @@ def download_heslare(task=None):
         if task and task.isCanceled():
             return False
 
-        print(f"Zpracovávám: {interni}...")
-        data = fetch_set(interni, api_nazev)
+        QgsMessageLog.logMessage(f"Zpracovávám kategorii: {interni}...", "AMČR", Qgis.Info)
+        
+        # Nyní předáváme task správně do upravené funkce
+        data = fetch_set(interni, api_nazev, task=task)
+        
+        if data is None:
+            return False # Bylo zrušeno uprostřed stahování
+
         all_data.extend(data)
 
         # Reportování postupu (0-100)
@@ -171,14 +172,11 @@ def download_heslare(task=None):
     # Uložení do CSV
     with open(OUTPUT_FILE, 'w', newline='', encoding='utf-8-sig') as f:
         fieldnames = ['Název', 'Kód', 'Kategorie']
-        # Používám středník, aby to ladilo s tvým parse_codelist_file
         writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';')
         writer.writeheader()
         writer.writerows(all_data)
 
     return True
-
-    # print(f"\nExport dokončen. Celkem {len(all_data)} záznamů uloženo do {OUTPUT_FILE}.")
 
 def refresh_globals():
     """Znovu načte data ze souborů do globálních proměnných."""

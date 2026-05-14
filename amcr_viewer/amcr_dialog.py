@@ -128,9 +128,8 @@ class AmcrFilterDialog(QDialog):
         
         # Determines if we are fetching 'akce' (projects) or 'lokalita' (locations)
         self.typ_dat = typ_dat
-
         
-        
+       
         # Cache dictionary to store selected codes for each category
         self.selection_cache = {
             'organizace': [], 'kraj': [], 'obdobi': [], 'areal': [], 
@@ -172,14 +171,8 @@ class AmcrFilterDialog(QDialog):
         if self.typ_dat == "akce":
             self.picker_org = self.setup_picker("Organizace", 'organizace', ORGANIZACE)
             layout.addWidget(self.picker_org)
-
-            # Button to fetch fresh project leaders from the API
-            self.btn_update_vedouci = QPushButton("🔄")
-            self.btn_update_vedouci.setToolTip("Aktualizovat seznam vedoucích z API")
-            self.btn_update_vedouci.setFixedWidth(30)
-            self.btn_update_vedouci.clicked.connect(self.action_update_heslare)
         
-            self.picker_vedouci = self.setup_picker("Vedoucí výzkumu", 'vedouci', VEDOUCI, extra_btn=self.btn_update_vedouci)
+            self.picker_vedouci = self.setup_picker("Vedoucí výzkumu", 'vedouci', VEDOUCI)
             layout.addWidget(self.picker_vedouci)
 
             # Type of event
@@ -217,10 +210,18 @@ class AmcrFilterDialog(QDialog):
         # Pushes everything above to the top
         layout.addStretch(1)
 
-        # Main dialog OK/Cancel buttons
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        # Main dialog OK/Cancel/Update buttons
+        
+        buttons = QDialogButtonBox()
+
+        self.btn_update = QPushButton("Aktualizovat hesláře 🔄")
+        self.btn_update.setToolTip("Provede kompletní aktualizaci heslářů AMČR. Toto bude trvat pár minut.")
+        self.btn_update.clicked.connect(self.action_update_heslare)
+
+        buttons.addButton(self.btn_update, QDialogButtonBox.ButtonRole.ActionRole)
+        buttons.addButton(QDialogButtonBox.StandardButton.Ok)
+        buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
+
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -248,7 +249,7 @@ class AmcrFilterDialog(QDialog):
         # Nested function that handles opening the dialog and saving results
         def open_dialog():
             dlg = FilterableSelectionDialog(label_text, data_source, self.selection_cache[cache_key], self)
-            if dlg.exec() == QDialog.DialogCode.Accepted: # PyQt6: DialogCode
+            if dlg.exec() == QDialog.DialogCode.Accepted:
                 codes, labels = dlg.get_selected_codes()
                 # Update local cache with selected IDs
                 self.selection_cache[cache_key] = codes
@@ -279,11 +280,23 @@ class AmcrFilterDialog(QDialog):
         # Vytvoření instance tasku
         task = UpdateCodelistsTask("Aktualizace heslářů AMČR")
         
-        # Propojení na callbacky pro informování uživatele v UI
-        task.taskCompleted.connect(lambda: QMessageBox.information(self, "Hotovo", "Hesláře byly aktualizovány."))
-        task.taskTerminated.connect(lambda: QMessageBox.warning(self, "Chyba", "Aktualizace selhala nebo byla zrušena."))
+        # Povolíme tlačítko zpět bez ohledu na výsledek
+        task.taskCompleted.connect(lambda: self.btn_update.setEnabled(True))
+        task.taskTerminated.connect(lambda: self.btn_update.setEnabled(True))
         
-        # Přidání tasku do globálního manažera QGISu
+        task.taskCompleted.connect(lambda: QMessageBox.information(self, "Hotovo", "Hesláře byly úspěšně aktualizovány."))
+        
+        # Ošetření, aby se přesně ukázala případná chyba
+        def on_error():
+            if task.exception:
+                # Tohle ti přesně řekne, na čem to teď padá (např. PermissionError)
+                msg = f"Aktualizace selhala z důvodu chyby:\n{str(task.exception)}"
+            else:
+                msg = "Aktualizace byla zrušena uživatelem."
+            QMessageBox.warning(self, "Chyba / Zrušeno", msg)
+            
+        task.taskTerminated.connect(on_error)
+        
         QgsApplication.taskManager().addTask(task)
 
     def get_bbox(self):
