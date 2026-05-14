@@ -148,16 +148,25 @@ def fetch_set(internal_name, api_set):
             
     return dataset
 
-def download_heslare():
+def download_heslare(task=None):
     """Fetches the codelists from the AMČR API and saves it to a CSV file."""
     ensure_codelists_dir()
-
     all_data = []
+    total_sets = len(slovnicek)
     
-    for interni, api_nazev in slovnicek.items():
+    for index, (interni, api_nazev) in enumerate(slovnicek.items()):
+        # Pokud uživatel task zrušil v liště QGISu
+        if task and task.isCanceled():
+            return False
+
         print(f"Zpracovávám: {interni}...")
         data = fetch_set(interni, api_nazev)
         all_data.extend(data)
+
+        # Reportování postupu (0-100)
+        if task:
+            progress = (index + 1) / total_sets * 100
+            task.setProgress(progress)
 
     # Uložení do CSV
     with open(OUTPUT_FILE, 'w', newline='', encoding='utf-8-sig') as f:
@@ -167,9 +176,9 @@ def download_heslare():
         writer.writeheader()
         writer.writerows(all_data)
 
-    refresh_globals()
+    return True
 
-    print(f"\nExport dokončen. Celkem {len(all_data)} záznamů uloženo do {OUTPUT_FILE}.")
+    # print(f"\nExport dokončen. Celkem {len(all_data)} záznamů uloženo do {OUTPUT_FILE}.")
 
 def refresh_globals():
     """Znovu načte data ze souborů do globálních proměnných."""

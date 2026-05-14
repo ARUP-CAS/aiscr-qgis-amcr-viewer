@@ -5,10 +5,39 @@ from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QFormLayout,
                                  QListWidget, QListWidgetItem, QHBoxLayout,
                                  QLabel, QMessageBox, QApplication, QWidget)
 from qgis.PyQt.QtCore import Qt
+from qgis.core import QgsTask, QgsApplication, QgsMessageLog, Qgis
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE, 
                              OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST, TYP_LOKALITY,
                              DRUH_LOKALITY, JISTOTA, LOKALITA_ZACHOVALOST,
-                             download_vedouci, refresh_vedouci_cache)
+                             download_heslare, refresh_globals)
+
+class UpdateCodelistsTask(QgsTask):
+    def __init__(self, description):
+        super().__init__(description, QgsTask.CanCancel)
+        self.success = False
+        self.exception = None
+
+    def run(self):
+        """Tato část běží ve vedlejším vlákně."""
+        try:
+            # Voláme upravenou funkci
+            self.success = download_heslare(task=self)
+            return self.success
+        except Exception as e:
+            self.exception = e
+            return False
+
+    def finished(self, result):
+        """Tato část běží v hlavním vlákně po skončení run()."""
+        if result:
+            # Teď bezpečně aktualizujeme globální proměnné v hlavním vlákně
+            refresh_globals()
+            QgsMessageLog.logMessage("Hesláře AMČR byly úspěšně aktualizovány.", "AMČR", Qgis.Info)
+        else:
+            if self.isCanceled():
+                QgsMessageLog.logMessage("Aktualizace heslářů byla zrušena.", "AMČR", Qgis.Warning)
+            else:
+                QgsMessageLog.logMessage(f"Chyba aktualizace: {self.exception}", "AMČR", Qgis.Critical)
 
 class FilterableSelectionDialog(QDialog):
     """
@@ -148,7 +177,7 @@ class AmcrFilterDialog(QDialog):
             self.btn_update_vedouci = QPushButton("🔄")
             self.btn_update_vedouci.setToolTip("Aktualizovat seznam vedoucích z API")
             self.btn_update_vedouci.setFixedWidth(30)
-            self.btn_update_vedouci.clicked.connect(self.action_update_vedouci)
+            self.btn_update_vedouci.clicked.connect(self.action_update_heslare)
         
             self.picker_vedouci = self.setup_picker("Vedoucí výzkumu", 'vedouci', VEDOUCI, extra_btn=self.btn_update_vedouci)
             layout.addWidget(self.picker_vedouci)
@@ -246,21 +275,16 @@ class AmcrFilterDialog(QDialog):
         row_widget.setLayout(row_layout)
         return row_widget
 
-    def action_update_vedouci(self):
-        # Change cursor to loading state to indicate background task
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        try:
-            success, msg = download_vedouci()
-            if success:
-                count = refresh_vedouci_cache()
-                QMessageBox.information(self, "Úspěch", f"{msg}\nNyní je v paměti {count} osob.")
-            else:
-                QMessageBox.warning(self, "Chyba", f"Nepodařilo se stáhnout data:\n{msg}")
-        except Exception as e:
-            QMessageBox.critical(self, "Chyba", str(e))
-        finally:
-            # Safely restore the normal cursor even if an error occurs
-            QApplication.restoreOverrideCursor()
+    def action_update_heslare(self):
+        # Vytvoření instance tasku
+        task = UpdateCodelistsTask("Aktualizace heslářů AMČR")
+        
+        # Propojení na callbacky pro informování uživatele v UI
+        task.taskCompleted.connect(lambda: QMessageBox.information(self, "Hotovo", "Hesláře byly aktualizovány."))
+        task.taskTerminated.connect(lambda: QMessageBox.warning(self, "Chyba", "Aktualizace selhala nebo byla zrušena."))
+        
+        # Přidání tasku do globálního manažera QGISu
+        QgsApplication.taskManager().addTask(task)
 
     def get_bbox(self):
         return "true" if self.chk_bbox.isChecked() else "false"
