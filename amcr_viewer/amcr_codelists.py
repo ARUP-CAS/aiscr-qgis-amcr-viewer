@@ -107,22 +107,27 @@ def fetch_set(internal_name, api_set, task=None):
                 metadata = rec.find('.//oai_dc:dc', NS)
                 if metadata is not None:
                     # Kód (identifier)
-                    kód = metadata.find('dc:identifier', NS).text if metadata.find('dc:identifier', NS) is not None else ""
+                    kod = metadata.find('dc:identifier', NS).text if metadata.find('dc:identifier', NS) is not None else ""
                     
                     # Název (title) - filtrujeme systémové popisky "AMČR - ..."
                     titles = metadata.findall('dc:title', NS)
-                    název = ""
+                    nazev = ""
                     for t in titles:
                         if t.text and not t.text.startswith("AMČR -") and not t.text.startswith(" AMČR -"):
-                            název = t.text
+                            nazev = t.text
                             break
                     # Pokud by náhodou žádný title neprošel filtrem, vezmeme první dostupný
-                    if not název and titles:
-                        název = titles[0].text
+                    if not nazev and titles:
+                        nazev = titles[0].text
+                    
+                    specialni_pripady = ['okres', 'katastr']
+
+                    if internal_name in specialni_pripady:
+                        kod = nazev
 
                     dataset.append({
-                        'Název': název,
-                        'Kód': kód,
+                        'Název': nazev,
+                        'Kód': kod,
                         'Kategorie': internal_name
                     })
 
