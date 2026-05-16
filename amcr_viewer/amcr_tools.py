@@ -246,23 +246,35 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                     dj_pian_value = dj_pian.get('id')
                     if dj_pian_value:
                         target_pian_ids.add(dj_pian_value)
-                        target_pian_ids_count += 1
                         if dj_pian_value not in pian_lookup:
                             pian_lookup[dj_pian_value] = []
-                        pian_lookup[dj_pian_value].append(dj_meta)
 
-                        # Parse non-spatial components if requested (for relational tables)
                         if komponenty == "true":
+                            # One feature per component — all data on a single row, no relations needed
                             komps = dj.get('dj_komponenta', [])
-                            for komp in komps:
-                                komp_temp = [
-                                    komp.get('ident_cely', ""),
-                                    komp.get('komponenta_areal', {}).get('value', ""),
-                                    komp.get('komponenta_obdobi', {}).get('value', "")
-                                ]
-                                if dj_id not in komponenty_lookup:
-                                    komponenty_lookup[dj_id] = []
-                                komponenty_lookup[dj_id].append(komp_temp)
+                            if komps:
+                                for komp in komps:
+                                    komp_meta = {
+                                        **dj_meta,
+                                        'komponenta_id': komp.get('ident_cely', ""),
+                                        'komponenta_areal': komp.get('komponenta_areal', {}).get('value', ""),
+                                        'komponenta_obdobi': komp.get('komponenta_obdobi', {}).get('value', ""),
+                                    }
+                                    pian_lookup[dj_pian_value].append(komp_meta)
+                                    target_pian_ids_count += 1
+                            else:
+                                # DJ without components — still include with empty component fields
+                                empty_meta = {
+                                    **dj_meta,
+                                    'komponenta_id': "",
+                                    'komponenta_areal': "",
+                                    'komponenta_obdobi': "",
+                                }
+                                pian_lookup[dj_pian_value].append(empty_meta)
+                                target_pian_ids_count += 1
+                        else:
+                            target_pian_ids_count += 1
+                            pian_lookup[dj_pian_value].append(dj_meta)
 
 
         if not target_pian_ids:
