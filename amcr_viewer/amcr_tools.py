@@ -393,7 +393,10 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             "popis_lokality": "Popis lokality",
             "typ_lokality": "Typ lokality",
             "druh_lokality": "Druh lokality",
-            "zachovalost": "Zachovalost"
+            "zachovalost": "Zachovalost",
+            "komponenta": "Komponenta",
+            "komponenta_areal": "Areál",
+            "komponenta_obdobi": "Období",
         }        
 
         if komponenty == "true":
@@ -487,10 +490,12 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                                     meta['lokalita_zachovalost']
                                 ])
                             
-                            if komponenty == "true" and meta['dj_id'] in komponenty_lookup:
-                                for k in komponenty_lookup[meta['dj_id']]:
-                                    if len(k) == 3:
-                                        k.append(referenced_layer.id())
+                            if komponenty == "true":
+                                atributy.extend([
+                                    meta.get('komponenta_id', ""),
+                                    meta.get('komponenta_areal', ""),
+                                    meta.get('komponenta_obdobi', ""),
+                                ])
                             
                             atributy.append(meta['pristupnost'])
                             feat.setAttributes(atributy)
