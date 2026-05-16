@@ -489,15 +489,16 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                                     meta['lokalita_typ'], meta['lokalita_druh'],
                                     meta['lokalita_zachovalost']
                                 ])
-                            
+
+                            atributy.append(meta['pristupnost'])
+
                             if komponenty == "true":
                                 atributy.extend([
                                     meta.get('komponenta_id', ""),
                                     meta.get('komponenta_areal', ""),
                                     meta.get('komponenta_obdobi', ""),
-                                ])
+                                ])                            
                             
-                            atributy.append(meta['pristupnost'])
                             feat.setAttributes(atributy)
                             target_list.append(feat)
                             
