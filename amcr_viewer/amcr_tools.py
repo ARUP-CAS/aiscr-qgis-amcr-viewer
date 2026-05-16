@@ -1,7 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 from qgis.core import (QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry, 
                        QgsField, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
-                       QgsWkbTypes, QgsPolymorphicRelation, QgsEditorWidgetSetup, Qgis)
+                       QgsWkbTypes, Qgis)
 from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt, QMetaType
 from qgis.PyQt.QtWidgets import QApplication
@@ -86,7 +86,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         current_page = 0 
         BATCH_DOCS = 500   # Records per API request
         MAX_LIMIT = 20000  # Safety limit to prevent QGIS from freezing
-        feats_k = []       # List for component features (non-spatial)
+
         
         seen_ids = set()
         target_pian_ids_count = 0
@@ -146,7 +146,6 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
         
         # pian_lookup maps a Geometry ID (PIAN) to a list of its associated metadata
         pian_lookup = {}
-        komponenty_lookup = {}
         target_pian_ids = set()
         actions_with_geom = 0
         
@@ -385,22 +384,12 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             "zachovalost": "Zachovalost"
         }        
 
-        # Create a non-spatial table for components if requested
         if komponenty == "true":
-            vl_komponenty = QgsVectorLayer("None", "AMCR Komponenty", "memory")
-            pr = vl_komponenty.dataProvider()
-            komponenty_cols = [
+            cols += [
                 QgsField("komponenta", QMetaType.Type.QString),
-                QgsField("dj_id", QMetaType.Type.QString),
                 QgsField("komponenta_areal", QMetaType.Type.QString),
                 QgsField("komponenta_obdobi", QMetaType.Type.QString),
-                QgsField("vrstva", QMetaType.Type.QString)
             ]
-            pr.addAttributes(komponenty_cols)
-            vl_komponenty.updateFields()
-
-            idx_vrstva = vl_komponenty.fields().indexOf("vrstva")
-            vl_komponenty.setEditorWidgetSetup(idx_vrstva, QgsEditorWidgetSetup("Hidden", {}))
 
         for vl in layers:
             vl.dataProvider().addAttributes(cols)
@@ -499,18 +488,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 print(f"Chyba při tvorbě feature: {ex}")
                 pass
         
-        if komponenty == "true":
-            for k in komponenty_lookup:
-                for komp in komponenty_lookup[k]:
-                    if len(komp) == 4:
-                        feat = QgsFeature()
-                        atributy = [
-                            komp[0], k, komp[1], komp[2], komp[3]
-                        ]
-                        feat.setAttributes(atributy)
-                        feats_k.append(feat)
-
-        # --- ADDING TO QGIS INTERFACE ---
+# --- ADDING TO QGIS INTERFACE ---
         proj = QgsProject.instance()
         added = 0
         layers_to_process = [
@@ -519,49 +497,16 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             (feats_pt, vl_point, "Body"),
         ]
 
-        if komponenty == "true":
-            layers_to_process.append((feats_k, vl_komponenty, "Komponenty"))
-
         for f, l, n in layers_to_process:
             if f:
                 l.dataProvider().addFeatures(f)
                 l.updateExtents()
                 l.setName(f"AMCR_{archeologicky_zaznam}_{n}") 
                 proj.addMapLayer(l)
-                if n != "Komponenty":
-                    added += len(f)
+                added += len(f)
         
         if added > 0:
             iface.messageBar().pushMessage("AMCR", f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). Vykresleno: {added} prvků.", level=Qgis.MessageLevel.Success)
-
-            # --- RELATIONSHIP MANAGEMENT ---
-            # Set up automatic links between spatial layers and the component table
-            if komponenty == "true":
-                parent_layers_ids = []
-                if feats_p:
-                    parent_layers_ids.append(vl_poly.id())
-                if feats_l:
-                    parent_layers_ids.append(vl_line.id())
-                if feats_pt:
-                    parent_layers_ids.append(vl_point.id())
-
-                rel_manager = proj.relationManager()
-                
-                rel = QgsPolymorphicRelation()
-                # rel.setId(f"rel_komponenty_{archeologicky_zaznam}") 
-                rel.setName("Komponenty")                    
-                rel.setReferencingLayer(vl_komponenty.id())
-                rel.setReferencedLayerExpression("@layer_id")
-                rel.setReferencedLayerField("vrstva")
-                rel.setReferencedLayerIds(parent_layers_ids)
-                rel.addFieldPair("dj_id", "Dokumentační jednotka")
-                rel.generateId() 
-                
-                if rel.isValid():
-                    rel_manager.addPolymorphicRelation(rel)
-                else:
-                    print("Relace Komponenty není validní!")
-
         else:
             iface.messageBar().pushMessage("AMCR", "Žádná data k zobrazení.", level=Qgis.MessageLevel.Info)
 
