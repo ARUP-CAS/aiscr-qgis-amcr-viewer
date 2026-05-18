@@ -2,9 +2,11 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QMenu, QAction, QToolButton, QDialog
+from qgis.core import Qgis
+from qgis.utils import iface
 
-from .amcr_tools import load_amcr_data
-from .amcr_dialog import AmcrFilterDialog
+from .amcr_tools import load_amcr_data, login_to_api
+from .amcr_dialog import AmcrFilterDialog, LoginDialog
 from .resources import *
 import os.path
 
@@ -179,3 +181,18 @@ class AmcrViewer:
             # Access the map canvas and start the fetch/render process from amcr_tools
             canvas = self.iface.mapCanvas()
             load_amcr_data(canvas, bbox, filters, typ_dat, komponenty)
+
+    def login(self):
+        dlg = LoginDialog(parent=self.iface.mainWindow())
+        result = dlg.exec()
+        if result == QDialog.DialogCode.Accepted:
+            username, password = LoginDialog.get_credentials()
+            session = login_to_api(username, password)
+            if session:
+                self.iface.messageBar().pushMessage(
+                    "AMČR", "Přihlášení proběhlo úspěšně.", level=Qgis.MessageLevel.Success
+                )
+            else:
+                self.iface.messageBar().pushMessage(
+                    "AMČR", "Přihlášení se nezdařilo – viz záložka AMČR login v panelu Zprávy.", level=Qgis.MessageLevel.Critical
+                )
