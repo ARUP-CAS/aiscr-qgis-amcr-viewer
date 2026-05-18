@@ -65,6 +65,63 @@ def login_to_api(username: str, password: str):
         _log(f"CHYBA sítě: {e}", Qgis.MessageLevel.Critical)
         return None
 
+def _get_session() -> requests.Session | None:
+    """
+    Vrátí aktivní session. Pokud žádná není (restart QGIS), pokusí se
+    automaticky přihlásit pomocí uložených přihlašovacích údajů.
+    Vrátí None pokud přihlašovací údaje nejsou uloženy.
+    """
+    global AMCR_SESSION
+    if AMCR_SESSION is not None:
+        return AMCR_SESSION
+
+    # Zkusit auto-login pomocí uložených údajů
+    from .amcr_dialog import LoginDialog
+    username, password = LoginDialog.get_credentials()
+    if username and password:
+        _log("Session vypršela nebo chybí – automatické přihlášení...")
+        AMCR_SESSION = login_to_api(username, password)
+
+    return AMCR_SESSION
+
+
+def _api_get(url, params, timeout=30) -> requests.Response:
+    """
+    Provede GET request. Pokud API signalizuje vypršení přihlášení,
+    provede jedno opakované přihlášení a zkusí znovu.
+    """
+    global AMCR_SESSION
+
+    def _is_auth_error(resp: requests.Response) -> bool:
+        """API vrací auth chyby se status 200 – je nutné zkontrolovat tělo."""
+        if resp.status_code == 401:
+            return True
+        try:
+            body = resp.json()
+            err = str(body.get("error", "")).lower()
+            return "unauthorized" in err or "not logged" in err or "session" in err
+        except Exception:
+            return False
+
+    session = _get_session()
+    resp = (session or requests).get(url, params=params, timeout=timeout)
+
+    if _is_auth_error(resp):
+        _log("Session vypršela během stahování – obnovuji přihlášení...", Qgis.MessageLevel.Warning)
+        AMCR_SESSION = None  # Zrušit starou session
+        from .amcr_dialog import LoginDialog
+        username, password = LoginDialog.get_credentials()
+        if username and password:
+            AMCR_SESSION = login_to_api(username, password)
+            if AMCR_SESSION:
+                resp = AMCR_SESSION.get(url, params=params, timeout=timeout)
+            else:
+                _log("Opakované přihlášení selhalo.", Qgis.MessageLevel.Critical)
+        else:
+            _log("Přihlašovací údaje nejsou uloženy – pokračuji anonymně.", Qgis.MessageLevel.Warning)
+
+    return resp
+
 def load_translations():
     """Fetches the official Czech translation dictionary from the AISCR API."""
     global TRANSLATIONS
@@ -156,7 +213,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 del base_params['page']
             
             try:
-                resp_docs = (AMCR_SESSION or requests).get(url, params=base_params, timeout=30)
+                resp_docs = _api_get(url, params=base_params, timeout=30)
                 resp_json = resp_docs.json()
                 data = resp_json.get('response', {})
                 batch_docs = data.get('docs', [])
@@ -361,7 +418,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             }
             try:
                 QApplication.processEvents() 
-                r_pian = (AMCR_SESSION or requests).get(url, params=params_pian, timeout=15)
+                r_pian = _api_get(url, params=params_pian, timeout=15)
                 batch_docs = r_pian.json().get('response', {}).get('docs', [])
                 docs_pian.extend(batch_docs)
             except Exception as e:
