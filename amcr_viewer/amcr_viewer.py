@@ -109,6 +109,16 @@ class AmcrViewer:
         )
         self.plugin_menu.addAction(self.action_download_lokality)
 
+        self.action_login_dialog = self.add_action(
+            icon_path=icon_akce_path,
+            text=self.tr(u'Přihlásit se | AMČR Viewer'),
+            callback=lambda checked=False: self.login(), 
+            parent=self.iface.mainWindow(),
+            add_to_menu=False,
+            add_to_toolbar=False
+        )
+        self.plugin_menu.addAction(self.action_login_dialog)
+
         # 3. Create the main project action and attach the menu to it
         main_icon = QIcon(icon_akce_path)
         self.main_action = QAction(main_icon, 'AMČR Viewer', self.iface.mainWindow())
