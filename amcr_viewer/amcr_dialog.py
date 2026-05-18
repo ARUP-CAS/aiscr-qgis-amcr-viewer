@@ -1,10 +1,11 @@
 ﻿# -*- coding: utf-8 -*-
+import base64
 from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, 
                                  QLineEdit, QDialogButtonBox, 
                                  QCheckBox, QGroupBox, QPushButton,
                                  QListWidget, QListWidgetItem, QHBoxLayout,
-                                 QMessageBox)
-from qgis.PyQt.QtCore import Qt
+                                 QMessageBox, QLabel, QFormLayout)
+from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.core import QgsTask, QgsApplication, QgsMessageLog, Qgis
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE, 
                              OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST, TYP_LOKALITY,
@@ -343,3 +344,97 @@ class AmcrFilterDialog(QDialog):
                 filters['f_lokalita_zachovalost'] = self.selection_cache['lokalita_zachovalost']
         
         return filters
+
+class LoginDialog(QDialog):
+    """
+    Dialog pro uložení přihlašovacích údajů do AMČR.
+    Ukládá do QSettings (username plaintext, heslo base64).
+    """
+
+    KEY_USER = "amcr_viewer/username"
+    KEY_PASS = "amcr_viewer/password"
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Přihlášení do AMČR")
+        self.setMinimumWidth(360)
+
+        layout = QVBoxLayout()
+
+        settings = QSettings()
+        has_saved = bool(settings.value(self.KEY_USER, ""))
+
+        if has_saved:
+            info = QLabel("✔ Přihlašovací údaje jsou uloženy. Vyplňte pole níže pro jejich změnu.")
+            info.setStyleSheet("color: green; font-style: italic;")
+        else:
+            info = QLabel("Zadejte přihlašovací údaje k Digitálnímu archivu AMČR. Přihlašovací údaje budou uloženy v registrech systému.")
+        info.setWordWrap(True)
+        layout.addWidget(info)
+        layout.addSpacing(8)
+
+        form = QFormLayout()
+
+        self.txt_user = QLineEdit()
+        self.txt_user.setPlaceholderText("např. jan.novak@email.cz")
+        # Předvyplnit uložené jméno pro pohodlí
+        self.txt_user.setText(settings.value(self.KEY_USER, ""))
+        form.addRow("Uživatelské jméno:", self.txt_user)
+
+        self.txt_pass = QLineEdit()
+        self.txt_pass.setEchoMode(QLineEdit.EchoMode.Password)
+        self.txt_pass.setPlaceholderText("heslo")
+        form.addRow("Heslo:", self.txt_pass)
+
+        layout.addLayout(form)
+        layout.addSpacing(8)
+
+        if has_saved:
+            btn_forget = QPushButton("Zapomenout uložené přihlašovací údaje")
+            btn_forget.setStyleSheet("color: #c0392b;")
+            btn_forget.clicked.connect(self._forget_credentials)
+            layout.addWidget(btn_forget)
+
+        layout.addStretch(1)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self._save_and_accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+        self.setLayout(layout)
+
+    def _save_and_accept(self):
+        username = self.txt_user.text().strip()
+        password = self.txt_pass.text()
+
+        if not username or not password:
+            QMessageBox.warning(self, "Chybí údaje", "Vyplňte prosím uživatelské jméno i heslo.")
+            return
+
+        settings = QSettings()
+        settings.setValue(self.KEY_USER, username)
+        # base64 není šifrování, ale heslo aspoň neleží v plaintextu v registru
+        settings.setValue(self.KEY_PASS, base64.b64encode(password.encode()).decode())
+        self.accept()
+
+    def _forget_credentials(self):
+        settings = QSettings()
+        settings.remove(self.KEY_USER)
+        settings.remove(self.KEY_PASS)
+        QMessageBox.information(self, "Hotovo", "Přihlašovací údaje byly odstraněny.")
+        self.reject()
+
+    @staticmethod
+    def get_credentials() -> tuple[str, str]:
+        """Vrátí (username, password) z QSettings, nebo ('', '') pokud nejsou uloženy."""
+        settings = QSettings()
+        username = settings.value(LoginDialog.KEY_USER, "")
+        encoded = settings.value(LoginDialog.KEY_PASS, "")
+        try:
+            password = base64.b64decode(encoded.encode()).decode() if encoded else ""
+        except Exception:
+            password = ""
+        return username, password
