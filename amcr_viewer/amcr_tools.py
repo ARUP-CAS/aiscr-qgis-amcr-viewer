@@ -1,7 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 from qgis.core import (QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry, 
                        QgsField, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
-                       QgsWkbTypes, Qgis)
+                       QgsWkbTypes, Qgis, QgsApplication, QgsAuthMethodConfig, QgsMessageLog)
 from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt, QMetaType
 from qgis.PyQt.QtWidgets import QApplication
@@ -11,6 +11,59 @@ import json
 
 # Global cache to store translated terms from the Digital Archive
 TRANSLATIONS = {}
+
+# Session s autentizační cookie po přihlášení; None = nepřihlášen (anonymní přístup)
+AMCR_SESSION: requests.Session | None = None
+
+def _log(msg: str, level=Qgis.MessageLevel.Info):
+    """Shortcut: zapíše zprávu do QGIS logu (panel Zprávy → záložka AMČR)."""
+    QgsMessageLog.logMessage(msg, "AMČR login", level)
+
+
+def login_to_api(username: str, password: str):
+    """
+    Přihlásí se do Digiarchiv API pomocí username a hesla.
+    Vrátí requests.Session s nastavenou session cookie, nebo None při chybě.
+    """
+    login_url = "https://digiarchiv.aiscr.cz/api/user/login"
+
+    _log(f"Přihlašuji uživatele: '{username}'")
+
+    if not username or not password:
+        _log("CHYBA: username nebo heslo je prázdné.", Qgis.MessageLevel.Critical)
+        return None
+
+    session = requests.Session()
+    session.headers.update({
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        "User-Agent": "QGIS-Plugin/1.0 (AISCR Data Fetcher)"
+    })
+
+    try:
+        _log(f"Odesílám POST na {login_url} ...")
+        response = session.post(login_url, json={"user": username, "pwd": password}, timeout=10)
+        _log(f"HTTP status: {response.status_code}")
+        response.raise_for_status()
+
+        # API vrací chyby se status kódem 200 – je nutné zkontrolovat tělo odpovědi
+        body = response.json()
+        if "error" in body:
+            _log(f"CHYBA přihlášení (API): {body['error']}", Qgis.MessageLevel.Critical)
+            return None
+
+        _log("Přihlášení proběhlo úspěšně.")
+        global AMCR_SESSION
+        AMCR_SESSION = session
+        return session
+
+    except requests.exceptions.HTTPError as e:
+        _log(f"CHYBA HTTP {e.response.status_code if e.response else '?'}: "
+             f"{e.response.text[:300] if e.response else 'žádná odpověď'}", Qgis.MessageLevel.Critical)
+        return None
+    except requests.exceptions.RequestException as e:
+        _log(f"CHYBA sítě: {e}", Qgis.MessageLevel.Critical)
+        return None
 
 def load_translations():
     """Fetches the official Czech translation dictionary from the AISCR API."""
