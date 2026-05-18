@@ -156,7 +156,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 del base_params['page']
             
             try:
-                resp_docs = requests.get(url, params=base_params, timeout=30)
+                resp_docs = (AMCR_SESSION or requests).get(url, params=base_params, timeout=30)
                 resp_json = resp_docs.json()
                 data = resp_json.get('response', {})
                 batch_docs = data.get('docs', [])
@@ -361,7 +361,7 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
             }
             try:
                 QApplication.processEvents() 
-                r_pian = requests.get(url, params=params_pian, timeout=15)
+                r_pian = (AMCR_SESSION or requests).get(url, params=params_pian, timeout=15)
                 batch_docs = r_pian.json().get('response', {}).get('docs', [])
                 docs_pian.extend(batch_docs)
             except Exception as e:
