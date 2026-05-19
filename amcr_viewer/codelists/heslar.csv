@@ -523,6 +523,9 @@ Děčín;Děčín;okres
 Česká Lípa;Česká Lípa;okres
 Beroun;Beroun;okres
 Benešov;Benešov;okres
+Kohoutovice;Kohoutovice;katastr
+Nový Lískovec;Nový Lískovec;katastr
+Bohunice;Bohunice;katastr
 Starý Lískovec;Starý Lískovec;katastr
 Horní Heršpice;Horní Heršpice;katastr
 Královo Pole;Královo Pole;katastr
@@ -9952,7 +9955,6 @@ Jestřabice;Jestřabice;katastr
 Jeníkovec;Jeníkovec;katastr
 Týnec nad Labem;Týnec nad Labem;katastr
 Horní Čepí;Horní Čepí;katastr
-Kohoutovice;Kohoutovice;katastr
 Pikárec;Pikárec;katastr
 Horní Slověnice;Horní Slověnice;katastr
 Porešín;Porešín;katastr
@@ -10586,7 +10588,6 @@ Němčice nad Labem;Němčice nad Labem;katastr
 Kozojídky;Kozojídky;katastr
 Šemanovice;Šemanovice;katastr
 Smolov;Smolov;katastr
-Bohunice;Bohunice;katastr
 Podolí u Mohelnice;Podolí u Mohelnice;katastr
 Běšiny;Běšiny;katastr
 Bělice;Bělice;katastr
@@ -11885,7 +11886,6 @@ Hřivínův Újezd;Hřivínův Újezd;katastr
 Radonice u Hradiště;Radonice u Hradiště;katastr
 Chabičovice;Chabičovice;katastr
 Košín;Košín;katastr
-Nový Lískovec;Nový Lískovec;katastr
 Pavlovice;Pavlovice;katastr
 Kněžičky;Kněžičky;katastr
 Občov;Občov;katastr
@@ -13614,6 +13614,8 @@ Kameničná;Kameničná;katastr
 Hrušová;Hrušová;katastr
 Javornice u Dubu;Javornice u Dubu;katastr
 Veleslavín;Veleslavín;katastr
+Tolar, Jan;OS-008490;vedouci
+Šimurda, Petr;OS-008489;vedouci
 Mrázek, Michal;OS-008488;vedouci
 Hendrych, Marek;OS-008487;vedouci
 Haydamakha, Ruslan;OS-008486;vedouci
@@ -21865,3 +21867,7 @@ ruina;HES-001456;lokalita_zachovalost
 nadzemní relikty;HES-001455;lokalita_zachovalost
 lokalita pod zástavbou;HES-001454;lokalita_zachovalost
 zaniklá lokalita;HES-001453;lokalita_zachovalost
+archivář;HES-000868;pristupnost
+archeolog;HES-000867;pristupnost
+badatel;HES-000866;pristupnost
+anonym;HES-000865;pristupnost
