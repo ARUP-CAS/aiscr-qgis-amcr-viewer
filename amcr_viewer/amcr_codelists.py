@@ -25,7 +25,8 @@ slovnicek = {
     'typ_lokality' : 'heslo:lokalita_typ',
     'druh_lokality' : 'heslo:lokalita_druh',
     'jistota' : 'heslo:jistota_urceni',
-    'lokalita_zachovalost' : 'heslo:stav_dochovani'
+    'lokalita_zachovalost' : 'heslo:stav_dochovani',
+    'pristupnost' : 'heslo:pristupnost'
 }
 
 NS = {
@@ -78,7 +79,7 @@ def parse_codelist_file(filename, target_dict=None):
     return target_dict
 
 def load_all_data():
-    """Loads all static and dynamic codelists during plugin startup."""
+    """Loads the codelist during plugin startup."""
     ensure_codelists_dir()
     categorized_data = {k: {} for k in slovnicek.keys()}
     parse_codelist_file('heslar.csv', categorized_data)
@@ -124,6 +125,9 @@ def fetch_set(internal_name, api_set, task=None):
 
                     if internal_name in specialni_pripady:
                         kod = nazev
+
+                    if internal_name == 'pristupnost':
+                        kod = next((t.text for t in titles if t.text and len(t.text) == 1 and t.text.isalpha()), None)
 
                     dataset.append({
                         'Název': nazev,
@@ -186,7 +190,7 @@ def download_heslare(task=None):
 def refresh_globals():
     """Znovu načte data ze souborů do globálních proměnných."""
     global OBDOBI, TYP_AKCE, AREAL, KRAJE, ORGANIZACE, OKRESY, KATASTRY
-    global VEDOUCI, PIAN_PRESNOST, TYP_LOKALITY, DRUH_LOKALITY, JISTOTA, LOKALITA_ZACHOVALOST
+    global VEDOUCI, PIAN_PRESNOST, TYP_LOKALITY, DRUH_LOKALITY, JISTOTA, LOKALITA_ZACHOVALOST, PRISTUPNOST
     
     data = load_all_data()
     
@@ -216,6 +220,9 @@ def refresh_globals():
     JISTOTA.update(data.get('jistota', {}))
     LOKALITA_ZACHOVALOST.clear()
     LOKALITA_ZACHOVALOST.update(data.get('lokalita_zachovalost', {}))
+    PRISTUPNOST.clear()
+    PRISTUPNOST.update(data.get('pristupnost', {}))
+
 
 # Inicializace prázdných diktů, které se naplní hned pod tím
 OBDOBI = {}
@@ -231,5 +238,6 @@ TYP_LOKALITY = {}
 DRUH_LOKALITY = {}
 JISTOTA = {}
 LOKALITA_ZACHOVALOST = {}
+PRISTUPNOST = {}
 
 refresh_globals()
