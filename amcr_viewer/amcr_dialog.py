@@ -373,7 +373,7 @@ class LoginDialog(QDialog):
             info = QLabel("✔ Přihlašovací údaje jsou uloženy. Vyplňte pole níže pro jejich změnu.")
             info.setStyleSheet("color: green; font-style: italic;")
         else:
-            info = QLabel("Zadejte přihlašovací údaje k Digitálnímu archivu AMČR. Přihlašovací údaje budou uloženy v registrech systému.")
+            info = QLabel("Zadejte přihlašovací údaje k Digitálnímu archivu AMČR.\nVarování: přihlašovací údaje budou nezašifrovaně uloženy v registrech systému.")
         info.setWordWrap(True)
         layout.addWidget(info)
         layout.addSpacing(8)
@@ -384,7 +384,7 @@ class LoginDialog(QDialog):
         self.txt_user.setPlaceholderText("např. jan.novak@email.cz")
         # Předvyplnit uložené jméno pro pohodlí
         self.txt_user.setText(settings.value(self.KEY_USER, ""))
-        form.addRow("Uživatelské jméno:", self.txt_user)
+        form.addRow("E-mail:", self.txt_user)
 
         self.txt_pass = QLineEdit()
         self.txt_pass.setEchoMode(QLineEdit.EchoMode.Password)
