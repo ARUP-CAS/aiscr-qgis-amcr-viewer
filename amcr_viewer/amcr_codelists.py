@@ -2,7 +2,7 @@
 import os
 import csv
 import requests
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
 import time
 from qgis.core import QgsMessageLog, Qgis
 
