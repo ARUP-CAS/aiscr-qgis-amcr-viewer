@@ -9,7 +9,7 @@ from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.core import QgsTask, QgsApplication, QgsMessageLog, Qgis
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE, 
                              OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST, TYP_LOKALITY,
-                             DRUH_LOKALITY, JISTOTA, LOKALITA_ZACHOVALOST,
+                             DRUH_LOKALITY, JISTOTA, LOKALITA_ZACHOVALOST, PRISTUPNOST,
                              download_heslare, refresh_globals)
 
 class UpdateCodelistsTask(QgsTask):
@@ -134,7 +134,7 @@ class AmcrFilterDialog(QDialog):
         # Cache dictionary to store selected codes for each category
         self.selection_cache = {
             'organizace': [], 'kraj': [], 'obdobi': [], 'areal': [], 
-            'typ_akce': [], 'okres': [], 'katastr': [], 'vedouci': [], 'pian_presnost': [],
+            'typ_akce': [], 'okres': [], 'katastr': [], 'vedouci': [], 'pian_presnost': [], 'pristupnost': [],
             'typ_lokality': [], 'druh_lokality': [], 'jistota': [], 'lokalita_zachovalost': []
         }
         
@@ -166,6 +166,9 @@ class AmcrFilterDialog(QDialog):
 
         self.picker_presnost = self.setup_picker("PIAN – přesnost", 'pian_presnost', PIAN_PRESNOST)
         layout.addWidget(self.picker_presnost)
+        
+        self.picker_pristupnost = self.setup_picker("Přístupnost", 'pristupnost', PRISTUPNOST)
+        layout.addWidget(self.picker_pristupnost)
 
         # Filters valid for Akce
 
@@ -322,6 +325,8 @@ class AmcrFilterDialog(QDialog):
             filters['f_areal'] = self.selection_cache['areal']
         if self.selection_cache['pian_presnost']:
             filters['f_pian_presnost'] = self.selection_cache['pian_presnost']  
+        if self.selection_cache['pristupnost']:
+            filters['pristupnost'] = self.selection_cache['pristupnost'] 
             
         if self.typ_dat == "akce":
             if self.chk_posevidence.isChecked():
