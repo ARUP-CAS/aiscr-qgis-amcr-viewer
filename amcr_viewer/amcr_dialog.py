@@ -1,12 +1,11 @@
 ﻿# -*- coding: utf-8 -*-
-import base64
 from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, 
                                  QLineEdit, QDialogButtonBox, 
                                  QCheckBox, QGroupBox, QPushButton,
                                  QListWidget, QListWidgetItem, QHBoxLayout,
                                  QMessageBox, QLabel, QFormLayout)
 from qgis.PyQt.QtCore import Qt, QSettings
-from qgis.core import QgsTask, QgsApplication, QgsMessageLog, Qgis
+from qgis.core import QgsTask, QgsApplication, QgsMessageLog, Qgis, QgsAuthMethodConfig
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE, 
                              OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST, TYP_LOKALITY,
                              DRUH_LOKALITY, JISTOTA, LOKALITA_ZACHOVALOST, PRISTUPNOST,
@@ -352,12 +351,24 @@ class AmcrFilterDialog(QDialog):
 
 class LoginDialog(QDialog):
     """
-    Dialog pro uložení přihlašovacích údajů do AMČR.
-    Ukládá do QSettings (username plaintext, heslo base64).
+    Dialog for saving AMČR login credentials securely in the QGIS Authentication Manager.
+
+    Credentials are encrypted by the platform's native secret storage
+    (DPAPI on Windows, Keychain on macOS, encrypted SQLite on Linux).
+    The auth config ID is persisted in QSettings so the session can be
+    restored automatically after a QGIS restart.
+
+    Note on QgsAuthManager quirks (QGIS 4 / Python bindings):
+    - hasConfigId() is unreliable – it checks an in-memory cache that may not
+      be populated yet. We never use it as a hard gate; we skip it and call
+      loadAuthenticationConfig() directly instead.
+    - storeAuthenticationConfig() and loadAuthenticationConfig() both have
+      SIP_INOUT on their config parameter, so Python bindings return a tuple
+      (bool, QgsAuthMethodConfig) rather than just bool. Always unpack both.
     """
 
-    KEY_USER = "amcr_viewer/username"
-    KEY_PASS = "amcr_viewer/password"
+    SETTINGS_KEY = "amcr_viewer/auth_config_id"
+    CONFIG_NAME  = "AMČR Viewer"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -366,14 +377,19 @@ class LoginDialog(QDialog):
 
         layout = QVBoxLayout()
 
-        settings = QSettings()
-        has_saved = bool(settings.value(self.KEY_USER, ""))
+        # Check whether a config ID is already stored from a previous session.
+        # We attempt a lightweight load (full=False) to confirm it is readable,
+        # since hasConfigId() may return False even for valid configs (cache lag).
+        existing_id = QSettings().value(self.SETTINGS_KEY, "")
+        self._has_saved = bool(existing_id) and bool(self._load_username_from_config(existing_id))
 
-        if has_saved:
-            info = QLabel("✔ Přihlašovací údaje jsou uloženy. Vyplňte pole níže pro jejich změnu.")
+        if self._has_saved:
+            info = QLabel("✔ Přihlašovací údaje jsou bezpečně uloženy ve správci autentizace QGIS.\n"
+                          "Vyplňte pole níže pouze pokud je chcete změnit.")
             info.setStyleSheet("color: green; font-style: italic;")
         else:
-            info = QLabel("Zadejte přihlašovací údaje k Digitálnímu archivu AMČR.\nVarování: přihlašovací údaje budou nezašifrovaně uloženy v registrech systému.")
+            info = QLabel("Zadejte přihlašovací údaje k Digitálnímu archivu AMČR.\n"
+                          "Budou zašifrovaně uloženy ve správci autentizace QGIS.")
         info.setWordWrap(True)
         layout.addWidget(info)
         layout.addSpacing(8)
@@ -382,20 +398,23 @@ class LoginDialog(QDialog):
 
         self.txt_user = QLineEdit()
         self.txt_user.setPlaceholderText("např. jan.novak@email.cz")
-        # Předvyplnit uložené jméno pro pohodlí
-        self.txt_user.setText(settings.value(self.KEY_USER, ""))
+        # Pre-fill the stored username (not sensitive) for convenience
+        if self._has_saved:
+            self.txt_user.setText(self._load_username_from_config(existing_id))
         form.addRow("E-mail:", self.txt_user)
 
         self.txt_pass = QLineEdit()
         self.txt_pass.setEchoMode(QLineEdit.EchoMode.Password)
-        self.txt_pass.setPlaceholderText("heslo")
+        self.txt_pass.setPlaceholderText(
+            "ponechte prázdné pro zachování stávajícího hesla" if self._has_saved else "heslo"
+        )
         form.addRow("Heslo:", self.txt_pass)
 
         layout.addLayout(form)
         layout.addSpacing(8)
 
-        if has_saved:
-            btn_forget = QPushButton("Zapomenout uložené přihlašovací údaje")
+        if self._has_saved:
+            btn_forget = QPushButton("Odebrat uložené přihlašovací údaje")
             btn_forget.setStyleSheet("color: #c0392b;")
             btn_forget.clicked.connect(self._forget_credentials)
             layout.addWidget(btn_forget)
@@ -411,35 +430,152 @@ class LoginDialog(QDialog):
 
         self.setLayout(layout)
 
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _load_config(config_id: str, full: bool = False):
+        """
+        Attempt to load a QgsAuthMethodConfig by ID.
+        Returns (ok, cfg). Never raises; returns (False, empty cfg) on any error.
+        full=True decrypts and includes the password.
+        """
+        try:
+            auth_mgr = QgsApplication.authManager()
+            cfg = QgsAuthMethodConfig()
+            result = auth_mgr.loadAuthenticationConfig(config_id, cfg, full)
+            # Python bindings return (bool, cfg) due to SIP_INOUT parameter
+            if isinstance(result, tuple):
+                return result
+            return result, cfg
+        except Exception:
+            return False, QgsAuthMethodConfig()
+
+    def _load_username_from_config(self, config_id: str) -> str:
+        """Load just the username from a stored config (no password decryption)."""
+        ok, cfg = self._load_config(config_id, full=False)
+        return cfg.config("username", "") if ok else ""
+
+    def _ensure_master_password(self) -> bool:
+        """
+        Ensure the Auth Manager is unlocked before writing.
+        Prompts the user to set or enter the master password if needed.
+        Returns True if the manager is ready, False if the user cancelled.
+        """
+        auth_mgr = QgsApplication.authManager()
+
+        if auth_mgr.isDisabled():
+            QMessageBox.critical(
+                self, "Správce autentizace nedostupný",
+                "Správce autentizace QGIS je zakázán nebo poškozený.\n"
+                "Zkuste obnovit databázi: Nastavení → Možnosti → Autentizace → Pomůcky."
+            )
+            return False
+
+        # setMasterPassword(True) shows the QGIS master password dialog if needed
+        if not auth_mgr.setMasterPassword(True):
+            return False  # User cancelled the master password dialog
+
+        return True
+
+    # ------------------------------------------------------------------
+    # Button actions
+    # ------------------------------------------------------------------
+
     def _save_and_accept(self):
         username = self.txt_user.text().strip()
         password = self.txt_pass.text()
 
-        if not username or not password:
-            QMessageBox.warning(self, "Chybí údaje", "Vyplňte prosím uživatelské jméno i heslo.")
+        if not username:
+            QMessageBox.warning(self, "Chybí údaje", "Vyplňte prosím e-mailovou adresu.")
             return
 
+        existing_id = QSettings().value(self.SETTINGS_KEY, "")
+        auth_mgr = QgsApplication.authManager()
+
+        # If a config already exists and the password field is blank,
+        # update only the username and keep the existing encrypted password.
+        if not password and existing_id:
+            ok, cfg = self._load_config(existing_id, full=True)
+            if ok:
+                if not self._ensure_master_password():
+                    return
+                cfg.setConfig("username", username)
+                auth_mgr.updateAuthenticationConfig(cfg)
+                self.accept()
+                return
+
+        if not password:
+            QMessageBox.warning(self, "Chybí údaje", "Vyplňte prosím heslo.")
+            return
+
+        if not self._ensure_master_password():
+            return
+
+        cfg = QgsAuthMethodConfig()
+        cfg.setName(self.CONFIG_NAME)
+        cfg.setMethod("Basic")
+        cfg.setConfig("username", username)
+        cfg.setConfig("password", password)  # nosec B106
+
         settings = QSettings()
-        settings.setValue(self.KEY_USER, username)
-        # base64 není šifrování, ale heslo aspoň neleží v plaintextu v registru
-        settings.setValue(self.KEY_PASS, base64.b64encode(password.encode()).decode())
+
+        # Try to update an existing config first; fall back to creating a new one.
+        # We skip hasConfigId() as it may return False despite the config existing
+        # (in-memory cache may not be populated yet in QGIS 4).
+        ok_load, existing_cfg = self._load_config(existing_id, full=False) if existing_id else (False, None)
+        if ok_load:
+            cfg.setId(existing_id)
+            ok, cfg = auth_mgr.updateAuthenticationConfig(cfg)
+        else:
+            ok, cfg = auth_mgr.storeAuthenticationConfig(cfg)
+
+        config_id = cfg.id() if cfg else ""
+
+        if not ok or not config_id:
+            QMessageBox.critical(
+                self, "Chyba uložení",
+                "Přihlašovací údaje se nepodařilo uložit do správce autentizace QGIS.\n"
+                "Zkuste restartovat QGIS a přihlásit se znovu."
+            )
+            return
+
+        settings.setValue(self.SETTINGS_KEY, config_id)
         self.accept()
 
     def _forget_credentials(self):
         settings = QSettings()
-        settings.remove(self.KEY_USER)
-        settings.remove(self.KEY_PASS)
-        QMessageBox.information(self, "Hotovo", "Přihlašovací údaje byly odstraněny.")
+        existing_id = settings.value(self.SETTINGS_KEY, "")
+        if existing_id:
+            QgsApplication.authManager().removeAuthenticationConfig(existing_id)
+            settings.remove(self.SETTINGS_KEY)
+        QMessageBox.information(self, "Hotovo", "Uložené přihlašovací údaje byly odebrány.")
         self.reject()
+
+    # ------------------------------------------------------------------
+    # Public static API – call this anywhere in the plugin to get credentials
+    # ------------------------------------------------------------------
 
     @staticmethod
     def get_credentials() -> tuple[str, str]:
-        """Vrátí (username, password) z QSettings, nebo ('', '') pokud nejsou uloženy."""
+        """
+        Retrieve (username, password) from the QGIS Authentication Manager.
+        Returns ('', '') if no credentials are stored or the manager is locked.
+
+        Note: hasConfigId() is intentionally skipped here – it checks an
+        in-memory cache that may lag behind the actual database contents,
+        causing false negatives (see class docstring). loadAuthenticationConfig()
+        is called directly and its return value is used as the authoritative result.
+        """
         settings = QSettings()
-        username = settings.value(LoginDialog.KEY_USER, "")
-        encoded = settings.value(LoginDialog.KEY_PASS, "")
-        try:
-            password = base64.b64decode(encoded.encode()).decode() if encoded else ""
-        except Exception:
-            password = ""
-        return username, password
+        config_id = settings.value(LoginDialog.SETTINGS_KEY, "")
+
+        if not config_id:
+            return "", ""
+
+        ok, cfg = LoginDialog._load_config(config_id, full=True)
+        if not ok:
+            return "", ""
+
+        return cfg.config("username", ""), cfg.config("password", "")  # nosec B106
