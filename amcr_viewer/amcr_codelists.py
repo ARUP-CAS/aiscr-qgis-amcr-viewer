@@ -126,6 +126,9 @@ def fetch_set(internal_name, api_set, task=None):
                     if internal_name in specialni_pripady:
                         kod = nazev
 
+                    if internal_name == 'pristupnost':
+                        kod = next((t.text for t in titles if t.text and len(t.text) == 1 and t.text.isalpha()), None)
+
                     dataset.append({
                         'Název': nazev,
                         'Kód': kod,

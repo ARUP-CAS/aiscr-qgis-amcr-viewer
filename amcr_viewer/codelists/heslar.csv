@@ -21867,7 +21867,7 @@ ruina;HES-001456;lokalita_zachovalost
 nadzemní relikty;HES-001455;lokalita_zachovalost
 lokalita pod zástavbou;HES-001454;lokalita_zachovalost
 zaniklá lokalita;HES-001453;lokalita_zachovalost
-archivář;HES-000868;pristupnost
-archeolog;HES-000867;pristupnost
-badatel;HES-000866;pristupnost
-anonym;HES-000865;pristupnost
+archivář;D;pristupnost
+archeolog;C;pristupnost
+badatel;B;pristupnost
+anonym;A;pristupnost
