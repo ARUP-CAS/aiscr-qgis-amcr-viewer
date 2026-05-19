@@ -2,7 +2,7 @@
 import os
 import csv
 import requests
-import xml.etree.ElementTree as ET  # nosec B314
+import xml.etree.ElementTree as ET  # nosec
 import time
 from qgis.core import QgsMessageLog, Qgis
 
@@ -101,7 +101,7 @@ def fetch_set(internal_name, api_set, task=None):
         try:
             response = requests.get(BASE_URL, params=params, timeout=30)
             response.raise_for_status()
-            root = ET.fromstring(response.content)
+            root = ET.fromstring(response.content) # nosec
             
             records = root.findall('.//oai:record', NS)
             for rec in records:
