@@ -142,6 +142,13 @@ def tr_code(code):
         return ""
     return TRANSLATIONS.get(code, code)
 
+def komp_projde_filtrem(komp, filter_areal, filter_datace, filters):
+    if filter_areal and komp.get('komponenta_areal', {}).get('id', "") not in filters.get('f_areal', []):
+        return False
+    if filter_datace and komp.get('komponenta_obdobi', {}).get('id', "") not in filters.get('f_obdobi', []):
+        return False
+    return True
+
 def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false"):
     """
     Main processing function:
@@ -203,6 +210,10 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
 
         # Check if we should skip negative results based on filter
         skip_negativni = filters.get('posevidence') == 'true' if filters else False
+
+        # Check whether we should filter results based on component filters
+        filter_areal = "f_areal" in filters if filters else False
+        filter_datace = "f_obdobi" in filters if filters else False
         
         # --- API PAGINATION LOOP ---
         while True:
@@ -339,6 +350,14 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                 if skip_negativni and dj.get('dj_negativni_jednotka') is True:
                     continue
 
+                komps = dj.get('dj_komponenta', [])
+                
+                if filter_areal or filter_datace:
+                    if not komps:
+                        continue
+                    if not any(komp_projde_filtrem(komp, filter_areal, filter_datace, filters) for komp in komps):
+                        continue
+
                 dj_id = dj.get('ident_cely')
                 dj_typ = dj.get('dj_typ')
 
@@ -361,9 +380,11 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
 
                         if komponenty == "true":
                             # One feature per component — all data on a single row, no relations needed
-                            komps = dj.get('dj_komponenta', [])
                             if komps:
                                 for komp in komps:
+                                    if not komp_projde_filtrem(komp, filter_areal, filter_datace, filters):
+                                        continue
+
                                     komp_meta = {
                                         **dj_meta,
                                         'komponenta_id': komp.get('ident_cely', ""),
@@ -374,6 +395,9 @@ def load_amcr_data(canvas, bb, filters=None, typ_dat="akce", komponenty="false")
                                     target_pian_ids_count += 1
                             else:
                                 # DJ without components — still include with empty component fields
+                                if filter_areal or filter_datace:
+                                    continue
+                                
                                 empty_meta = {
                                     **dj_meta,
                                     'komponenta_id': "",
