@@ -8,7 +8,7 @@ name=AMČR Viewer
 qgisMinimumVersion=3.4.0
 qgisMaximumVersion=4.99.0
 description=Viewing and downloading the AMČR data.
-version=2.0.0-alpha.3
+version=2.0.0-alpha.4
 author=David Spáčil
 email=spacil@arub.cz
 
@@ -22,7 +22,16 @@ repository=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=
+  v2.0.0-alpha.4 (2026-06-03)
+   * Backend filtering of the results based on the component-related filters improvement (plugin not only loads the results from API, it filters them further)
+  v2.0.0-alpha.2–3 (2026-05-19)
+   * Security vulnerabilities fix
+  v2.0.0-alpha.1 (2026-05-19):
+   * Attribute fields renamed to be ASCII compliant
+   * Codelist update; codelist can be recompiled from AMČR API
+   * Basic element changed from Documentation Unit to Component if user asks for components to simplify result filtering
+   * Plugin now supports logging with an AMČR account and enables the downloading of Events and Sites available to the roles Researcher and higher 
 
 # Tags are comma separated with spaces allowed
 tags=python,AMCR,AIS CR,archaeology,PIAN,AMČR
