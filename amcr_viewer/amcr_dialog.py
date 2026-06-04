@@ -447,6 +447,9 @@ class LoginDialog(QDialog):
     - storeAuthenticationConfig() and loadAuthenticationConfig() both have
       SIP_INOUT on their config parameter, so Python bindings return a tuple
       (bool, QgsAuthMethodConfig) rather than just bool. Always unpack both.
+    - loadAuthenticationConfig() with full=False loads only metadata (name, method,
+      id) but NOT the config() values like username/password. Use full=True to
+      access those.
     """
 
     SETTINGS_KEY = "amcr_viewer/auth_config_id"
@@ -463,11 +466,14 @@ class LoginDialog(QDialog):
         # We attempt a lightweight load (full=False) to confirm it is readable,
         # since hasConfigId() may return False even for valid configs
         # (cache lag).
+        # The Auth Manager must be unlocked before we attempt to read from it;
+        # otherwise loadAuthenticationConfig() returns ok=False even for valid
+        # configs, causing _has_saved to be incorrectly set to False.
         existing_id = QSettings().value(self.SETTINGS_KEY, "")
-        self._has_saved = (
-            bool(existing_id)
-            and bool(self._load_username_from_config(existing_id))
-        )
+        if existing_id:
+            QgsApplication.authManager().setMasterPassword(True)
+        username = self._load_username_from_config(existing_id)
+        self._has_saved = bool(existing_id) and bool(username)
 
         if self._has_saved:
             info = QLabel(
@@ -548,9 +554,10 @@ class LoginDialog(QDialog):
             return False, QgsAuthMethodConfig()
 
     def _load_username_from_config(self, config_id: str) -> str:
-        """Load just the username from a stored config
-        (no password decryption)."""
-        ok, cfg = self._load_config(config_id, full=False)
+        """Load the username from a stored config.
+        Requires full=True since config() values are only populated
+        when the config is fully decrypted."""
+        ok, cfg = self._load_config(config_id, full=True)
         return cfg.config("username", "") if ok else ""
 
     def _ensure_master_password(self) -> bool:
@@ -635,7 +642,7 @@ class LoginDialog(QDialog):
         )
         if ok_load:
             cfg.setId(existing_id)
-            ok, cfg = auth_mgr.updateAuthenticationConfig(cfg)
+            ok = auth_mgr.updateAuthenticationConfig(cfg)
         else:
             ok, cfg = auth_mgr.storeAuthenticationConfig(cfg)
 
