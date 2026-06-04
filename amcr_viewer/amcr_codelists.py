@@ -106,7 +106,7 @@ def fetch_set(internal_name, api_set, task=None):
     }
 
     while True:
-        # Kontrola zrušení v každém kroku
+        # Check for cancellation at each iteration
         if task and task.isCanceled():
             return None
 
@@ -119,7 +119,7 @@ def fetch_set(internal_name, api_set, task=None):
             for rec in records:
                 metadata = rec.find('.//oai_dc:dc', NS)
                 if metadata is not None:
-                    # Kód (identifier)
+                    # Code (identifier)
                     identifier_el = metadata.find('dc:identifier', NS)
                     kod = (
                         identifier_el.text
@@ -127,7 +127,7 @@ def fetch_set(internal_name, api_set, task=None):
                         else ""
                     )
 
-                    # Název (title) - filtrujeme systémové popisky "AMČR - ..."
+                    # Title – filter out system labels "AMČR - ..."
                     titles = metadata.findall('dc:title', NS)
                     nazev = ""
                     for t in titles:
@@ -138,8 +138,8 @@ def fetch_set(internal_name, api_set, task=None):
                         ):
                             nazev = t.text
                             break
-                    # Pokud by náhodou žádný title neprošel filtrem,
-                    # vezmeme první dostupný
+                    # If no title passed the filter, fall back
+                    # to the first available one
                     if not nazev and titles:
                         nazev = titles[0].text
 
@@ -165,7 +165,7 @@ def fetch_set(internal_name, api_set, task=None):
                         'Kategorie': internal_name
                     })
 
-            # Stránkování
+            # Pagination
             token = root.find('.//oai:resumptionToken', NS)
             if token is not None and token.text:
                 params = {
@@ -192,7 +192,7 @@ def download_heslare(task=None):
     total_sets = len(slovnicek)
 
     for index, (interni, api_nazev) in enumerate(slovnicek.items()):
-        # Pokud uživatel task zrušil v liště QGISu
+        # Check if the user cancelled the task via the QGIS taskbar
         if task and task.isCanceled():
             return False
 
@@ -200,20 +200,20 @@ def download_heslare(task=None):
             f"Zpracovávám kategorii: {interni}...",
             "AMČR", Qgis.Info)
 
-        # Nyní předáváme task správně do upravené funkce
+        # Pass the task correctly to the updated fetch function
         data = fetch_set(interni, api_nazev, task=task)
 
         if data is None:
-            return False  # Bylo zrušeno uprostřed stahování
+            return False  # Cancelled mid-download
 
         all_data.extend(data)
 
-        # Reportování postupu (0-100)
+        # Report progress (0-100)
         if task:
             progress = (index + 1) / total_sets * 100
             task.setProgress(progress)
 
-    # Uložení do CSV
+    # Save to CSV
     with open(OUTPUT_FILE, 'w', newline='', encoding='utf-8-sig') as f:
         fieldnames = ['Název', 'Kód', 'Kategorie']
         writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';')
@@ -224,7 +224,7 @@ def download_heslare(task=None):
 
 
 def refresh_globals():
-    """Znovu načte data ze souborů do globálních proměnných."""
+    """Reloads data from files into the global variables."""
     data = load_all_data()
 
     OBDOBI.clear()
@@ -257,7 +257,7 @@ def refresh_globals():
     PRISTUPNOST.update(data.get('pristupnost', {}))
 
 
-# Inicializace prázdných diktů, které se naplní hned pod tím
+# Initialize empty dicts that will be populated immediately below
 OBDOBI = {}
 TYP_AKCE = {}
 AREAL = {}

@@ -13,20 +13,23 @@ import json
 # Global cache to store translated terms from the Digital Archive
 TRANSLATIONS = {}
 
-# Session s autentizační cookie po přihlášení;
-# None = nepřihlášen (anonymní přístup)
+# Session with authentication cookie after login;
+# None = not logged in (anonymous access)
 AMCR_SESSION: requests.Session | None = None
 
 
 def _log(msg: str, level=Qgis.MessageLevel.Info):
-    """Shortcut: zapíše zprávu do QGIS logu (panel Zprávy → záložka AMČR)."""
+    """
+    Shortcut: writes a message to the QGIS log
+    (Messages panel → AMČR tab).
+    """
     QgsMessageLog.logMessage(msg, "AMČR login", level)
 
 
 def login_to_api(username: str, password: str):
     """
-    Přihlásí se do Digiarchiv API pomocí username a hesla.
-    Vrátí requests.Session s nastavenou session cookie, nebo None při chybě.
+    Logs in to the Digiarchiv API using a username and password.
+    Returns a requests.Session with the session cookie set, or None on error.
     """
     login_url = "https://digiarchiv.aiscr.cz/api/user/login"
 
@@ -56,8 +59,8 @@ def login_to_api(username: str, password: str):
         _log(f"HTTP status: {response.status_code}")
         response.raise_for_status()
 
-        # API vrací chyby se status kódem 200
-        # je nutné zkontrolovat tělo odpovědi
+        # The API returns errors with status code 200 –
+        # the response body must be checked
         body = response.json()
         if "error" in body:
             _log(
@@ -83,15 +86,15 @@ def login_to_api(username: str, password: str):
 
 def _get_session() -> requests.Session | None:
     """
-    Vrátí aktivní session. Pokud žádná není (restart QGIS), pokusí se
-    automaticky přihlásit pomocí uložených přihlašovacích údajů.
-    Vrátí None pokud přihlašovací údaje nejsou uloženy.
+    Returns the active session. If none exists (e.g. after a QGIS restart),
+    attempts automatic login using stored credentials.
+    Returns None if no credentials are stored.
     """
     global AMCR_SESSION
     if AMCR_SESSION is not None:
         return AMCR_SESSION
 
-    # Zkusit auto-login pomocí uložených údajů
+    # Attempt auto-login using stored credentials
     from .amcr_dialog import LoginDialog
     username, password = LoginDialog.get_credentials()
     if username and password:
@@ -103,13 +106,14 @@ def _get_session() -> requests.Session | None:
 
 def _api_get(url, params, timeout=30) -> requests.Response:
     """
-    Provede GET request. Pokud API signalizuje vypršení přihlášení,
-    provede jedno opakované přihlášení a zkusí znovu.
+    Performs a GET request. If the API signals an expired login,
+    re-authenticates once and retries.
     """
     global AMCR_SESSION
 
     def _is_auth_error(resp: requests.Response) -> bool:
-        """API vrací auth chyby se status 200 – je nutné zkontrolovat tělo."""
+        """The API returns auth errors with status 200 –
+        the body must be checked."""
         if resp.status_code == 401:
             return True
         try:
@@ -129,7 +133,7 @@ def _api_get(url, params, timeout=30) -> requests.Response:
     if _is_auth_error(resp):
         _log("Session vypršela během stahování – obnovuji přihlášení...",
              Qgis.MessageLevel.Warning)
-        AMCR_SESSION = None  # Zrušit starou session
+        AMCR_SESSION = None  # Invalidate the old session
         from .amcr_dialog import LoginDialog
         username, password = LoginDialog.get_credentials()
         if username and password:
@@ -147,7 +151,10 @@ def _api_get(url, params, timeout=30) -> requests.Response:
 
 
 def load_translations():
-    # Fetches the official Czech translation dictionary from the AISCR API.
+    """
+    Fetches the official Czech translation dictionary
+    from the Digiarchive API.
+    """
     global TRANSLATIONS
     if TRANSLATIONS:
         return
@@ -162,8 +169,10 @@ def load_translations():
 
 
 def tr_code(code):
-    # Translates a technical code into a human-readable
-    # string using the global cache.
+    """
+    Translates a technical code into a human-readable string
+    using the global cache.
+    """
     if not code:
         return ""
     return TRANSLATIONS.get(code, code)
@@ -328,14 +337,14 @@ def load_amcr_data(canvas, bb, filters=None,
         target_pian_ids = set()
         actions_with_geom = 0
 
-        # Helper function for safe single-value extraction
+        # Helper: safely extract a single value
         def g(doc, key, default=""):
             val = doc.get(key)
             if isinstance(val, list):
                 return str(val[0]) if val else default
             return str(val) if val is not None else default
 
-        # Helper function for safe list-value extraction and joining
+        # Helper: safely extract and join a list of values
         def g_list(doc, key, translate=False):
             val = doc.get(key, [])
             if not isinstance(val, list):
@@ -352,8 +361,7 @@ def load_amcr_data(canvas, bb, filters=None,
 
             actions_with_geom += 1
 
-            # Extract protected data
-            # (fields not available in public Solr index)
+            # Extract protected fields
             az_chranene = doc.get('az_chranene_udaje', {})
             chranene = (
                 doc.get('akce_chranene_udaje')
@@ -361,7 +369,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 or {}
             )
 
-            # Format additional cadastral areas from dictionaries
+            # Format additional cadastral areas from nested dicts
             dalsi_kat = az_chranene.get('dalsi_katastr', [])
             dalsi_kat_str = ""
             if isinstance(dalsi_kat, list):
@@ -451,7 +459,7 @@ def load_amcr_data(canvas, bb, filters=None,
             djs = doc.get('az_dokumentacni_jednotka', [])
 
             for dj in djs:
-                # Filter out negative evidence units if requested
+                # Skip negative evidence units if requested
                 if skip_negativni and dj.get('dj_negativni_jednotka') is True:
                     continue
 
@@ -472,7 +480,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 dj_id = dj.get('ident_cely')
                 dj_typ = dj.get('dj_typ')
 
-                # Merge general meta with documentation unit specific data
+                # Merge shared metadata with documentation unit-specific fields
                 dj_meta = {
                     **meta,
                     'dj_id': dj_id,
@@ -494,7 +502,7 @@ def load_amcr_data(canvas, bb, filters=None,
                             pian_lookup[dj_pian_value] = []
 
                         if komponenty == "true":
-                            # One feature per component —
+                            # One feature per component –
                             # all data on a single row, no relations needed
                             if komps:
                                 for komp in komps:

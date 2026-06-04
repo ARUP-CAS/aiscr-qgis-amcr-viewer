@@ -21,9 +21,9 @@ class UpdateCodelistsTask(QgsTask):
         self.exception = None
 
     def run(self):
-        """Tato část běží ve vedlejším vlákně."""
+        """Runs in a background thread."""
         try:
-            # Voláme upravenou funkci
+            # Call the download function with the task reference
             self.success = download_heslare(task=self)
             return self.success
         except Exception as e:
@@ -31,9 +31,9 @@ class UpdateCodelistsTask(QgsTask):
             return False
 
     def finished(self, result):
-        """Tato část běží v hlavním vlákně po skončení run()."""
+        """Runs in the main thread after run() completes."""
         if result:
-            # Teď bezpečně aktualizujeme globální proměnné v hlavním vlákně
+            # Safely update the global variables in the main thread
             refresh_globals()
             QgsMessageLog.logMessage(
                 "Hesláře AMČR byly úspěšně aktualizovány.",
@@ -138,8 +138,8 @@ class AmcrFilterDialog(QDialog):
         self.setWindowTitle("Filtr AMČR")
         self.resize(500, 750)
 
-        # Determines if we are fetching 'akce' (projects)
-        # or 'lokalita' (locations)
+        # Determines if we are fetching 'akce' (events)
+        # or 'lokalita' (sites)
         self.typ_dat = typ_dat
 
         # Cache dictionary to store selected codes for each category
@@ -309,7 +309,7 @@ class AmcrFilterDialog(QDialog):
         btn = QPushButton("Vybrat...")
         btn.setFixedWidth(80)
 
-        # Nested function that handles opening the dialog and saving results
+        # Nested handler: opens the selection dialog and saves the result
         def open_dialog():
             dlg = FilterableSelectionDialog(
                 label_text,
@@ -319,15 +319,15 @@ class AmcrFilterDialog(QDialog):
             )
             if dlg.exec() == QDialog.DialogCode.Accepted:
                 codes, labels = dlg.get_selected_codes()
-                # Update local cache with selected IDs
+                # Update the local cache with selected IDs
                 self.selection_cache[cache_key] = codes
-                # Update the UI text field with selected names
+                # Update the display field with the selected item names
                 if labels:
                     display_field.setText(", ".join(labels))
                 else:
                     display_field.clear()
 
-        # Special case: Pre-fill specific accuracy levels by default
+        # Special case: pre-select default PIAN accuracy levels
         if cache_key == 'pian_presnost':
             display_field.setText(
                 "odchylka jednotky metrů, odchylka desítky metrů, "
@@ -344,7 +344,7 @@ class AmcrFilterDialog(QDialog):
         row_layout.addWidget(display_field)
         row_layout.addWidget(btn)
 
-        # Add an optional extra button (e.g., the refresh button for leaders)
+        # Optionally append an extra button (e.g. a refresh button)
         if extra_btn:
             row_layout.addWidget(extra_btn)
 
@@ -352,10 +352,10 @@ class AmcrFilterDialog(QDialog):
         return row_widget
 
     def action_update_heslare(self):
-        # Vytvoření instance tasku
+        # Create the task instance
         task = UpdateCodelistsTask("Aktualizace heslářů AMČR")
 
-        # Povolíme tlačítko zpět bez ohledu na výsledek
+        # Re-enable the button regardless of the outcome
         task.taskCompleted.connect(lambda: self.btn_update.setEnabled(True))
         task.taskTerminated.connect(lambda: self.btn_update.setEnabled(True))
 
@@ -365,11 +365,10 @@ class AmcrFilterDialog(QDialog):
             "Hesláře byly úspěšně aktualizovány."
         ))
 
-        # Ošetření, aby se přesně ukázala případná chyba
+        # Show the exact error if the task fails
         def on_error():
             if task.exception:
-                # Tohle ti přesně řekne,
-                # na čem to teď padá (např. PermissionError)
+                # This will show exactly what went wrong (e.g. PermissionError)
                 msg = (
                     "Aktualizace selhala z důvodu chyby:\n"
                     f"{str(task.exception)}"
