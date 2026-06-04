@@ -13,20 +13,20 @@ BASE_URL = "https://api.aiscr.cz/2.2/oai"
 OUTPUT_FILE = os.path.join(CODELISTS_DIR, 'heslar.csv')
 
 slovnicek = {
-    'obdobi' : 'heslo:obdobi',
-    'typ_akce' : 'heslo:akce_typ',
-    'areal' : 'heslo:areal',    
-    'kraj' : 'ruian_kraj',
-    'organizace' : 'organizace',
-    'okres' : 'ruian_okres',
-    'katastr' : 'ruian_katastr',
-    'vedouci' : 'osoba',
-    'pian_presnost' : 'heslo:pian_presnost',
-    'typ_lokality' : 'heslo:lokalita_typ',
-    'druh_lokality' : 'heslo:lokalita_druh',
-    'jistota' : 'heslo:jistota_urceni',
-    'lokalita_zachovalost' : 'heslo:stav_dochovani',
-    'pristupnost' : 'heslo:pristupnost'
+    'obdobi': 'heslo:obdobi',
+    'typ_akce': 'heslo:akce_typ',
+    'areal': 'heslo:areal',
+    'kraj': 'ruian_kraj',
+    'organizace': 'organizace',
+    'okres': 'ruian_okres',
+    'katastr': 'ruian_katastr',
+    'vedouci': 'osoba',
+    'pian_presnost': 'heslo:pian_presnost',
+    'typ_lokality': 'heslo:lokalita_typ',
+    'druh_lokality': 'heslo:lokalita_druh',
+    'jistota': 'heslo:jistota_urceni',
+    'lokalita_zachovalost': 'heslo:stav_dochovani',
+    'pristupnost': 'heslo:pristupnost'
 }
 
 NS = {
@@ -35,30 +35,35 @@ NS = {
     'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/'
 }
 
+
 def ensure_codelists_dir():
     """Creates the codelists directory if it does not exist."""
     if not os.path.exists(CODELISTS_DIR):
         os.makedirs(CODELISTS_DIR)
 
+
 def parse_codelist_file(filename, target_dict=None):
-    """Reads a CSV codelist file and populates the target dictionary grouped by categories."""
+    """
+    Reads a CSV codelist file and populates
+    the target dictionary grouped by categories.
+    """
     if target_dict is None:
         target_dict = {}
-        
+
     path = os.path.join(CODELISTS_DIR, filename)
-    
+
     # Return early if the file doesn't exist to avoid missing file errors
-    if not os.path.exists(path): 
+    if not os.path.exists(path):
         return target_dict
-        
+
     try:
         # Open the file using standard UTF-8 encoding
         with open(path, 'r', encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
-            
+
             # Skip the CSV header row
-            next(reader, None) 
-            
+            next(reader, None)
+
             # Iterate through rows and extract label, code, and category
             for row in reader:
                 if len(row) >= 3:
@@ -66,17 +71,23 @@ def parse_codelist_file(filename, target_dict=None):
                     code = row[1].strip()
                     cat = row[2].strip()
                     clean = code if code else None
-                    
-                    # Initialize a new dictionary for a category if encountered for the first time
+
+                    # Initialize a new dictionary for a category if encountered
+                    # for the first time
                     if cat not in target_dict:
                         target_dict[cat] = {}
-                        
-                    # Assign the extracted code to the corresponding label within the category
+
+                    # Assign the extracted code to the corresponding label
+                    # within the category
                     target_dict[cat][label] = clean
+
     except Exception as e:
-        QgsMessageLog.logMessage(f"AMČR Codelist Read Error for {filename}: {e}", "AMČR", Qgis.Critical)
-        
+        QgsMessageLog.logMessage(
+            f"AMČR Codelist Read Error for {filename}: {e}",
+            "AMČR", Qgis.Critical)
+
     return target_dict
+
 
 def load_all_data():
     """Loads the codelist during plugin startup."""
@@ -85,6 +96,7 @@ def load_all_data():
     parse_codelist_file('heslar.csv', categorized_data)
     return categorized_data
 
+
 def fetch_set(internal_name, api_set, task=None):
     dataset = []
     params = {
@@ -92,7 +104,7 @@ def fetch_set(internal_name, api_set, task=None):
         "metadataPrefix": "oai_dc",
         "set": api_set
     }
-    
+
     while True:
         # Kontrola zrušení v každém kroku
         if task and task.isCanceled():
@@ -101,33 +113,51 @@ def fetch_set(internal_name, api_set, task=None):
         try:
             response = requests.get(BASE_URL, params=params, timeout=30)
             response.raise_for_status()
-            root = ET.fromstring(response.content) # nosec
-            
+            root = ET.fromstring(response.content)  # nosec
+
             records = root.findall('.//oai:record', NS)
             for rec in records:
                 metadata = rec.find('.//oai_dc:dc', NS)
                 if metadata is not None:
                     # Kód (identifier)
-                    kod = metadata.find('dc:identifier', NS).text if metadata.find('dc:identifier', NS) is not None else ""
-                    
+                    identifier_el = metadata.find('dc:identifier', NS)
+                    kod = (
+                        identifier_el.text
+                        if identifier_el is not None
+                        else ""
+                    )
+
                     # Název (title) - filtrujeme systémové popisky "AMČR - ..."
                     titles = metadata.findall('dc:title', NS)
                     nazev = ""
                     for t in titles:
-                        if t.text and not t.text.startswith("AMČR -") and not t.text.startswith(" AMČR -"):
+                        if (
+                            t.text
+                            and not t.text.startswith("AMČR -")
+                            and not t.text.startswith(" AMČR -")
+                        ):
                             nazev = t.text
                             break
-                    # Pokud by náhodou žádný title neprošel filtrem, vezmeme první dostupný
+                    # Pokud by náhodou žádný title neprošel filtrem,
+                    # vezmeme první dostupný
                     if not nazev and titles:
                         nazev = titles[0].text
-                    
+
                     specialni_pripady = ['okres', 'katastr']
 
                     if internal_name in specialni_pripady:
                         kod = nazev
 
                     if internal_name == 'pristupnost':
-                        kod = next((t.text for t in titles if t.text and len(t.text) == 1 and t.text.isalpha()), None)
+                        kod = next(
+                            (
+                                t.text for t in titles
+                                if t.text
+                                and len(t.text) == 1
+                                and t.text.isalpha()
+                            ),
+                            None
+                        )
 
                     dataset.append({
                         'Název': nazev,
@@ -145,31 +175,36 @@ def fetch_set(internal_name, api_set, task=None):
                 time.sleep(0.5)
             else:
                 break
-                
+
         except Exception as e:
-            QgsMessageLog.logMessage(f"Chyba u setu {api_set}: {e}", "AMČR", Qgis.Warning)
+            QgsMessageLog.logMessage(
+                f"Chyba u setu {api_set}: {e}",
+                "AMČR", Qgis.Warning)
             break
-            
+
     return dataset
+
 
 def download_heslare(task=None):
     """Fetches the codelists from the AMČR API and saves it to a CSV file."""
     ensure_codelists_dir()
     all_data = []
     total_sets = len(slovnicek)
-    
+
     for index, (interni, api_nazev) in enumerate(slovnicek.items()):
         # Pokud uživatel task zrušil v liště QGISu
         if task and task.isCanceled():
             return False
 
-        QgsMessageLog.logMessage(f"Zpracovávám kategorii: {interni}...", "AMČR", Qgis.Info)
-        
+        QgsMessageLog.logMessage(
+            f"Zpracovávám kategorii: {interni}...",
+            "AMČR", Qgis.Info)
+
         # Nyní předáváme task správně do upravené funkce
         data = fetch_set(interni, api_nazev, task=task)
-        
+
         if data is None:
-            return False # Bylo zrušeno uprostřed stahování
+            return False  # Bylo zrušeno uprostřed stahování
 
         all_data.extend(data)
 
@@ -187,13 +222,11 @@ def download_heslare(task=None):
 
     return True
 
+
 def refresh_globals():
     """Znovu načte data ze souborů do globálních proměnných."""
-    global OBDOBI, TYP_AKCE, AREAL, KRAJE, ORGANIZACE, OKRESY, KATASTRY
-    global VEDOUCI, PIAN_PRESNOST, TYP_LOKALITY, DRUH_LOKALITY, JISTOTA, LOKALITA_ZACHOVALOST, PRISTUPNOST
-    
     data = load_all_data()
-    
+
     OBDOBI.clear()
     OBDOBI.update(data.get('obdobi', {}))
     TYP_AKCE.clear()
