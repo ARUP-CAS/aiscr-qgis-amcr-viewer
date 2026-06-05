@@ -8,7 +8,7 @@ name=AMČR Viewer
 qgisMinimumVersion=3.4.0
 qgisMaximumVersion=4.99.0
 description=Viewing and downloading the AMČR data.
-version=2.0.0-alpha.4
+version=2.0.0
 author=David Spáčil
 email=spacil@arub.cz
 
@@ -23,6 +23,13 @@ repository=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
+  Aktualizace na verzi 2.0.0 výrazně mění chování pluginu. Před updatem je doporučeno přečíst si seznam změn níže.
+  Version 2.0.0 changes the plugin behavior dramatically. It is advised to check the changelog below.
+  Plný seznam změn v češtině je dostupný zde: https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases/tag/v2.0.0
+  v2.0.0 (2026-06-05)
+   * Added warning regarding the feature duplication when loading components to the dialog 
+   * Added Help button to the plugin menu
+   * Code clean-up
   v2.0.0-alpha.4 (2026-06-03)
    * Backend filtering of the results based on the component-related filters improvement (plugin not only loads the results from API, it filters them further)
   v2.0.0-alpha.2–3 (2026-05-19)
@@ -30,17 +37,17 @@ changelog=
   v2.0.0-alpha.1 (2026-05-19):
    * Attribute fields renamed to be ASCII compliant
    * Codelist update; codelist can be recompiled from AMČR API
-   * Basic element changed from Documentation Unit to Component if user asks for components to simplify result filtering
+   * Base element changed from Documentation Unit to Component if user asks for components to simplify result filtering
    * Plugin now supports logging with an AMČR account and enables the downloading of Events and Sites available to the roles Researcher and higher 
 
 # Tags are comma separated with spaces allowed
-tags=python,AMCR,AIS CR,archaeology,PIAN,AMČR
+tags=python,AMCR,AIS CR,archaeology,PIAN,AMČR,archeologie
 
 homepage=https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html
 category=Vector
 icon=download.png
 # experimental flag
-experimental=True
+experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
