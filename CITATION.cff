@@ -20,11 +20,10 @@ identifiers:
     value: 10.5281/zenodo.18609813
 repository-code: 'https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer'
 abstract: >-
-  This QGIS plugin is intended for downloading the data
-  (Fieldwork events data only, at the time) from the
-  Digiarchive of the Archaeological Map of the Czech
-  Republic (AMCR). As of now, only publicly accessible data
-  can be downloaded.
+  This plugin is intended for downloading the data
+  (Fieldwork events, Sites, and their Components) from
+  the Digital archive of the Archaeological Map of the
+  Czech Republic (https://digiarchiv.aiscr.cz/).
 license: GPL-3.0
-version: '1.0.1'
-date-released: '2026-02-11'
+version: '2.0.0'
+date-released: '2026-06-05'
