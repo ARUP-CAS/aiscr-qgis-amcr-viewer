@@ -263,6 +263,24 @@ class AmcrFilterDialog(QDialog):
         self.chk_komponenty = QCheckBox("Načíst komponenty")
         layout.addWidget(self.chk_komponenty)
 
+        # Warning label
+        self.lbl_komponenty_warning = QLabel(
+            "⚠ Při načtení komponent jsou prostorové prvky duplikovány — "
+            "každý prvek odpovídá jedné komponentě. "
+            "Prostorové analýzy (plochy, počty) mohou být zkreslené."
+        )
+        self.lbl_komponenty_warning.setWordWrap(True)
+        self.lbl_komponenty_warning.setStyleSheet(
+            "color: #8a6d00; background-color: #fff8e1; "
+            "border: 1px solid #ffe082; border-radius: 4px; padding: 6px;"
+        )
+        self.lbl_komponenty_warning.setVisible(False)
+        layout.addWidget(self.lbl_komponenty_warning)
+
+        self.chk_komponenty.toggled.connect(
+            self.lbl_komponenty_warning.setVisible
+        )
+
         # Pushes everything above to the top
         layout.addStretch(1)
 
