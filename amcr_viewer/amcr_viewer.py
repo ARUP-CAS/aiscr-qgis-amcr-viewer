@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
-from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QUrl
+from qgis.PyQt.QtGui import QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import QMenu, QAction, QToolButton, QDialog
 from qgis.core import Qgis
 
@@ -91,6 +91,7 @@ class AmcrViewer:
         # Define paths for action-specific icons
         icon_akce_path = os.path.join(self.plugin_dir, 'akce.png')
         icon_lokality_path = os.path.join(self.plugin_dir, 'lokality.png')
+        icon_amcr_help_path = os.path.join(self.plugin_dir, 'amcr-help.png')
 
         # 1. Create a container menu for the plugin
         self.plugin_menu = QMenu()
@@ -127,6 +128,16 @@ class AmcrViewer:
             add_to_toolbar=False
         )
         self.plugin_menu.addAction(self.action_login_dialog)
+
+        self.action_amcr_help = self.add_action(
+            icon_path=icon_amcr_help_path,
+            text=self.tr(u'Nápověda AMČR Help | AMČR Viewer'),
+            callback=lambda checked=False: self.open_help(),
+            parent=self.iface.mainWindow(),
+            add_to_menu=False,
+            add_to_toolbar=False
+        )
+        self.plugin_menu.addAction(self.action_amcr_help)
 
         # 3. Create the main project action and attach the menu to it
         main_icon = QIcon(icon_akce_path)
@@ -217,3 +228,7 @@ class AmcrViewer:
                     "v panelu Zprávy.",
                     level=Qgis.MessageLevel.Critical
                 )
+
+    def open_help(self):
+        help_url = "https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html"
+        QDesktopServices.openUrl(QUrl(help_url))
