@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**Platform:** QGIS 3.4.0–4.99.0
+**Platform:** QGIS 3.44.0–4.99.0
 
 **Module Type:** Data Acquisition & Visualization
 
