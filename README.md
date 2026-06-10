@@ -24,9 +24,9 @@
 
 ## 2. Installation Guide
 
-**Install the plugin from QGIS plugin repository.**
+**Install the latest version of the plugin from the QGIS plugin repository.**
 
-**OR**
+**OR** (*in case you need older version*)
 
 1. *Obtain the [plugin distribution package](https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases) (ZIP archive containing the `amcr_viewer` directory).*
 2. *Launch QGIS.*
