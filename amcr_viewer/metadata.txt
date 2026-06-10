@@ -5,7 +5,7 @@
 
 [general]
 name=AMČR Viewer
-qgisMinimumVersion=3.4.0
+qgisMinimumVersion=3.44.0
 qgisMaximumVersion=4.99.0
 description=Viewing and downloading the AMČR data.
 version=2.0.0
@@ -26,6 +26,8 @@ changelog=
   Aktualizace na verzi 2.0.0 výrazně mění chování pluginu. Před updatem je doporučeno přečíst si seznam změn níže.
   Version 2.0.0 changes the plugin behavior dramatically. It is advised to check the changelog below.
   Plný seznam změn v češtině je dostupný zde: https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases/tag/v2.0.0
+  v2.0.1 (2026-06-10)
+   * Fixed QGIS minimum version
   v2.0.0 (2026-06-05)
    * Added warning regarding the feature duplication when loading components to the dialog 
    * Added Help button to the plugin menu
