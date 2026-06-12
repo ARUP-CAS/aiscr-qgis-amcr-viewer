@@ -17,6 +17,15 @@ TRANSLATIONS = {}
 # None = not logged in (anonymous access)
 AMCR_SESSION: requests.Session | None = None
 
+# Reason of the last failed login: 'auth' (wrong credentials),
+# 'network' (server unreachable / invalid response) or None
+LAST_LOGIN_ERROR: str | None = None
+
+# Re-entrancy guard: the download runs in the main thread and pumps the
+# event loop via processEvents(), so the user could otherwise start
+# a second download while the first one is still running
+_LOADING = False
+
 
 def _log(msg: str, level=Qgis.MessageLevel.Info):
     """
@@ -33,6 +42,9 @@ def login_to_api(username: str, password: str):
     """
     login_url = "https://digiarchiv.aiscr.cz/api/user/login"
 
+    global LAST_LOGIN_ERROR
+    LAST_LOGIN_ERROR = None
+
     _log(f"Přihlašuji uživatele: '{username}'")
 
     if not username or not password:
@@ -40,6 +52,7 @@ def login_to_api(username: str, password: str):
             "CHYBA: username nebo heslo je prázdné.",
             Qgis.MessageLevel.Critical
         )
+        LAST_LOGIN_ERROR = 'auth'
         return None
 
     session = requests.Session()
@@ -67,6 +80,7 @@ def login_to_api(username: str, password: str):
                 f"CHYBA přihlášení (API): {body['error']}",
                 Qgis.MessageLevel.Critical
             )
+            LAST_LOGIN_ERROR = 'auth'
             return None
 
         _log("Přihlášení proběhlo úspěšně.")
@@ -75,12 +89,22 @@ def login_to_api(username: str, password: str):
         return session
 
     except requests.exceptions.HTTPError as e:
-        _log(f"CHYBA HTTP {e.response.status_code if e.response else '?'}: "
-             f"{e.response.text[:300] if e.response else 'žádná odpověď'}",
+        status = e.response.status_code if e.response is not None else None
+        _log(f"CHYBA HTTP {status if status else '?'}: "
+             f"{e.response.text[:300] if e.response is not None else 'žádná odpověď'}",
              Qgis.MessageLevel.Critical)
+        LAST_LOGIN_ERROR = 'auth' if status in (401, 403) else 'network'
         return None
     except requests.exceptions.RequestException as e:
         _log(f"CHYBA sítě: {e}", Qgis.MessageLevel.Critical)
+        LAST_LOGIN_ERROR = 'network'
+        return None
+    except ValueError:
+        # Server returned non-JSON (e.g. an HTML error page behind a proxy)
+        _log("CHYBA: server nevrátil platný JSON: "
+             f"{response.text[:300]}",
+             Qgis.MessageLevel.Critical)
+        LAST_LOGIN_ERROR = 'network'
         return None
 
 
@@ -104,33 +128,40 @@ def _get_session() -> requests.Session | None:
     return AMCR_SESSION
 
 
-def _api_get(url, params, timeout=30) -> requests.Response:
+def _api_get_json(url, params, timeout=30) -> dict:
     """
-    Performs a GET request. If the API signals an expired login,
-    re-authenticates once and retries.
+    Performs a GET request and returns the parsed JSON body.
+    If the API signals an expired login, re-authenticates once and retries.
+    The body is parsed exactly once (the auth check reuses it).
+    Raises ValueError if the server does not return valid JSON.
     """
     global AMCR_SESSION
 
-    def _is_auth_error(resp: requests.Response) -> bool:
+    def _is_auth_error(resp: requests.Response, body) -> bool:
         """The API returns auth errors with status 200 –
         the body must be checked."""
         if resp.status_code == 401:
             return True
-        try:
-            body = resp.json()
-            err = str(body.get("error", "")).lower()
-            return (
-                "unauthorized" in err
-                or "not logged" in err
-                or "session" in err
-            )
-        except Exception:
+        if not isinstance(body, dict):
             return False
+        err = str(body.get("error", "")).lower()
+        return (
+            "unauthorized" in err
+            or "not logged" in err
+            or "session" in err
+        )
+
+    def _parse(resp):
+        try:
+            return resp.json()
+        except ValueError:
+            return None
 
     session = _get_session()
     resp = (session or requests).get(url, params=params, timeout=timeout)
+    body = _parse(resp)
 
-    if _is_auth_error(resp):
+    if _is_auth_error(resp, body):
         _log("Session vypršela během stahování – obnovuji přihlášení...",
              Qgis.MessageLevel.Warning)
         AMCR_SESSION = None  # Invalidate the old session
@@ -140,6 +171,7 @@ def _api_get(url, params, timeout=30) -> requests.Response:
             AMCR_SESSION = login_to_api(username, password)
             if AMCR_SESSION:
                 resp = AMCR_SESSION.get(url, params=params, timeout=timeout)
+                body = _parse(resp)
             else:
                 _log("Opakované přihlášení selhalo.",
                      Qgis.MessageLevel.Critical)
@@ -147,7 +179,11 @@ def _api_get(url, params, timeout=30) -> requests.Response:
             _log("Přihlašovací údaje nejsou uloženy – pokračuji anonymně.",
                  Qgis.MessageLevel.Warning)
 
-    return resp
+    if body is None:
+        raise ValueError(
+            f"API nevrátilo platný JSON (HTTP {resp.status_code})"
+        )
+    return body
 
 
 def load_translations():
@@ -165,7 +201,10 @@ def load_translations():
         if r.status_code == 200:
             TRANSLATIONS = r.json()
     except Exception as e:
-        print(f"Error downloading vocabulary: {e}")
+        QgsMessageLog.logMessage(
+            f"Error downloading vocabulary: {e}",
+            "AMČR", Qgis.MessageLevel.Warning
+        )
 
 
 def tr_code(code):
@@ -179,11 +218,12 @@ def tr_code(code):
 
 
 def komp_projde_filtrem(komp, filter_areal, filter_datace, filters):
-    areal_id = komp.get('komponenta_areal', {}).get('id', "")
+    # 'or {}' – the key may be present with a None value
+    areal_id = (komp.get('komponenta_areal') or {}).get('id', "")
     if filter_areal and areal_id not in filters.get('f_areal', []):
         return False
 
-    obdobi_id = komp.get('komponenta_obdobi', {}).get('id', "")
+    obdobi_id = (komp.get('komponenta_obdobi') or {}).get('id', "")
     if filter_datace and obdobi_id not in filters.get('f_obdobi', []):
         return False
 
@@ -198,6 +238,16 @@ def load_amcr_data(canvas, bb, filters=None,
     2. Fetches metadata and geometries from API
     3. Creates QGIS memory layers and populates them with features
     """
+    global _LOADING
+    if _LOADING:
+        iface.messageBar().pushMessage(
+            "AMCR",
+            "Stahování již probíhá, počkejte na jeho dokončení.",
+            level=Qgis.MessageLevel.Warning
+        )
+        return
+    _LOADING = True
+
     load_translations()
 
     # --- 1. COORDINATE TRANSFORMATION ---
@@ -257,6 +307,7 @@ def load_amcr_data(canvas, bb, filters=None,
         MAX_LIMIT = 20000  # Safety limit to prevent QGIS from freezing
 
         seen_ids = set()
+        fetched_total = 0  # All downloaded records incl. duplicates
         target_pian_ids_count = 0
 
         # Check if we should skip negative results based on filter
@@ -270,6 +321,10 @@ def load_amcr_data(canvas, bb, filters=None,
         filter_areal = "f_areal" in filters if filters else False
         filter_datace = "f_obdobi" in filters if filters else False
 
+        # Set when a network error interrupts the download – the user
+        # gets an explicit error/warning instead of a silent partial result
+        network_error = False
+
         # --- API PAGINATION LOOP ---
         while True:
             base_params['rows'] = BATCH_DOCS
@@ -279,14 +334,15 @@ def load_amcr_data(canvas, bb, filters=None,
                 del base_params['page']
 
             try:
-                resp_docs = _api_get(url, params=base_params, timeout=30)
-                resp_json = resp_docs.json()
+                resp_json = _api_get_json(url, params=base_params, timeout=30)
                 data = resp_json.get('response', {})
                 batch_docs = data.get('docs', [])
                 num_found = data.get('numFound', 0)
 
                 if not batch_docs:
                     break
+
+                fetched_total += len(batch_docs)
 
                 # Filter out duplicates and append to main list
                 new_docs = []
@@ -297,12 +353,16 @@ def load_amcr_data(canvas, bb, filters=None,
                         new_docs.append(d)
 
                 docs.extend(new_docs)
-                print(
+                QgsMessageLog.logMessage(
                     f"Strana {current_page} stažena. "
-                    f"Celkem záznamů: {len(docs)} / {num_found}"
+                    f"Celkem záznamů: {len(docs)} / {num_found}",
+                    "AMČR", Qgis.MessageLevel.Info
                 )
 
-                if len(docs) >= num_found:
+                # Compare downloaded (not unique) records against numFound –
+                # pages full of duplicates would otherwise trigger
+                # needless extra requests
+                if fetched_total >= num_found:
                     break
                 if len(docs) >= MAX_LIMIT:
                     iface.messageBar().pushMessage(
@@ -315,9 +375,29 @@ def load_amcr_data(canvas, bb, filters=None,
                 current_page += 1
                 QApplication.processEvents()  # Keep UI responsive
 
-            except Exception as e:
-                print(f"Chyba při stránkování na straně {current_page}: {e}")
+            except requests.exceptions.RequestException as e:
+                network_error = True
+                QgsMessageLog.logMessage(
+                    f"Chyba sítě při stránkování na straně "
+                    f"{current_page}: {e}",
+                    "AMČR", Qgis.MessageLevel.Critical
+                )
                 break
+            except Exception as e:
+                QgsMessageLog.logMessage(
+                    f"Chyba při stránkování na straně {current_page}: {e}",
+                    "AMČR", Qgis.MessageLevel.Warning
+                )
+                break
+
+        if network_error and not docs:
+            iface.messageBar().pushMessage(
+                "AMCR",
+                "Stahování selhalo: chyba sítě. "
+                "Zkontrolujte připojení k internetu.",
+                level=Qgis.MessageLevel.Critical
+            )
+            return
 
         if not docs:
             iface.messageBar().pushMessage(
@@ -361,8 +441,8 @@ def load_amcr_data(canvas, bb, filters=None,
 
             actions_with_geom += 1
 
-            # Extract protected fields
-            az_chranene = doc.get('az_chranene_udaje', {})
+            # Extract protected fields ('or {}' – key may hold None)
+            az_chranene = doc.get('az_chranene_udaje') or {}
             chranene = (
                 doc.get('akce_chranene_udaje')
                 or doc.get('lokalita_chranene_udaje')
@@ -518,13 +598,13 @@ def load_amcr_data(canvas, bb, filters=None,
                                             'ident_cely',
                                             ""
                                             ),
-                                        'komponenta_areal': komp.get(
-                                            'komponenta_areal',
-                                            {}
+                                        'komponenta_areal': (
+                                            komp.get('komponenta_areal')
+                                            or {}
                                         ).get('value', ""),
-                                        'komponenta_obdobi': komp.get(
-                                            'komponenta_obdobi',
-                                            {}
+                                        'komponenta_obdobi': (
+                                            komp.get('komponenta_obdobi')
+                                            or {}
                                         ).get('value', ""),
                                     }
                                     pian_lookup[dj_pian_value].append(komp_meta)
@@ -592,11 +672,22 @@ def load_amcr_data(canvas, bb, filters=None,
             }
             try:
                 QApplication.processEvents()
-                r_pian = _api_get(url, params=params_pian, timeout=15)
-                batch_docs = r_pian.json().get('response', {}).get('docs', [])
-                docs_pian.extend(batch_docs)
+                r_json = _api_get_json(url, params=params_pian, timeout=15)
+                docs_pian.extend(r_json.get('response', {}).get('docs', []))
+            except requests.exceptions.RequestException as e:
+                # Network is down – stop immediately instead of
+                # uselessly retrying every remaining batch
+                network_error = True
+                QgsMessageLog.logMessage(
+                    f"Chyba sítě při stahování geometrií PIAN: {e}",
+                    "AMČR", Qgis.MessageLevel.Critical
+                )
+                break
             except Exception as e:
-                print(f"Chyba PIAN: {e}")
+                QgsMessageLog.logMessage(
+                    f"Chyba PIAN: {e}",
+                    "AMČR", Qgis.MessageLevel.Warning
+                )
 
         # ==========================================
         # D) LAYER CREATION (QGIS Memory Layers)
@@ -713,6 +804,14 @@ def load_amcr_data(canvas, bb, filters=None,
         # Lists to hold features before batch-adding to layers
         feats_p, feats_l, feats_pt = [], [], []
 
+        # Transform for PIANs that only provide WGS-84 geometry (geom_wkt) –
+        # the target layers are in S-JTSK (EPSG:5514)
+        xform_wgs_to_sjtsk = QgsCoordinateTransform(
+            QgsCoordinateReferenceSystem("EPSG:4326"),
+            QgsCoordinateReferenceSystem("EPSG:5514"),
+            QgsProject.instance()
+        )
+
         # --- FEATURE POPULATION ---
         for doc in docs_pian:
             try:
@@ -733,25 +832,46 @@ def load_amcr_data(canvas, bb, filters=None,
                 )
 
                 wkt = None
+                wkt_is_wgs = False
                 if jdata.get('geom_sjtsk_wkt'):
                     wkt = jdata.get('geom_sjtsk_wkt', {}).get('value')
                 elif jdata.get('geom_wkt'):
+                    # Fallback geometry is in WGS-84 and must be
+                    # transformed to S-JTSK before use
                     wkt = jdata.get('geom_wkt', {}).get('value')
+                    wkt_is_wgs = True
 
-                pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
-                pian_typ = tr_code(str(doc.get('pian_typ', '')))
+                # The API may return the value as a single-item list –
+                # normalize before comparing against filter codes
+                raw_presnost = doc.get('pian_presnost', '')
+                if isinstance(raw_presnost, list):
+                    raw_presnost = raw_presnost[0] if raw_presnost else ''
+                raw_typ = doc.get('pian_typ', '')
+                if isinstance(raw_typ, list):
+                    raw_typ = raw_typ[0] if raw_typ else ''
+
+                pian_presnost = tr_code(str(raw_presnost))
+                pian_typ = tr_code(str(raw_typ))
 
                 # Final precision filter check
                 if (
                     filters
                     and filters.get('f_pian_presnost')
-                    and doc.get('pian_presnost')
+                    and str(raw_presnost)
                     not in filters.get('f_pian_presnost')
                 ):
                     continue
 
                 if wkt:
                     geom = QgsGeometry.fromWkt(wkt)
+                    if geom.isNull():
+                        continue
+                    if wkt_is_wgs:
+                        geom.transform(xform_wgs_to_sjtsk)
+                    if not geom.isGeosValid():
+                        # Try to repair (e.g. self-intersections)
+                        # instead of silently dropping the feature
+                        geom = geom.makeValid()
                     if geom.isGeosValid():
                         t = geom.type()
                         target_list = None
@@ -821,8 +941,10 @@ def load_amcr_data(canvas, bb, filters=None,
                             target_list.append(feat)
 
             except Exception as ex:
-                print(f"Chyba při tvorbě feature: {ex}")
-                pass
+                QgsMessageLog.logMessage(
+                    f"Chyba při tvorbě feature: {ex}",
+                    "AMČR", Qgis.MessageLevel.Warning
+                )
 
 # --- ADDING TO QGIS INTERFACE ---
         proj = QgsProject.instance()
@@ -841,7 +963,19 @@ def load_amcr_data(canvas, bb, filters=None,
                 proj.addMapLayer(l)
                 added += len(f)
 
-        if added > 0:
+        if network_error:
+            iface.messageBar().pushMessage(
+                "AMCR",
+                "Stahování bylo přerušeno chybou sítě – "
+                f"výsledek je neúplný (vykresleno {added} prvků). "
+                "Zkontrolujte připojení a spusťte stahování znovu.",
+                level=(
+                    Qgis.MessageLevel.Warning
+                    if added > 0
+                    else Qgis.MessageLevel.Critical
+                )
+            )
+        elif added > 0:
             iface.messageBar().pushMessage(
                 "AMCR",
                 f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). "
@@ -862,5 +996,6 @@ def load_amcr_data(canvas, bb, filters=None,
             level=Qgis.MessageLevel.Critical
         )
     finally:
-        # Always restore cursor, even after failure
+        # Always restore cursor and release the guard, even after failure
+        _LOADING = False
         QApplication.restoreOverrideCursor()

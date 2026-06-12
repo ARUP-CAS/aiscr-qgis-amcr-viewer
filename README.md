@@ -131,6 +131,8 @@ Layers are only created if the query returns features of the corresponding geome
 
 The plugin is developed in **Python 3** using the **PyQt6** framework for the GUI and the **Requests** library for HTTP communication.
 
+> **Note:** The `requests` library is bundled with the QGIS installers for Windows and macOS. On Linux (distribution packages), it may need to be installed separately (e.g. `python3-requests`).
+
 ### 4.1 File Structure
 
 * `amcr_viewer.py`: Entry point; handles GUI integration, toolbar/menu setup, and login flow.

@@ -7,11 +7,18 @@ from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout,
 from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.core import (QgsTask, QgsApplication,
                        QgsMessageLog, Qgis, QgsAuthMethodConfig)
+from qgis.utils import iface
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
                              OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST,
                              TYP_LOKALITY, DRUH_LOKALITY, JISTOTA,
                              LOKALITA_ZACHOVALOST, PRISTUPNOST,
                              download_heslare, refresh_globals)
+
+
+# Keep Python references to running tasks. QgsTaskManager only holds the
+# C++ object; without a Python-side reference the wrapper can be garbage
+# collected before the task finishes, which crashes QGIS.
+_ACTIVE_TASKS = []
 
 
 class UpdateCodelistsTask(QgsTask):
@@ -370,21 +377,38 @@ class AmcrFilterDialog(QDialog):
         return row_widget
 
     def action_update_heslare(self):
-        # Create the task instance
+        # Create the task instance and keep a reference so the Python
+        # wrapper survives until the task finishes
         task = UpdateCodelistsTask("Aktualizace heslářů AMČR")
+        _ACTIVE_TASKS.append(task)
 
-        # Re-enable the button regardless of the outcome
-        task.taskCompleted.connect(lambda: self.btn_update.setEnabled(True))
-        task.taskTerminated.connect(lambda: self.btn_update.setEnabled(True))
+        # Prevent parallel downloads overwriting heslar.csv
+        self.btn_update.setEnabled(False)
 
-        task.taskCompleted.connect(lambda: QMessageBox.information(
-            self,
-            "Hotovo",
-            "Hesláře byly úspěšně aktualizovány."
-        ))
+        # Message boxes are parented to the main window, not to this dialog –
+        # the dialog may already be closed (and its C++ object deleted)
+        # by the time the minute-long task finishes.
+        parent_win = iface.mainWindow() if iface else None
+
+        def _cleanup():
+            if task in _ACTIVE_TASKS:
+                _ACTIVE_TASKS.remove(task)
+            try:
+                self.btn_update.setEnabled(True)
+            except RuntimeError:
+                pass  # dialog already closed
+
+        def on_completed():
+            _cleanup()
+            QMessageBox.information(
+                parent_win,
+                "Hotovo",
+                "Hesláře byly úspěšně aktualizovány."
+            )
 
         # Show the exact error if the task fails
         def on_error():
+            _cleanup()
             if task.exception:
                 # This will show exactly what went wrong (e.g. PermissionError)
                 msg = (
@@ -393,8 +417,9 @@ class AmcrFilterDialog(QDialog):
                 )
             else:
                 msg = "Aktualizace byla zrušena uživatelem."
-            QMessageBox.warning(self, "Chyba / Zrušeno", msg)
+            QMessageBox.warning(parent_win, "Chyba / Zrušeno", msg)
 
+        task.taskCompleted.connect(on_completed)
         task.taskTerminated.connect(on_error)
 
         QgsApplication.taskManager().addTask(task)
@@ -602,6 +627,39 @@ class LoginDialog(QDialog):
 
         return True
 
+    def _verify_credentials(self, username: str, password: str) -> bool:
+        """
+        Verify the credentials against the API before saving them.
+        Returns True if they should be stored: either the login succeeded,
+        or the server was unreachable and the user chose to keep them
+        unverified. Wrong credentials are never stored.
+        """
+        # Lazy import to avoid an import cycle
+        # (amcr_tools imports LoginDialog lazily as well)
+        from . import amcr_tools
+
+        if amcr_tools.login_to_api(username, password):
+            return True
+
+        if amcr_tools.LAST_LOGIN_ERROR == 'network':
+            answer = QMessageBox.question(
+                self,
+                "Server nedostupný",
+                "Přihlašovací údaje se nepodařilo ověřit – server AMČR "
+                "je nedostupný.\nChcete je přesto uložit (neověřené)?",
+                QMessageBox.StandardButton.Yes
+                | QMessageBox.StandardButton.No
+            )
+            return answer == QMessageBox.StandardButton.Yes
+
+        QMessageBox.warning(
+            self,
+            "Neplatné přihlašovací údaje",
+            "Přihlášení se nezdařilo – zkontrolujte e-mail a heslo.\n"
+            "Údaje nebyly uloženy."
+        )
+        return False
+
     # ------------------------------------------------------------------
     # Button actions
     # ------------------------------------------------------------------
@@ -628,6 +686,11 @@ class LoginDialog(QDialog):
             if ok:
                 if not self._ensure_master_password():
                     return
+                # Verify the new username against the stored password
+                if not self._verify_credentials(
+                    username, cfg.config("password", "")
+                ):
+                    return
                 cfg.setConfig("username", username)
                 auth_mgr.updateAuthenticationConfig(cfg)
                 self.accept()
@@ -635,6 +698,11 @@ class LoginDialog(QDialog):
 
         if not password:
             QMessageBox.warning(self, "Chybí údaje", "Vyplňte prosím heslo.")
+            return
+
+        # Verify before prompting for the master password – wrong
+        # credentials must never reach the Authentication Manager
+        if not self._verify_credentials(username, password):
             return
 
         if not self._ensure_master_password():
