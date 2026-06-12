@@ -179,11 +179,12 @@ def tr_code(code):
 
 
 def komp_projde_filtrem(komp, filter_areal, filter_datace, filters):
-    areal_id = komp.get('komponenta_areal', {}).get('id', "")
+    # 'or {}' – the key may be present with a None value
+    areal_id = (komp.get('komponenta_areal') or {}).get('id', "")
     if filter_areal and areal_id not in filters.get('f_areal', []):
         return False
 
-    obdobi_id = komp.get('komponenta_obdobi', {}).get('id', "")
+    obdobi_id = (komp.get('komponenta_obdobi') or {}).get('id', "")
     if filter_datace and obdobi_id not in filters.get('f_obdobi', []):
         return False
 
@@ -361,8 +362,8 @@ def load_amcr_data(canvas, bb, filters=None,
 
             actions_with_geom += 1
 
-            # Extract protected fields
-            az_chranene = doc.get('az_chranene_udaje', {})
+            # Extract protected fields ('or {}' – key may hold None)
+            az_chranene = doc.get('az_chranene_udaje') or {}
             chranene = (
                 doc.get('akce_chranene_udaje')
                 or doc.get('lokalita_chranene_udaje')
@@ -518,13 +519,13 @@ def load_amcr_data(canvas, bb, filters=None,
                                             'ident_cely',
                                             ""
                                             ),
-                                        'komponenta_areal': komp.get(
-                                            'komponenta_areal',
-                                            {}
+                                        'komponenta_areal': (
+                                            komp.get('komponenta_areal')
+                                            or {}
                                         ).get('value', ""),
-                                        'komponenta_obdobi': komp.get(
-                                            'komponenta_obdobi',
-                                            {}
+                                        'komponenta_obdobi': (
+                                            komp.get('komponenta_obdobi')
+                                            or {}
                                         ).get('value', ""),
                                     }
                                     pian_lookup[dj_pian_value].append(komp_meta)
@@ -713,6 +714,14 @@ def load_amcr_data(canvas, bb, filters=None,
         # Lists to hold features before batch-adding to layers
         feats_p, feats_l, feats_pt = [], [], []
 
+        # Transform for PIANs that only provide WGS-84 geometry (geom_wkt) –
+        # the target layers are in S-JTSK (EPSG:5514)
+        xform_wgs_to_sjtsk = QgsCoordinateTransform(
+            QgsCoordinateReferenceSystem("EPSG:4326"),
+            QgsCoordinateReferenceSystem("EPSG:5514"),
+            QgsProject.instance()
+        )
+
         # --- FEATURE POPULATION ---
         for doc in docs_pian:
             try:
@@ -733,25 +742,46 @@ def load_amcr_data(canvas, bb, filters=None,
                 )
 
                 wkt = None
+                wkt_is_wgs = False
                 if jdata.get('geom_sjtsk_wkt'):
                     wkt = jdata.get('geom_sjtsk_wkt', {}).get('value')
                 elif jdata.get('geom_wkt'):
+                    # Fallback geometry is in WGS-84 and must be
+                    # transformed to S-JTSK before use
                     wkt = jdata.get('geom_wkt', {}).get('value')
+                    wkt_is_wgs = True
 
-                pian_presnost = tr_code(str(doc.get('pian_presnost', '')))
-                pian_typ = tr_code(str(doc.get('pian_typ', '')))
+                # The API may return the value as a single-item list –
+                # normalize before comparing against filter codes
+                raw_presnost = doc.get('pian_presnost', '')
+                if isinstance(raw_presnost, list):
+                    raw_presnost = raw_presnost[0] if raw_presnost else ''
+                raw_typ = doc.get('pian_typ', '')
+                if isinstance(raw_typ, list):
+                    raw_typ = raw_typ[0] if raw_typ else ''
+
+                pian_presnost = tr_code(str(raw_presnost))
+                pian_typ = tr_code(str(raw_typ))
 
                 # Final precision filter check
                 if (
                     filters
                     and filters.get('f_pian_presnost')
-                    and doc.get('pian_presnost')
+                    and str(raw_presnost)
                     not in filters.get('f_pian_presnost')
                 ):
                     continue
 
                 if wkt:
                     geom = QgsGeometry.fromWkt(wkt)
+                    if geom.isNull():
+                        continue
+                    if wkt_is_wgs:
+                        geom.transform(xform_wgs_to_sjtsk)
+                    if not geom.isGeosValid():
+                        # Try to repair (e.g. self-intersections)
+                        # instead of silently dropping the feature
+                        geom = geom.makeValid()
                     if geom.isGeosValid():
                         t = geom.type()
                         target_list = None
