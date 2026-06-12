@@ -47,7 +47,7 @@ tags=python,AMCR,AIS CR,archaeology,PIAN,AMČR,archeologie
 
 homepage=https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html
 category=Vector
-icon=download.png
+icon=akce.png
 # experimental flag
 experimental=False
 
