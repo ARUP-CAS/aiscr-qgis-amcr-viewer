@@ -17,6 +17,11 @@ TRANSLATIONS = {}
 # None = not logged in (anonymous access)
 AMCR_SESSION: requests.Session | None = None
 
+# Re-entrancy guard: the download runs in the main thread and pumps the
+# event loop via processEvents(), so the user could otherwise start
+# a second download while the first one is still running
+_LOADING = False
+
 
 def _log(msg: str, level=Qgis.MessageLevel.Info):
     """
@@ -82,6 +87,12 @@ def login_to_api(username: str, password: str):
     except requests.exceptions.RequestException as e:
         _log(f"CHYBA sítě: {e}", Qgis.MessageLevel.Critical)
         return None
+    except ValueError:
+        # Server returned non-JSON (e.g. an HTML error page behind a proxy)
+        _log("CHYBA: server nevrátil platný JSON: "
+             f"{response.text[:300]}",
+             Qgis.MessageLevel.Critical)
+        return None
 
 
 def _get_session() -> requests.Session | None:
@@ -104,33 +115,40 @@ def _get_session() -> requests.Session | None:
     return AMCR_SESSION
 
 
-def _api_get(url, params, timeout=30) -> requests.Response:
+def _api_get_json(url, params, timeout=30) -> dict:
     """
-    Performs a GET request. If the API signals an expired login,
-    re-authenticates once and retries.
+    Performs a GET request and returns the parsed JSON body.
+    If the API signals an expired login, re-authenticates once and retries.
+    The body is parsed exactly once (the auth check reuses it).
+    Raises ValueError if the server does not return valid JSON.
     """
     global AMCR_SESSION
 
-    def _is_auth_error(resp: requests.Response) -> bool:
+    def _is_auth_error(resp: requests.Response, body) -> bool:
         """The API returns auth errors with status 200 –
         the body must be checked."""
         if resp.status_code == 401:
             return True
-        try:
-            body = resp.json()
-            err = str(body.get("error", "")).lower()
-            return (
-                "unauthorized" in err
-                or "not logged" in err
-                or "session" in err
-            )
-        except Exception:
+        if not isinstance(body, dict):
             return False
+        err = str(body.get("error", "")).lower()
+        return (
+            "unauthorized" in err
+            or "not logged" in err
+            or "session" in err
+        )
+
+    def _parse(resp):
+        try:
+            return resp.json()
+        except ValueError:
+            return None
 
     session = _get_session()
     resp = (session or requests).get(url, params=params, timeout=timeout)
+    body = _parse(resp)
 
-    if _is_auth_error(resp):
+    if _is_auth_error(resp, body):
         _log("Session vypršela během stahování – obnovuji přihlášení...",
              Qgis.MessageLevel.Warning)
         AMCR_SESSION = None  # Invalidate the old session
@@ -140,6 +158,7 @@ def _api_get(url, params, timeout=30) -> requests.Response:
             AMCR_SESSION = login_to_api(username, password)
             if AMCR_SESSION:
                 resp = AMCR_SESSION.get(url, params=params, timeout=timeout)
+                body = _parse(resp)
             else:
                 _log("Opakované přihlášení selhalo.",
                      Qgis.MessageLevel.Critical)
@@ -147,7 +166,11 @@ def _api_get(url, params, timeout=30) -> requests.Response:
             _log("Přihlašovací údaje nejsou uloženy – pokračuji anonymně.",
                  Qgis.MessageLevel.Warning)
 
-    return resp
+    if body is None:
+        raise ValueError(
+            f"API nevrátilo platný JSON (HTTP {resp.status_code})"
+        )
+    return body
 
 
 def load_translations():
@@ -165,7 +188,10 @@ def load_translations():
         if r.status_code == 200:
             TRANSLATIONS = r.json()
     except Exception as e:
-        print(f"Error downloading vocabulary: {e}")
+        QgsMessageLog.logMessage(
+            f"Error downloading vocabulary: {e}",
+            "AMČR", Qgis.MessageLevel.Warning
+        )
 
 
 def tr_code(code):
@@ -199,6 +225,16 @@ def load_amcr_data(canvas, bb, filters=None,
     2. Fetches metadata and geometries from API
     3. Creates QGIS memory layers and populates them with features
     """
+    global _LOADING
+    if _LOADING:
+        iface.messageBar().pushMessage(
+            "AMCR",
+            "Stahování již probíhá, počkejte na jeho dokončení.",
+            level=Qgis.MessageLevel.Warning
+        )
+        return
+    _LOADING = True
+
     load_translations()
 
     # --- 1. COORDINATE TRANSFORMATION ---
@@ -258,6 +294,7 @@ def load_amcr_data(canvas, bb, filters=None,
         MAX_LIMIT = 20000  # Safety limit to prevent QGIS from freezing
 
         seen_ids = set()
+        fetched_total = 0  # All downloaded records incl. duplicates
         target_pian_ids_count = 0
 
         # Check if we should skip negative results based on filter
@@ -280,14 +317,15 @@ def load_amcr_data(canvas, bb, filters=None,
                 del base_params['page']
 
             try:
-                resp_docs = _api_get(url, params=base_params, timeout=30)
-                resp_json = resp_docs.json()
+                resp_json = _api_get_json(url, params=base_params, timeout=30)
                 data = resp_json.get('response', {})
                 batch_docs = data.get('docs', [])
                 num_found = data.get('numFound', 0)
 
                 if not batch_docs:
                     break
+
+                fetched_total += len(batch_docs)
 
                 # Filter out duplicates and append to main list
                 new_docs = []
@@ -298,12 +336,16 @@ def load_amcr_data(canvas, bb, filters=None,
                         new_docs.append(d)
 
                 docs.extend(new_docs)
-                print(
+                QgsMessageLog.logMessage(
                     f"Strana {current_page} stažena. "
-                    f"Celkem záznamů: {len(docs)} / {num_found}"
+                    f"Celkem záznamů: {len(docs)} / {num_found}",
+                    "AMČR", Qgis.MessageLevel.Info
                 )
 
-                if len(docs) >= num_found:
+                # Compare downloaded (not unique) records against numFound –
+                # pages full of duplicates would otherwise trigger
+                # needless extra requests
+                if fetched_total >= num_found:
                     break
                 if len(docs) >= MAX_LIMIT:
                     iface.messageBar().pushMessage(
@@ -317,7 +359,10 @@ def load_amcr_data(canvas, bb, filters=None,
                 QApplication.processEvents()  # Keep UI responsive
 
             except Exception as e:
-                print(f"Chyba při stránkování na straně {current_page}: {e}")
+                QgsMessageLog.logMessage(
+                    f"Chyba při stránkování na straně {current_page}: {e}",
+                    "AMČR", Qgis.MessageLevel.Warning
+                )
                 break
 
         if not docs:
@@ -593,11 +638,13 @@ def load_amcr_data(canvas, bb, filters=None,
             }
             try:
                 QApplication.processEvents()
-                r_pian = _api_get(url, params=params_pian, timeout=15)
-                batch_docs = r_pian.json().get('response', {}).get('docs', [])
-                docs_pian.extend(batch_docs)
+                r_json = _api_get_json(url, params=params_pian, timeout=15)
+                docs_pian.extend(r_json.get('response', {}).get('docs', []))
             except Exception as e:
-                print(f"Chyba PIAN: {e}")
+                QgsMessageLog.logMessage(
+                    f"Chyba PIAN: {e}",
+                    "AMČR", Qgis.MessageLevel.Warning
+                )
 
         # ==========================================
         # D) LAYER CREATION (QGIS Memory Layers)
@@ -851,8 +898,10 @@ def load_amcr_data(canvas, bb, filters=None,
                             target_list.append(feat)
 
             except Exception as ex:
-                print(f"Chyba při tvorbě feature: {ex}")
-                pass
+                QgsMessageLog.logMessage(
+                    f"Chyba při tvorbě feature: {ex}",
+                    "AMČR", Qgis.MessageLevel.Warning
+                )
 
 # --- ADDING TO QGIS INTERFACE ---
         proj = QgsProject.instance()
@@ -892,5 +941,6 @@ def load_amcr_data(canvas, bb, filters=None,
             level=Qgis.MessageLevel.Critical
         )
     finally:
-        # Always restore cursor, even after failure
+        # Always restore cursor and release the guard, even after failure
+        _LOADING = False
         QApplication.restoreOverrideCursor()
