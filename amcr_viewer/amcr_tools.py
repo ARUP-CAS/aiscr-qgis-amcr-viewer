@@ -17,6 +17,10 @@ TRANSLATIONS = {}
 # None = not logged in (anonymous access)
 AMCR_SESSION: requests.Session | None = None
 
+# Reason of the last failed login: 'auth' (wrong credentials),
+# 'network' (server unreachable / invalid response) or None
+LAST_LOGIN_ERROR: str | None = None
+
 # Re-entrancy guard: the download runs in the main thread and pumps the
 # event loop via processEvents(), so the user could otherwise start
 # a second download while the first one is still running
@@ -38,6 +42,9 @@ def login_to_api(username: str, password: str):
     """
     login_url = "https://digiarchiv.aiscr.cz/api/user/login"
 
+    global LAST_LOGIN_ERROR
+    LAST_LOGIN_ERROR = None
+
     _log(f"Přihlašuji uživatele: '{username}'")
 
     if not username or not password:
@@ -45,6 +52,7 @@ def login_to_api(username: str, password: str):
             "CHYBA: username nebo heslo je prázdné.",
             Qgis.MessageLevel.Critical
         )
+        LAST_LOGIN_ERROR = 'auth'
         return None
 
     session = requests.Session()
@@ -72,6 +80,7 @@ def login_to_api(username: str, password: str):
                 f"CHYBA přihlášení (API): {body['error']}",
                 Qgis.MessageLevel.Critical
             )
+            LAST_LOGIN_ERROR = 'auth'
             return None
 
         _log("Přihlášení proběhlo úspěšně.")
@@ -80,18 +89,22 @@ def login_to_api(username: str, password: str):
         return session
 
     except requests.exceptions.HTTPError as e:
-        _log(f"CHYBA HTTP {e.response.status_code if e.response else '?'}: "
-             f"{e.response.text[:300] if e.response else 'žádná odpověď'}",
+        status = e.response.status_code if e.response is not None else None
+        _log(f"CHYBA HTTP {status if status else '?'}: "
+             f"{e.response.text[:300] if e.response is not None else 'žádná odpověď'}",
              Qgis.MessageLevel.Critical)
+        LAST_LOGIN_ERROR = 'auth' if status in (401, 403) else 'network'
         return None
     except requests.exceptions.RequestException as e:
         _log(f"CHYBA sítě: {e}", Qgis.MessageLevel.Critical)
+        LAST_LOGIN_ERROR = 'network'
         return None
     except ValueError:
         # Server returned non-JSON (e.g. an HTML error page behind a proxy)
         _log("CHYBA: server nevrátil platný JSON: "
              f"{response.text[:300]}",
              Qgis.MessageLevel.Critical)
+        LAST_LOGIN_ERROR = 'network'
         return None
 
 

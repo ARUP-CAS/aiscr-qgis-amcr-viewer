@@ -627,6 +627,39 @@ class LoginDialog(QDialog):
 
         return True
 
+    def _verify_credentials(self, username: str, password: str) -> bool:
+        """
+        Verify the credentials against the API before saving them.
+        Returns True if they should be stored: either the login succeeded,
+        or the server was unreachable and the user chose to keep them
+        unverified. Wrong credentials are never stored.
+        """
+        # Lazy import to avoid an import cycle
+        # (amcr_tools imports LoginDialog lazily as well)
+        from . import amcr_tools
+
+        if amcr_tools.login_to_api(username, password):
+            return True
+
+        if amcr_tools.LAST_LOGIN_ERROR == 'network':
+            answer = QMessageBox.question(
+                self,
+                "Server nedostupný",
+                "Přihlašovací údaje se nepodařilo ověřit – server AMČR "
+                "je nedostupný.\nChcete je přesto uložit (neověřené)?",
+                QMessageBox.StandardButton.Yes
+                | QMessageBox.StandardButton.No
+            )
+            return answer == QMessageBox.StandardButton.Yes
+
+        QMessageBox.warning(
+            self,
+            "Neplatné přihlašovací údaje",
+            "Přihlášení se nezdařilo – zkontrolujte e-mail a heslo.\n"
+            "Údaje nebyly uloženy."
+        )
+        return False
+
     # ------------------------------------------------------------------
     # Button actions
     # ------------------------------------------------------------------
@@ -653,6 +686,11 @@ class LoginDialog(QDialog):
             if ok:
                 if not self._ensure_master_password():
                     return
+                # Verify the new username against the stored password
+                if not self._verify_credentials(
+                    username, cfg.config("password", "")
+                ):
+                    return
                 cfg.setConfig("username", username)
                 auth_mgr.updateAuthenticationConfig(cfg)
                 self.accept()
@@ -660,6 +698,11 @@ class LoginDialog(QDialog):
 
         if not password:
             QMessageBox.warning(self, "Chybí údaje", "Vyplňte prosím heslo.")
+            return
+
+        # Verify before prompting for the master password – wrong
+        # credentials must never reach the Authentication Manager
+        if not self._verify_credentials(username, password):
             return
 
         if not self._ensure_master_password():
