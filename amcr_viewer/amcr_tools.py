@@ -308,6 +308,10 @@ def load_amcr_data(canvas, bb, filters=None,
         filter_areal = "f_areal" in filters if filters else False
         filter_datace = "f_obdobi" in filters if filters else False
 
+        # Set when a network error interrupts the download – the user
+        # gets an explicit error/warning instead of a silent partial result
+        network_error = False
+
         # --- API PAGINATION LOOP ---
         while True:
             base_params['rows'] = BATCH_DOCS
@@ -358,12 +362,29 @@ def load_amcr_data(canvas, bb, filters=None,
                 current_page += 1
                 QApplication.processEvents()  # Keep UI responsive
 
+            except requests.exceptions.RequestException as e:
+                network_error = True
+                QgsMessageLog.logMessage(
+                    f"Chyba sítě při stránkování na straně "
+                    f"{current_page}: {e}",
+                    "AMČR", Qgis.MessageLevel.Critical
+                )
+                break
             except Exception as e:
                 QgsMessageLog.logMessage(
                     f"Chyba při stránkování na straně {current_page}: {e}",
                     "AMČR", Qgis.MessageLevel.Warning
                 )
                 break
+
+        if network_error and not docs:
+            iface.messageBar().pushMessage(
+                "AMCR",
+                "Stahování selhalo: chyba sítě. "
+                "Zkontrolujte připojení k internetu.",
+                level=Qgis.MessageLevel.Critical
+            )
+            return
 
         if not docs:
             iface.messageBar().pushMessage(
@@ -640,6 +661,15 @@ def load_amcr_data(canvas, bb, filters=None,
                 QApplication.processEvents()
                 r_json = _api_get_json(url, params=params_pian, timeout=15)
                 docs_pian.extend(r_json.get('response', {}).get('docs', []))
+            except requests.exceptions.RequestException as e:
+                # Network is down – stop immediately instead of
+                # uselessly retrying every remaining batch
+                network_error = True
+                QgsMessageLog.logMessage(
+                    f"Chyba sítě při stahování geometrií PIAN: {e}",
+                    "AMČR", Qgis.MessageLevel.Critical
+                )
+                break
             except Exception as e:
                 QgsMessageLog.logMessage(
                     f"Chyba PIAN: {e}",
@@ -920,7 +950,19 @@ def load_amcr_data(canvas, bb, filters=None,
                 proj.addMapLayer(l)
                 added += len(f)
 
-        if added > 0:
+        if network_error:
+            iface.messageBar().pushMessage(
+                "AMCR",
+                "Stahování bylo přerušeno chybou sítě – "
+                f"výsledek je neúplný (vykresleno {added} prvků). "
+                "Zkontrolujte připojení a spusťte stahování znovu.",
+                level=(
+                    Qgis.MessageLevel.Warning
+                    if added > 0
+                    else Qgis.MessageLevel.Critical
+                )
+            )
+        elif added > 0:
             iface.messageBar().pushMessage(
                 "AMCR",
                 f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). "
