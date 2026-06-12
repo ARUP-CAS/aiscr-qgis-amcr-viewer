@@ -6,7 +6,6 @@ from qgis.core import Qgis
 
 from .amcr_tools import load_amcr_data, login_to_api
 from .amcr_dialog import AmcrFilterDialog, LoginDialog
-from .resources import *
 import os.path
 
 
@@ -24,8 +23,9 @@ class AmcrViewer:
         self.iface = iface
         self.plugin_dir = os.path.dirname(__file__)
 
-        # Determine the user's locale to load appropriate translation files
-        locale = QSettings().value('locale/userLocale')[0:2]
+        # Determine the user's locale to load appropriate translation files.
+        # The setting may be missing (None) on a fresh QGIS install.
+        locale = str(QSettings().value('locale/userLocale') or 'en')[0:2]
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
