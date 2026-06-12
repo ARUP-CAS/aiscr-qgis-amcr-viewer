@@ -158,6 +158,11 @@ def fetch_set(internal_name, api_set, task=None):
                             ),
                             None
                         )
+                        # Skip records without a valid one-letter code –
+                        # a None code would end up in the CSV and later
+                        # in the API filter as the string "None"
+                        if not kod:
+                            continue
 
                     dataset.append({
                         'Název': nazev,
