@@ -317,6 +317,12 @@ def load_amcr_data(canvas, bb, filters=None,
             else False
         )
 
+        only_projektove_akce = (
+            filters.get('proj_akce') == 'true'
+            if filters
+            else False
+        )
+
         # Check whether we should filter results based on component filters
         filter_areal = "f_areal" in filters if filters else False
         filter_datace = "f_obdobi" in filters if filters else False
@@ -437,6 +443,9 @@ def load_amcr_data(canvas, bb, filters=None,
         for doc in docs:
             piani = doc.get('az_dj_pian', [])
             if not piani:
+                continue
+
+            if only_projektove_akce and not doc.get("akce_projekt", False):
                 continue
 
             actions_with_geom += 1
