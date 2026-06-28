@@ -44,16 +44,19 @@ class UpdateCodelistsTask(QgsTask):
             refresh_globals()
             QgsMessageLog.logMessage(
                 "Hesláře AMČR byly úspěšně aktualizovány.",
-                "AMČR", Qgis.Info)
+                "AMČR", Qgis.Info
+            )
         else:
             if self.isCanceled():
                 QgsMessageLog.logMessage(
                     "Aktualizace heslářů byla zrušena.",
-                    "AMČR", Qgis.Warning)
+                    "AMČR", Qgis.Warning
+                )
             else:
                 QgsMessageLog.logMessage(
                     f"Chyba aktualizace: {self.exception}",
-                    "AMČR", Qgis.Critical)
+                    "AMČR", Qgis.Critical
+                )
 
 
 class FilterableSelectionDialog(QDialog):
@@ -151,10 +154,20 @@ class AmcrFilterDialog(QDialog):
 
         # Cache dictionary to store selected codes for each category
         self.selection_cache = {
-            'organizace': [], 'kraj': [], 'obdobi': [], 'areal': [],
-            'typ_akce': [], 'okres': [], 'katastr': [], 'vedouci': [],
-            'pian_presnost': [], 'pristupnost': [], 'typ_lokality': [],
-            'druh_lokality': [], 'jistota': [], 'lokalita_zachovalost': []
+            'organizace': [],
+            'kraj': [],
+            'obdobi': [],
+            'areal': [],
+            'typ_akce': [],
+            'okres': [],
+            'katastr': [],
+            'vedouci': [],
+            'pian_presnost': [],
+            'pristupnost': [],
+            'typ_lokality': [],
+            'druh_lokality': [],
+            'jistota': [],
+            'lokalita_zachovalost': [],
         }
 
         layout = QVBoxLayout()
@@ -363,7 +376,7 @@ class AmcrFilterDialog(QDialog):
             self.selection_cache[cache_key] = [
                 'HES-000861',
                 'HES-000862',
-                'HES-000863'
+                'HES-000863',
             ]
 
         btn.clicked.connect(open_dialog)

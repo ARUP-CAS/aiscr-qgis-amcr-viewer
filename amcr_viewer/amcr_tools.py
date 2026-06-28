@@ -283,7 +283,7 @@ def load_amcr_data(canvas, bb, filters=None,
         base_params = {
             "mapa": "true",
             "sort": "ident_cely asc",
-            "entity": typ_dat
+            "entity": typ_dat,
         }
 
         # Restrict search to map window if requested
@@ -479,7 +479,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 "katastr": g_list(doc, 'katastr'),
                 "dalsi_katastr": dalsi_kat_str,
                 "pristupnost": g(doc, 'pristupnost'),
-                "loc": g_list(doc, 'loc')
+                "loc": g_list(doc, 'loc'),
             }
 
             # Add entity-specific metadata
@@ -668,8 +668,10 @@ def load_amcr_data(canvas, bb, filters=None,
         )
 
         fl_pian = [
-            "ident_cely", "pian_typ",
-            "pian_chranene_udaje", "pian_presnost"
+            "ident_cely",
+            "pian_typ",
+            "pian_chranene_udaje",
+            "pian_presnost",
         ]
 
         for i in range(0, total_pians, BATCH_PIAN):
@@ -682,7 +684,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 "entity": "pian",
                 "q": fq_pian,
                 "rows": len(batch),
-                "fl": ",".join(fl_pian)
+                "fl": ",".join(fl_pian),
             }
             try:
                 QApplication.processEvents()
@@ -739,7 +741,7 @@ def load_amcr_data(canvas, bb, filters=None,
             QgsField("odkaz_do_digiarchivu", QMetaType.Type.QString),
             QgsField("okres", QMetaType.Type.QString),
             QgsField("katastr", QMetaType.Type.QString),
-            QgsField("dalsi_katastry", QMetaType.Type.QString)
+            QgsField("dalsi_katastry", QMetaType.Type.QString),
         ]
 
         # Extend table based on data type
@@ -763,7 +765,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 QgsField("popis_lokality", QMetaType.Type.QString),
                 QgsField("typ_lokality", QMetaType.Type.QString),
                 QgsField("druh_lokality", QMetaType.Type.QString),
-                QgsField("zachovalost", QMetaType.Type.QString)
+                QgsField("zachovalost", QMetaType.Type.QString),
             ]
 
         cols.append(QgsField("Přístupnost", QMetaType.Type.QString))
