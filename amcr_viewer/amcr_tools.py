@@ -920,7 +920,7 @@ def load_amcr_data(canvas, bb, filters=None,
                                 + meta['ident_cely'],
                                 meta['az_okres'],
                                 meta['katastr'],
-                                meta['dalsi_katastr']
+                                meta['dalsi_katastr'],
                             ]
                             if is_akce:
                                 atributy.extend([
@@ -942,7 +942,7 @@ def load_amcr_data(canvas, bb, filters=None,
                                     meta['lokalita_popis'],
                                     meta['lokalita_typ'],
                                     meta['lokalita_druh'],
-                                    meta['lokalita_zachovalost']
+                                    meta['lokalita_zachovalost'],
                                 ])
 
                             atributy.append(meta['pristupnost'])
@@ -972,12 +972,12 @@ def load_amcr_data(canvas, bb, filters=None,
             (feats_pt, vl_point, "Body"),
         ]
 
-        for f, l, n in layers_to_process:
+        for f, L, n in layers_to_process:
             if f:
-                l.dataProvider().addFeatures(f)
-                l.updateExtents()
-                l.setName(f"AMCR_{archeologicky_zaznam}_{n}")
-                proj.addMapLayer(l)
+                L.dataProvider().addFeatures(f)
+                L.updateExtents()
+                L.setName(f"AMCR_{archeologicky_zaznam}_{n}")
+                proj.addMapLayer(L)
                 added += len(f)
 
         if network_error:
