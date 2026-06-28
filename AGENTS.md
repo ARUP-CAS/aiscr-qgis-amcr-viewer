@@ -12,6 +12,15 @@ přes AMČR účet.
 
 Zdroj dat: https://digiarchiv.aiscr.cz/ · Nápověda: https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html
 
+## Zařazení v ekosystému AIS CR
+
+Tento repozitář je jedním ze **sourozeneckých repozitářů** ekosystému AIS CR.
+Centrální governance a AI konfigurace spravuje hub **`aiscr-management`**; konvence
+v tomto souboru jsou s tímto vzorem sladěné a zjednodušené pro potřeby jednoho
+QGIS pluginu. Těžkou mašinerii hubu (složka `.agents/`, OpenSpec, sync skripty,
+multi-assistant generování) tento repozitář **záměrně nepřebírá**. Při širších
+otázkách governance má přednost vzor z `aiscr-management`.
+
 ## Struktura repozitáře
 
 ```
@@ -37,18 +46,34 @@ README.md               # uživatelská dokumentace (anglicky)
 - **Commity, PR a komentáře v issue:** česky.
 
 ### Commity
-- Styl odpovídá historii: česky, věcně, popisně.
-- U prací na konkrétní funkci se používá prefix názvu větve, např.:
-  `feature/projektove-akce: do dialogu akce přidán checkbox …`
-- Jeden commit = jedna logická změna.
+- Styl odpovídá historii: česky, věcně, popisně; jeden commit = jedna logická
+  změna.
+- První řádek stručně a výstižně (ideálně v imperativu); podrobnosti do těla.
+- Pokud je commit připraven s pomocí AI, uveď to v těle commitu nebo v popisu PR.
 
 ### Větve
-- Vývoj probíhá na tematických větvích, např. `feature/<nazev>`,
-  `chore/<nazev>`, `hotfix/<nazev>`.
+Konvence názvů je sladěná s hubem `aiscr-management`:
+
+- **lidé:** `feat/<téma>` (nová funkce), `fix/<téma>` (oprava), `docs/<téma>`
+  (dokumentace), `chore/<téma>` (údržba).
+- **AI agenti:** `agents/<jméno-agenta>/<téma>` (např. `agents/claude/oprava-pian`).
+
+Další pravidla:
+
 - Cílová větev pro nový vývoj je aktuální `version/v2.x.y` (ne přímo do
   výchozí větve bez PR).
+- **Nikdy** nepushuj přímo do chráněných větví; vždy přes Pull Request.
 - Standardizační / nefunkční změny drž v samostatné větvi, ať se nemíchají do
   feature PR.
+
+### Pravidla pro AI agenty (git)
+- AI ve výchozím stavu zůstává u **lokální práce na aktuální větvi**.
+- Bez **výslovného pokynu** uživatele AI nestageuje (`git add`), necommituje,
+  nepushuje ani samo nepřepíná/nezakládá větev pro vzdálené doručení.
+- Při výslovném požadavku na push/PR použij větev `agents/<jméno-agenta>/<téma>`;
+  pokud aktuální větev tomuto vzoru neodpovídá, vyžádej si nejdřív potvrzení.
+- Vytvoření větve, stage, commit, push ani draft PR AI běžně nenabízí; zmiňuj je
+  jen tehdy, když jsou pro splnění úkolu opravdu nutné.
 
 ### QGIS specifika
 - Minimální podporovaná verze QGIS je **3.44** (`qgisMinimumVersion` v
@@ -63,6 +88,8 @@ README.md               # uživatelská dokumentace (anglicky)
 - Verze pluginu žije v **`amcr_viewer/metadata.txt`** (`version=`).
 - **Při každé změně chování / nové funkci** povyš verzi a doplň položku do
   `changelog=` v `metadata.txt` (formát `vX.Y.Z (RRRR-MM-DD)` + odrážky).
+- Datum v changelogu ber z **deterministického zdroje**, ne z paměti, např.
+  `python -c "import datetime; print(datetime.date.today().isoformat())"`.
 - Release se vytváří publikací GitHub Release; workflow
   `.github/workflows/release_plugin.yml` zabalí složku `amcr_viewer/` do
   `amcr_viewer.zip` a přiloží ji k releasu. Do ZIPu se nesmí dostat `.git*`
@@ -75,6 +102,17 @@ README.md               # uživatelská dokumentace (anglicky)
 - PR musí mířit do správné `version/v2.x.y` větve.
 - Před požádáním o review projdi kontrolní seznam v šabloně (zejména bump verze
   v `metadata.txt`, pokud měníš chování).
+- V popisu PR uveď **podíl AI** (např. „text navržen AI, ručně zkontrolováno")
+  a odkaz na související issue, pokud existuje.
+
+## Bezpečnost a soukromí
+
+- Do promptů, příkladů ani commitů **nevkládej** ostrá produkční data, plné
+  log dumpy ani reálné osobní údaje (PII).
+- **Rediguj** secrets, tokeny, API klíče a hesla z čehokoli, co posíláš AI;
+  nikdy je necommituj do repozitáře (ani přihlašovací údaje k AMČR účtu).
+- Pro interní infrastrukturu (URL, hostname, prostředí) používej placeholdery,
+  pokud konkrétní hodnota není nutná a povolená.
 
 ## Lokální ověření
 
