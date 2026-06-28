@@ -317,6 +317,12 @@ def load_amcr_data(canvas, bb, filters=None,
             else False
         )
 
+        only_projektove_akce = (
+            filters.get('proj_akce') == 'true'
+            if filters
+            else False
+        )
+
         # Check whether we should filter results based on component filters
         filter_areal = "f_areal" in filters if filters else False
         filter_datace = "f_obdobi" in filters if filters else False
@@ -439,6 +445,9 @@ def load_amcr_data(canvas, bb, filters=None,
             if not piani:
                 continue
 
+            if only_projektove_akce and not doc.get("akce_projekt", False):
+                continue
+
             actions_with_geom += 1
 
             # Extract protected fields ('or {}' – key may hold None)
@@ -514,6 +523,11 @@ def load_amcr_data(canvas, bb, filters=None,
                         "Ano"
                         if doc.get('akce_je_nz') is True
                         else "Ne"
+                    ),
+                    "projekt": g(
+                        doc,
+                        'akce_projekt',
+                        ""
                     ),
                 })
 
@@ -741,6 +755,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 QgsField("vedlejsi_typ", QMetaType.Type.QString),
                 QgsField("zjisteni", QMetaType.Type.QString),
                 QgsField("nahrazuje_NZ", QMetaType.Type.QString),
+                QgsField("projekt", QMetaType.Type.QString),
             ]
         elif typ_dat == "lokalita":
             cols += [
@@ -784,6 +799,7 @@ def load_amcr_data(canvas, bb, filters=None,
             "komponenta": "Komponenta",
             "komponenta_areal": "Areál",
             "komponenta_obdobi": "Období",
+            "projekt": "Projekt",
         }
 
         if komponenty == "true":
@@ -917,7 +933,8 @@ def load_amcr_data(canvas, bb, filters=None,
                                     meta['akce_hlavni_typ'],
                                     meta['akce_vedlejsi_typ'],
                                     meta['dj_negativni'],
-                                    meta['akce_je_nz']
+                                    meta['akce_je_nz'],
+                                    meta['projekt'],
                                 ])
                             else:
                                 atributy.extend([

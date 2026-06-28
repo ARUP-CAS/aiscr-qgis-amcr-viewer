@@ -169,6 +169,8 @@ class AmcrFilterDialog(QDialog):
         if self.typ_dat == "akce":
             self.chk_posevidence = QCheckBox("Pouze pozitivní zjištění")
             layout.addWidget(self.chk_posevidence)
+            self.chk_proj_akce = QCheckBox("Pouze projektové akce")
+            layout.addWidget(self.chk_proj_akce)
 
         layout.addSpacing(10)
 
@@ -453,6 +455,8 @@ class AmcrFilterDialog(QDialog):
         if self.typ_dat == "akce":
             if self.chk_posevidence.isChecked():
                 filters['posevidence'] = 'true'
+            if self.chk_proj_akce.isChecked():
+                filters['proj_akce'] = 'true'
             if self.selection_cache['organizace']:
                 filters['f_organizace'] = self.selection_cache['organizace']
             if self.selection_cache['typ_akce']:
