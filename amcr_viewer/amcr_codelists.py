@@ -297,6 +297,16 @@ def refresh_globals():
     LOKALITA_ZACHOVALOST.update(data.get('lokalita_zachovalost', {}))
     PRISTUPNOST.clear()
     PRISTUPNOST.update(data.get('pristupnost', {}))
+    NALEZ_KATEGORIE.clear()
+    NALEZ_KATEGORIE.update(data.get('nalez_kategorie', {}))
+    DRUH_NALEZU.clear()
+    DRUH_NALEZU.update(data.get('druh_nalezu', {}))
+    SPECIFIKACE.clear()
+    SPECIFIKACE.update(data.get('specifikace', {}))
+    NALEZOVE_OKOLNOSTI.clear()
+    NALEZOVE_OKOLNOSTI.update(data.get('nalezove_okolnosti', {}))
+    NALEZCE.clear()
+    NALEZCE.update(data.get('nalezce', {}))
 
 
 # Initialize empty dicts that will be populated immediately below
@@ -314,5 +324,10 @@ DRUH_LOKALITY = {}
 JISTOTA = {}
 LOKALITA_ZACHOVALOST = {}
 PRISTUPNOST = {}
+NALEZ_KATEGORIE = {}
+DRUH_NALEZU = {}
+SPECIFIKACE = {}
+NALEZOVE_OKOLNOSTI = {}
+NALEZCE = {}
 
 refresh_globals()
