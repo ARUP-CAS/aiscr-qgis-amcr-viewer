@@ -90,6 +90,7 @@ class AmcrViewer:
         """
         # Define paths for action-specific icons
         icon_akce_path = os.path.join(self.plugin_dir, 'akce.png')
+        icon_pas_path = os.path.join(self.plugin_dir, 'akce.png')
         icon_lokality_path = os.path.join(self.plugin_dir, 'lokality.png')
         icon_amcr_help_path = os.path.join(self.plugin_dir, 'amcr-help.png')
 
@@ -108,6 +109,16 @@ class AmcrViewer:
             add_to_toolbar=False
         )
         self.plugin_menu.addAction(self.action_download_akce)
+
+        self.action_download_pas = self.add_action(
+            icon_path=icon_pas_path,
+            text=self.tr(u'Stáhnout data samostatných nálezů | AMČR Viewer'),
+            callback=lambda checked=False: self.run_download('pas'),
+            parent=self.iface.mainWindow(),
+            add_to_menu=False,
+            add_to_toolbar=False
+        )
+        self.plugin_menu.addAction(self.action_download_pas)
 
         self.action_download_lokality = self.add_action(
             icon_path=icon_lokality_path,
