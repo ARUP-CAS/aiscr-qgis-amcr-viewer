@@ -9,24 +9,30 @@ from qgis.core import QgsMessageLog, Qgis
 # Define paths for the plugin and its codelists directory
 PLUGIN_DIR = os.path.dirname(__file__)
 CODELISTS_DIR = os.path.join(PLUGIN_DIR, 'codelists')
-BASE_URL = "https://api.aiscr.cz/2.2/oai"
+BASE_URL_AMCR = "https://api.aiscr.cz/2.2/oai"
+BASE_URL_DA = "https://digiarchiv.aiscr.cz/api/search/query"
 OUTPUT_FILE = os.path.join(CODELISTS_DIR, 'heslar.csv')
 
 slovnicek = {
-    'obdobi': 'heslo:obdobi',
-    'typ_akce': 'heslo:akce_typ',
-    'areal': 'heslo:areal',
-    'kraj': 'ruian_kraj',
-    'organizace': 'organizace',
-    'okres': 'ruian_okres',
-    'katastr': 'ruian_katastr',
-    'vedouci': 'osoba',
-    'pian_presnost': 'heslo:pian_presnost',
-    'typ_lokality': 'heslo:lokalita_typ',
-    'druh_lokality': 'heslo:lokalita_druh',
-    'jistota': 'heslo:jistota_urceni',
-    'lokalita_zachovalost': 'heslo:stav_dochovani',
-    'pristupnost': 'heslo:pristupnost'
+    'obdobi': (BASE_URL_AMCR, 'heslo:obdobi'),
+    'typ_akce': (BASE_URL_AMCR, 'heslo:akce_typ'),
+    'areal': (BASE_URL_AMCR, 'heslo:areal'),
+    'kraj': (BASE_URL_AMCR, 'ruian_kraj'),
+    'organizace': (BASE_URL_AMCR, 'organizace'),
+    'okres': (BASE_URL_AMCR, 'ruian_okres'),
+    'katastr': (BASE_URL_AMCR, 'ruian_katastr'),
+    'pian_presnost': (BASE_URL_AMCR, 'heslo:pian_presnost'),
+    'typ_lokality': (BASE_URL_AMCR, 'heslo:lokalita_typ'),
+    'druh_lokality': (BASE_URL_AMCR, 'heslo:lokalita_druh'),
+    'jistota': (BASE_URL_AMCR, 'heslo:jistota_urceni'),
+    'lokalita_zachovalost': (BASE_URL_AMCR, 'heslo:stav_dochovani'),
+    'pristupnost': (BASE_URL_AMCR, 'heslo:pristupnost'),
+    'nalez_kategorie': (BASE_URL_AMCR, 'heslo:predmet_druh_kat'),
+    'druh_nalezu': (BASE_URL_AMCR, 'heslo:predmet_druh'),
+    'specifikace': (BASE_URL_AMCR, 'heslo:predmet_specifikace'),
+    'nalezove_okolnosti': (BASE_URL_AMCR, 'heslo:nalezove_okolnosti'),
+    'vedouci': (BASE_URL_DA, 'f_vedouci'),
+    'nalezce': (BASE_URL_DA, 'f_nalezce'),
 }
 
 NS = {
