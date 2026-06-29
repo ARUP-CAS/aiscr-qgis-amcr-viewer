@@ -103,12 +103,18 @@ def load_all_data():
     return categorized_data
 
 
-def fetch_set(internal_name, api_set, task=None):
+def fetch_set(base_url, internal_name, api_set, task=None):
     dataset = []
-    params = {
+    params_amcr = {
         "verb": "ListRecords",
         "metadataPrefix": "oai_dc",
         "set": api_set
+    }
+    params_da = {
+        "entity": "samostatny_nalez" if internal_name == "nalezce" else "akce",
+        "rows": 0,
+        "noFacets": "false",
+        "onlyFacets": "true"
     }
 
     while True:
@@ -117,75 +123,95 @@ def fetch_set(internal_name, api_set, task=None):
             return None
 
         try:
-            response = requests.get(BASE_URL, params=params, timeout=30)
-            response.raise_for_status()
-            root = ET.fromstring(response.content)  # nosec
+            if "digiarchiv" not in base_url:
+                response = requests.get(base_url, params=params_amcr, timeout=30)
+                response.raise_for_status()
+                root = ET.fromstring(response.content)  # nosec
 
-            records = root.findall('.//oai:record', NS)
-            for rec in records:
-                metadata = rec.find('.//oai_dc:dc', NS)
-                if metadata is not None:
-                    # Code (identifier)
-                    identifier_el = metadata.find('dc:identifier', NS)
-                    kod = (
-                        identifier_el.text
-                        if identifier_el is not None
-                        else ""
-                    )
-
-                    # Title – filter out system labels "AMČR - ..."
-                    titles = metadata.findall('dc:title', NS)
-                    nazev = ""
-                    for t in titles:
-                        if (
-                            t.text
-                            and not t.text.startswith("AMČR -")
-                            and not t.text.startswith(" AMČR -")
-                        ):
-                            nazev = t.text
-                            break
-                    # If no title passed the filter, fall back
-                    # to the first available one
-                    if not nazev and titles:
-                        nazev = titles[0].text
-
-                    specialni_pripady = ['okres', 'katastr']
-
-                    if internal_name in specialni_pripady:
-                        kod = nazev
-
-                    if internal_name == 'pristupnost':
-                        kod = next(
-                            (
-                                t.text for t in titles
-                                if t.text
-                                and len(t.text) == 1
-                                and t.text.isalpha()
-                            ),
-                            None
+                records = root.findall('.//oai:record', NS)
+                for rec in records:
+                    metadata = rec.find('.//oai_dc:dc', NS)
+                    if metadata is not None:
+                        # Code (identifier)
+                        identifier_el = metadata.find('dc:identifier', NS)
+                        kod = (
+                            identifier_el.text
+                            if identifier_el is not None
+                            else ""
                         )
-                        # Skip records without a valid one-letter code –
-                        # a None code would end up in the CSV and later
-                        # in the API filter as the string "None"
-                        if not kod:
-                            continue
+
+                        # Title – filter out system labels "AMČR - ..."
+                        titles = metadata.findall('dc:title', NS)
+                        nazev = ""
+                        for t in titles:
+                            if (
+                                t.text
+                                and not t.text.startswith("AMČR -")
+                                and not t.text.startswith(" AMČR -")
+                            ):
+                                nazev = t.text
+                                break
+                        # If no title passed the filter, fall back
+                        # to the first available one
+                        if not nazev and titles:
+                            nazev = titles[0].text
+
+                        specialni_pripady = ['okres', 'katastr']
+
+                        if internal_name in specialni_pripady:
+                            kod = nazev
+
+                        if internal_name == 'pristupnost':
+                            kod = next(
+                                (
+                                    t.text for t in titles
+                                    if t.text
+                                    and len(t.text) == 1
+                                    and t.text.isalpha()
+                                ),
+                                None
+                            )
+                            # Skip records without a valid one-letter code –
+                            # a None code would end up in the CSV and later
+                            # in the API filter as the string "None"
+                            if not kod:
+                                continue
+
+                        dataset.append({
+                            'Název': nazev,
+                            'Kód': kod,
+                            'Kategorie': internal_name
+                        })
+
+                # Pagination
+                token = root.find('.//oai:resumptionToken', NS)
+                if token is not None and token.text:
+                    params_amcr = {
+                        "verb": "ListRecords",
+                        "resumptionToken": token.text
+                    }
+                    time.sleep(0.5)
+                else:
+                    break
+            
+            else:
+                response = requests.get(base_url, params=params_da, timeout=30)
+                response.raise_for_status()
+                data_json = response.json()
+
+                records = data_json['facet_counts']['facet_fields'][api_set]
+
+                for r in records:
+
+                    nazev = r["name"]
 
                     dataset.append({
-                        'Název': nazev,
-                        'Kód': kod,
-                        'Kategorie': internal_name
-                    })
-
-            # Pagination
-            token = root.find('.//oai:resumptionToken', NS)
-            if token is not None and token.text:
-                params = {
-                    "verb": "ListRecords",
-                    "resumptionToken": token.text
-                }
-                time.sleep(0.5)
-            else:
-                break
+                            'Název': nazev,
+                            'Kód': nazev,
+                            'Kategorie': internal_name
+                        })
+                
+                break                    
 
         except Exception as e:
             QgsMessageLog.logMessage(
@@ -201,8 +227,13 @@ def download_heslare(task=None):
     ensure_codelists_dir()
     all_data = []
     total_sets = len(slovnicek)
+# index, (interni, api_nazev)
+    for index, (key, value) in enumerate(slovnicek.items()):
 
-    for index, (interni, api_nazev) in enumerate(slovnicek.items()):
+        base_url = value[0]
+        interni = key
+        api_nazev = value[1]
+
         # Check if the user cancelled the task via the QGIS taskbar
         if task and task.isCanceled():
             return False
@@ -212,7 +243,7 @@ def download_heslare(task=None):
             "AMČR", Qgis.Info)
 
         # Pass the task correctly to the updated fetch function
-        data = fetch_set(interni, api_nazev, task=task)
+        data = fetch_set(base_url, interni, api_nazev, task=task)
 
         if data is None:
             return False  # Cancelled mid-download
