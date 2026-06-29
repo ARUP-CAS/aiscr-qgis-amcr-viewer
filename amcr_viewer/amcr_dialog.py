@@ -11,7 +11,9 @@ from qgis.utils import iface
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
                              OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST,
                              TYP_LOKALITY, DRUH_LOKALITY, JISTOTA,
-                             LOKALITA_ZACHOVALOST, PRISTUPNOST,
+                             LOKALITA_ZACHOVALOST, PRISTUPNOST, 
+                             NALEZ_KATEGORIE, DRUH_NALEZU, SPECIFIKACE,
+                             NALEZOVE_OKOLNOSTI, NALEZCE,
                              download_heslare, refresh_globals)
 
 
@@ -168,6 +170,11 @@ class AmcrFilterDialog(QDialog):
             'druh_lokality': [],
             'jistota': [],
             'lokalita_zachovalost': [],
+            'nalez_kategorie': [],
+            'druh_nalezu': [],
+            'specifikace': [],
+            'nalezove_okolnosti': [],
+            'nalezce': [],
         }
 
         layout = QVBoxLayout()
@@ -283,35 +290,35 @@ class AmcrFilterDialog(QDialog):
             self.picker_nalez_kategorie = self.setup_picker(
                 "Kategorie nálezu",
                 'nalez_kategorie',
-                ""
+                NALEZ_KATEGORIE
             )
             layout.addWidget(self.picker_nalez_kategorie)
 
             self.picker_druh_nalezu = self.setup_picker(
                 "Druh nálezu",
                 'druh_nalezu',
-                ""
+                DRUH_NALEZU
             )
             layout.addWidget(self.picker_druh_nalezu)
 
             self.picker_specifikace = self.setup_picker(
                 "Specifikace nálezu",
                 'specifikace',
-                ""
+                SPECIFIKACE
             )
             layout.addWidget(self.picker_specifikace)
 
             self.picker_nalezove_okolnosti = self.setup_picker(
                 "Okolnosti nálezu",
                 'nalezove_okolnosti',
-                ""
+                NALEZOVE_OKOLNOSTI
             )
             layout.addWidget(self.picker_nalezove_okolnosti)
 
             self.picker_nalezce = self.setup_picker(
                 "Nálezce",
                 'nalezce',
-                ""
+                NALEZCE
             )
             layout.addWidget(self.picker_nalezce)
 
@@ -509,22 +516,23 @@ class AmcrFilterDialog(QDialog):
                 filters['posevidence'] = 'true'
             if self.chk_proj_akce.isChecked():
                 filters['proj_akce'] = 'true'
-            if self.selection_cache['organizace']:
-                filters['f_organizace'] = self.selection_cache['organizace']
-            if self.selection_cache['typ_akce']:
-                filters['f_typ_vyzkumu'] = self.selection_cache['typ_akce']
-            if self.selection_cache['vedouci']:
-                filters['f_vedouci'] = self.selection_cache['vedouci']
 
-        if self.typ_dat == "lokalita":
-            if self.selection_cache['typ_lokality']:
-                filters['f_typ_lokality'] = self.selection_cache['typ_lokality']
-            if self.selection_cache['druh_lokality']:
-                filters['f_druh_lokality'] = self.selection_cache['druh_lokality']
-            if self.selection_cache['jistota']:
-                filters['f_jistota'] = self.selection_cache['jistota']
-            if self.selection_cache['lokalita_zachovalost']:
-                filters['f_lokalita_zachovalost'] = self.selection_cache['lokalita_zachovalost']
+        if self.selection_cache['typ_akce']:
+            filters['f_typ_vyzkumu'] = self.selection_cache['typ_akce']
+        if self.selection_cache['vedouci']:
+            filters['f_vedouci'] = self.selection_cache['vedouci']
+
+        if self.selection_cache['organizace']:
+            filters['f_organizace'] = self.selection_cache['organizace']                
+
+        if self.selection_cache['typ_lokality']:
+            filters['f_typ_lokality'] = self.selection_cache['typ_lokality']
+        if self.selection_cache['druh_lokality']:
+            filters['f_druh_lokality'] = self.selection_cache['druh_lokality']
+        if self.selection_cache['jistota']:
+            filters['f_jistota'] = self.selection_cache['jistota']
+        if self.selection_cache['lokalita_zachovalost']:
+            filters['f_lokalita_zachovalost'] = self.selection_cache['lokalita_zachovalost']
 
         return filters
 
