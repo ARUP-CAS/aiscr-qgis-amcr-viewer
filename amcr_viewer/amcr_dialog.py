@@ -218,7 +218,7 @@ class AmcrFilterDialog(QDialog):
 
         # Filters valid for Akce
 
-        if self.typ_dat == "akce":
+        if self.typ_dat in ["pas", "akce"]:
             self.picker_org = self.setup_picker(
                 "Organizace",
                 'organizace',
@@ -226,6 +226,7 @@ class AmcrFilterDialog(QDialog):
             )
             layout.addWidget(self.picker_org)
 
+        if self.typ_dat == "akce":
             self.picker_vedouci = self.setup_picker(
                 "Vedoucí výzkumu",
                 'vedouci',
@@ -278,12 +279,49 @@ class AmcrFilterDialog(QDialog):
         self.picker_obdobi = self.setup_picker("Období", 'obdobi', OBDOBI)
         layout.addWidget(self.picker_obdobi)
 
-        self.picker_areal = self.setup_picker("Areál", 'areal', AREAL)
-        layout.addWidget(self.picker_areal)
+        if self.typ_dat == "pas":
+            self.picker_nalez_kategorie = self.setup_picker(
+                "Kategorie nálezu",
+                'nalez_kategorie',
+                ""
+            )
+            layout.addWidget(self.picker_nalez_kategorie)
 
-        # Option to download related components table
-        self.chk_komponenty = QCheckBox("Načíst komponenty")
-        layout.addWidget(self.chk_komponenty)
+            self.picker_druh_nalezu = self.setup_picker(
+                "Druh nálezu",
+                'druh_nalezu',
+                ""
+            )
+            layout.addWidget(self.picker_druh_nalezu)
+
+            self.picker_specifikace = self.setup_picker(
+                "Specifikace nálezu",
+                'specifikace',
+                ""
+            )
+            layout.addWidget(self.picker_specifikace)
+
+            self.picker_nalezove_okolnosti = self.setup_picker(
+                "Okolnosti nálezu",
+                'nalezove_okolnosti',
+                ""
+            )
+            layout.addWidget(self.picker_nalezove_okolnosti)
+
+            self.picker_nalezce = self.setup_picker(
+                "Nálezce",
+                'nalezce',
+                ""
+            )
+            layout.addWidget(self.picker_nalezce)
+
+        if self.typ_dat != "pas":
+            self.picker_areal = self.setup_picker("Areál", 'areal', AREAL)
+            layout.addWidget(self.picker_areal)
+
+            # Option to download related components table
+            self.chk_komponenty = QCheckBox("Načíst komponenty")
+            layout.addWidget(self.chk_komponenty)
 
         # Warning label
         self.lbl_komponenty_warning = QLabel(
@@ -299,9 +337,10 @@ class AmcrFilterDialog(QDialog):
         self.lbl_komponenty_warning.setVisible(False)
         layout.addWidget(self.lbl_komponenty_warning)
 
-        self.chk_komponenty.toggled.connect(
-            self.lbl_komponenty_warning.setVisible
-        )
+        if self.typ_dat != "pas":
+            self.chk_komponenty.toggled.connect(
+                self.lbl_komponenty_warning.setVisible
+            )
 
         # Pushes everything above to the top
         layout.addStretch(1)
