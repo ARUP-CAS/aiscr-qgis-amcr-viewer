@@ -26,6 +26,17 @@ LAST_LOGIN_ERROR: str | None = None
 # a second download while the first one is still running
 _LOADING = False
 
+archeologicky_zaznam_l = [
+    "akce",
+    "lokalita",
+]
+
+typ_dat_vocab = {
+    "akce": "Akce",
+    "lokalita": "Lokalita",
+    "samostatny_nalez": "PAS",
+}
+
 
 def _log(msg: str, level=Qgis.MessageLevel.Info):
     """
@@ -709,7 +720,7 @@ def load_amcr_data(canvas, bb, filters=None,
         # D) LAYER CREATION (QGIS Memory Layers)
         # ==========================================
 
-        archeologicky_zaznam = "Akce" if typ_dat == "akce" else "Lokalita"
+        archeologicky_zaznam = typ_dat_vocab[typ_dat]
 
         # Initialize three layers for different geometry types (S-JTSK CRS)
         vl_poly = QgsVectorLayer(
