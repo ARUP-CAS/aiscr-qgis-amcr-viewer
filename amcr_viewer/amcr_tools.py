@@ -451,270 +451,283 @@ def load_amcr_data(canvas, bb, filters=None,
             return ", ".join([str(x) for x in val if x])
 
         # Process each downloaded metadata record
-        for doc in docs:
-            piani = doc.get('az_dj_pian', [])
-            if not piani:
-                continue
-
-            if only_projektove_akce and not doc.get("akce_projekt", False):
-                continue
-
-            actions_with_geom += 1
-
-            # Extract protected fields ('or {}' – key may hold None)
-            az_chranene = doc.get('az_chranene_udaje') or {}
-            chranene = (
-                doc.get('akce_chranene_udaje')
-                or doc.get('lokalita_chranene_udaje')
-                or {}
-            )
-
-            # Format additional cadastral areas from nested dicts
-            dalsi_kat = az_chranene.get('dalsi_katastr', [])
-            dalsi_kat_str = ""
-            if isinstance(dalsi_kat, list):
-                items = [
-                    x.get('value', '') if isinstance(x, dict) else str(x)
-                    for x in dalsi_kat
-                ]
-                dalsi_kat_str = ", ".join([i for i in items if i])
-
-            lokalizace = chranene.get('lokalizace_okolnosti', "")
-            lokalita_nazev = chranene.get('nazev', "")
-            lokalita_popis = chranene.get('popis', "")
-
-            # Core metadata structure
-            meta = {
-                "ident_cely": doc.get('ident_cely', ''),
-                "az_okres": g(doc, 'az_okres'),
-                "katastr": g_list(doc, 'katastr'),
-                "dalsi_katastr": dalsi_kat_str,
-                "pristupnost": g(doc, 'pristupnost'),
-                "loc": g_list(doc, 'loc'),
-            }
-
-            # Add entity-specific metadata
-            if typ_dat == "akce":
-                meta.update({
-                    "akce_hlavni_vedouci": g(
-                        doc,
-                        'akce_hlavni_vedouci'
-                    ),
-                    "akce_organizace": tr_code(g(
-                        doc,
-                        'akce_organizace'
-                    )),
-                    "akce_specifikace_data": tr_code(g(
-                        doc,
-                        'akce_specifikace_data'
-                    )),
-                    "akce_datum_zahajeni": g(
-                        doc,
-                        'akce_datum_zahajeni'
-                    ),
-                    "akce_datum_ukonceni": g(
-                        doc,
-                        'akce_datum_ukonceni'
-                    ),
-                    "akce_hlavni_typ": tr_code(g(
-                        doc,
-                        'akce_hlavni_typ'
-                    )),
-                    "akce_vedlejsi_typ": g_list(
-                        doc,
-                        'akce_vedlejsi_typ',
-                        translate=True
-                    ),
-                    "lokalizace_okolnosti": (
-                        str(lokalizace)
-                        if lokalizace
-                        else ""
-                    ),
-                    "akce_je_nz": (
-                        "Ano"
-                        if doc.get('akce_je_nz') is True
-                        else "Ne"
-                    ),
-                    "projekt": g(
-                        doc,
-                        'akce_projekt',
-                        ""
-                    ),
-                })
-
-            elif typ_dat == "lokalita":
-                meta.update({
-                    "lokalita_nazev": lokalita_nazev,
-                    "lokalita_popis": lokalita_popis,
-                    "lokalita_zachovalost": tr_code(g(
-                        doc,
-                        'lokalita_zachovalost'
-                    )),
-                    "lokalita_druh": tr_code(g(
-                        doc,
-                        'lokalita_druh'
-                    )),
-                    "lokalita_typ": tr_code(g(
-                        doc,
-                        'lokalita_typ_lokality'
-                    )),
-                })
-
-            # Documentation units (DJ) within the record
-            djs = doc.get('az_dokumentacni_jednotka', [])
-
-            for dj in djs:
-                # Skip negative evidence units if requested
-                if skip_negativni and dj.get('dj_negativni_jednotka') is True:
+        if typ_dat in archeologicky_zaznam_l:
+            for doc in docs:
+                piani = doc.get('az_dj_pian', [])
+                if not piani:
                     continue
 
-                komps = dj.get('dj_komponenta', [])
+                if only_projektove_akce and not doc.get("akce_projekt", False):
+                    continue
 
-                if filter_areal or filter_datace:
-                    if not komps:
-                        continue
-                    if not any(
-                        komp_projde_filtrem(
-                            komp, filter_areal,
-                            filter_datace, filters
-                        )
-                        for komp in komps
-                    ):
-                        continue
+                actions_with_geom += 1
 
-                dj_id = dj.get('ident_cely')
-                dj_typ = dj.get('dj_typ')
+                # Extract protected fields ('or {}' – key may hold None)
+                az_chranene = doc.get('az_chranene_udaje') or {}
+                chranene = (
+                    doc.get('akce_chranene_udaje')
+                    or doc.get('lokalita_chranene_udaje')
+                    or {}
+                )
 
-                # Merge shared metadata with documentation unit-specific fields
-                dj_meta = {
-                    **meta,
-                    'dj_id': dj_id,
-                    'dj_typ_value': dj_typ.get('value') if dj_typ else "",
-                    'dj_negativni': (
-                        "Negativní"
-                        if dj.get('dj_negativni_jednotka') is True
-                        else "Pozitivní"
-                    )
+                # Format additional cadastral areas from nested dicts
+                dalsi_kat = az_chranene.get('dalsi_katastr', [])
+                dalsi_kat_str = ""
+                if isinstance(dalsi_kat, list):
+                    items = [
+                        x.get('value', '') if isinstance(x, dict) else str(x)
+                        for x in dalsi_kat
+                    ]
+                    dalsi_kat_str = ", ".join([i for i in items if i])
+
+                lokalizace = chranene.get('lokalizace_okolnosti', "")
+                lokalita_nazev = chranene.get('nazev', "")
+                lokalita_popis = chranene.get('popis', "")
+
+                # Core metadata structure
+                meta = {
+                    "ident_cely": doc.get('ident_cely', ''),
+                    "az_okres": g(doc, 'az_okres'),
+                    "katastr": g_list(doc, 'katastr'),
+                    "dalsi_katastr": dalsi_kat_str,
+                    "pristupnost": g(doc, 'pristupnost'),
+                    "loc": g_list(doc, 'loc'),
                 }
 
-                # Link Documentation Unit to Geometry (PIAN)
-                dj_pian = dj.get('dj_pian')
-                if dj_pian:
-                    dj_pian_value = dj_pian.get('id')
-                    if dj_pian_value:
-                        target_pian_ids.add(dj_pian_value)
-                        if dj_pian_value not in pian_lookup:
-                            pian_lookup[dj_pian_value] = []
+                # Add entity-specific metadata
+                if typ_dat == "akce":
+                    meta.update({
+                        "akce_hlavni_vedouci": g(
+                            doc,
+                            'akce_hlavni_vedouci'
+                        ),
+                        "akce_organizace": tr_code(g(
+                            doc,
+                            'akce_organizace'
+                        )),
+                        "akce_specifikace_data": tr_code(g(
+                            doc,
+                            'akce_specifikace_data'
+                        )),
+                        "akce_datum_zahajeni": g(
+                            doc,
+                            'akce_datum_zahajeni'
+                        ),
+                        "akce_datum_ukonceni": g(
+                            doc,
+                            'akce_datum_ukonceni'
+                        ),
+                        "akce_hlavni_typ": tr_code(g(
+                            doc,
+                            'akce_hlavni_typ'
+                        )),
+                        "akce_vedlejsi_typ": g_list(
+                            doc,
+                            'akce_vedlejsi_typ',
+                            translate=True
+                        ),
+                        "lokalizace_okolnosti": (
+                            str(lokalizace)
+                            if lokalizace
+                            else ""
+                        ),
+                        "akce_je_nz": (
+                            "Ano"
+                            if doc.get('akce_je_nz') is True
+                            else "Ne"
+                        ),
+                        "projekt": g(
+                            doc,
+                            'akce_projekt',
+                            ""
+                        ),
+                    })
 
-                        if komponenty == "true":
-                            # One feature per component –
-                            # all data on a single row, no relations needed
-                            if komps:
-                                for komp in komps:
-                                    if not komp_projde_filtrem(
-                                        komp, filter_areal,
-                                        filter_datace, filters
-                                    ):
+                elif typ_dat == "lokalita":
+                    meta.update({
+                        "lokalita_nazev": lokalita_nazev,
+                        "lokalita_popis": lokalita_popis,
+                        "lokalita_zachovalost": tr_code(g(
+                            doc,
+                            'lokalita_zachovalost'
+                        )),
+                        "lokalita_druh": tr_code(g(
+                            doc,
+                            'lokalita_druh'
+                        )),
+                        "lokalita_typ": tr_code(g(
+                            doc,
+                            'lokalita_typ_lokality'
+                        )),
+                    })
+
+                # Documentation units (DJ) within the record
+                djs = doc.get('az_dokumentacni_jednotka', [])
+
+                for dj in djs:
+                    # Skip negative evidence units if requested
+                    if skip_negativni and dj.get('dj_negativni_jednotka') is True:
+                        continue
+
+                    komps = dj.get('dj_komponenta', [])
+
+                    if filter_areal or filter_datace:
+                        if not komps:
+                            continue
+                        if not any(
+                            komp_projde_filtrem(
+                                komp, filter_areal,
+                                filter_datace, filters
+                            )
+                            for komp in komps
+                        ):
+                            continue
+
+                    dj_id = dj.get('ident_cely')
+                    dj_typ = dj.get('dj_typ')
+
+                    # Merge shared metadata with documentation unit-specific fields
+                    dj_meta = {
+                        **meta,
+                        'dj_id': dj_id,
+                        'dj_typ_value': dj_typ.get('value') if dj_typ else "",
+                        'dj_negativni': (
+                            "Negativní"
+                            if dj.get('dj_negativni_jednotka') is True
+                            else "Pozitivní"
+                        )
+                    }
+
+                    # Link Documentation Unit to Geometry (PIAN)
+                    dj_pian = dj.get('dj_pian')
+                    if dj_pian:
+                        dj_pian_value = dj_pian.get('id')
+                        if dj_pian_value:
+                            target_pian_ids.add(dj_pian_value)
+                            if dj_pian_value not in pian_lookup:
+                                pian_lookup[dj_pian_value] = []
+
+                            if komponenty == "true":
+                                # One feature per component –
+                                # all data on a single row, no relations needed
+                                if komps:
+                                    for komp in komps:
+                                        if not komp_projde_filtrem(
+                                            komp, filter_areal,
+                                            filter_datace, filters
+                                        ):
+                                            continue
+
+                                        komp_meta = {
+                                            **dj_meta,
+                                            'komponenta_id': komp.get(
+                                                'ident_cely',
+                                                ""
+                                                ),
+                                            'komponenta_areal': (
+                                                komp.get('komponenta_areal')
+                                                or {}
+                                            ).get('value', ""),
+                                            'komponenta_obdobi': (
+                                                komp.get('komponenta_obdobi')
+                                                or {}
+                                            ).get('value', ""),
+                                        }
+                                        pian_lookup[dj_pian_value].append(komp_meta)
+                                        target_pian_ids_count += 1
+                                else:
+                                    # DJ without components — still include
+                                    # with empty component fields
+                                    if filter_areal or filter_datace:
                                         continue
 
-                                    komp_meta = {
+                                    empty_meta = {
                                         **dj_meta,
-                                        'komponenta_id': komp.get(
-                                            'ident_cely',
-                                            ""
-                                            ),
-                                        'komponenta_areal': (
-                                            komp.get('komponenta_areal')
-                                            or {}
-                                        ).get('value', ""),
-                                        'komponenta_obdobi': (
-                                            komp.get('komponenta_obdobi')
-                                            or {}
-                                        ).get('value', ""),
+                                        'komponenta_id': "",
+                                        'komponenta_areal': "",
+                                        'komponenta_obdobi': "",
                                     }
-                                    pian_lookup[dj_pian_value].append(komp_meta)
+                                    pian_lookup[dj_pian_value].append(empty_meta)
                                     target_pian_ids_count += 1
                             else:
-                                # DJ without components — still include
-                                # with empty component fields
-                                if filter_areal or filter_datace:
-                                    continue
-
-                                empty_meta = {
-                                    **dj_meta,
-                                    'komponenta_id': "",
-                                    'komponenta_areal': "",
-                                    'komponenta_obdobi': "",
-                                }
-                                pian_lookup[dj_pian_value].append(empty_meta)
                                 target_pian_ids_count += 1
-                        else:
-                            target_pian_ids_count += 1
-                            pian_lookup[dj_pian_value].append(dj_meta)
+                                pian_lookup[dj_pian_value].append(dj_meta)
 
-        if not target_pian_ids:
+            if not target_pian_ids:
+                iface.messageBar().pushMessage(
+                    "AMCR",
+                    f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.",
+                    level=Qgis.MessageLevel.Warning
+                )
+                return
+
+            # ==========================================
+            # C) GEOMETRY FETCHING (PIAN)
+            # ==========================================
+            ids_list = list(target_pian_ids)
+            total_pians = len(ids_list)
+            docs_pian = []
+            # Geometry requests are batch-processed
+            # to stay under URL length limits:
+            BATCH_PIAN = 200
+
             iface.messageBar().pushMessage(
                 "AMCR",
-                f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.",
-                level=Qgis.MessageLevel.Warning
+                f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). "
+                f"Stahuji {total_pians} unikátních geometrií, "
+                f"vykresluji {target_pian_ids_count} geometrií...",
+                level=Qgis.MessageLevel.Info
             )
-            return
 
-        # ==========================================
-        # C) GEOMETRY FETCHING (PIAN)
-        # ==========================================
-        ids_list = list(target_pian_ids)
-        total_pians = len(ids_list)
-        docs_pian = []
-        # Geometry requests are batch-processed
-        # to stay under URL length limits:
-        BATCH_PIAN = 200
+            fl_pian = [
+                "ident_cely",
+                "pian_typ",
+                "pian_chranene_udaje",
+                "pian_presnost",
+            ]
 
-        iface.messageBar().pushMessage(
-            "AMCR",
-            f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). "
-            f"Stahuji {total_pians} unikátních geometrií, "
-            f"vykresluji {target_pian_ids_count} geometrií...",
-            level=Qgis.MessageLevel.Info
-        )
+            for i in range(0, total_pians, BATCH_PIAN):
+                batch = ids_list[i: i + BATCH_PIAN]
+                or_query = " OR ".join(batch)
+                fq_pian = f"ident_cely:({or_query})"
 
-        fl_pian = [
-            "ident_cely",
-            "pian_typ",
-            "pian_chranene_udaje",
-            "pian_presnost",
-        ]
+                params_pian = {
+                    "mapa": "true",
+                    "entity": "pian",
+                    "q": fq_pian,
+                    "rows": len(batch),
+                    "fl": ",".join(fl_pian),
+                }
+                try:
+                    QApplication.processEvents()
+                    r_json = _api_get_json(url, params=params_pian, timeout=15)
+                    docs_pian.extend(r_json.get('response', {}).get('docs', []))
+                except requests.exceptions.RequestException as e:
+                    # Network is down – stop immediately instead of
+                    # uselessly retrying every remaining batch
+                    network_error = True
+                    QgsMessageLog.logMessage(
+                        f"Chyba sítě při stahování geometrií PIAN: {e}",
+                        "AMČR", Qgis.MessageLevel.Critical
+                    )
+                    break
+                except Exception as e:
+                    QgsMessageLog.logMessage(
+                        f"Chyba PIAN: {e}",
+                        "AMČR", Qgis.MessageLevel.Warning
+                    )
 
-        for i in range(0, total_pians, BATCH_PIAN):
-            batch = ids_list[i: i + BATCH_PIAN]
-            or_query = " OR ".join(batch)
-            fq_pian = f"ident_cely:({or_query})"
+        elif typ_dat == "samostatny_nalez":
+            for doc in docs:
+                loc = g(doc, "loc", [])
+                if not loc:
+                    continue
 
-            params_pian = {
-                "mapa": "true",
-                "entity": "pian",
-                "q": fq_pian,
-                "rows": len(batch),
-                "fl": ",".join(fl_pian),
-            }
-            try:
-                QApplication.processEvents()
-                r_json = _api_get_json(url, params=params_pian, timeout=15)
-                docs_pian.extend(r_json.get('response', {}).get('docs', []))
-            except requests.exceptions.RequestException as e:
-                # Network is down – stop immediately instead of
-                # uselessly retrying every remaining batch
-                network_error = True
-                QgsMessageLog.logMessage(
-                    f"Chyba sítě při stahování geometrií PIAN: {e}",
-                    "AMČR", Qgis.MessageLevel.Critical
-                )
-                break
-            except Exception as e:
-                QgsMessageLog.logMessage(
-                    f"Chyba PIAN: {e}",
-                    "AMČR", Qgis.MessageLevel.Warning
-                )
+                actions_with_geom += 1
+
+                sn_chranene = doc.get("samostatny_nalez_chranene_udaje") or {}
+
+                
 
         # ==========================================
         # D) LAYER CREATION (QGIS Memory Layers)
