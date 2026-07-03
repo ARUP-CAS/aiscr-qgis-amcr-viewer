@@ -113,7 +113,7 @@ class AmcrViewer:
         self.action_download_pas = self.add_action(
             icon_path=icon_pas_path,
             text=self.tr(u'Stáhnout data samostatných nálezů | AMČR Viewer'),
-            callback=lambda checked=False: self.run_download('pas'),
+            callback=lambda checked=False: self.run_download('samostatny_nalez'),
             parent=self.iface.mainWindow(),
             add_to_menu=False,
             add_to_toolbar=False

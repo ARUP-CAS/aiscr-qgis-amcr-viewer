@@ -225,7 +225,7 @@ class AmcrFilterDialog(QDialog):
 
         # Filters valid for Akce
 
-        if self.typ_dat in ["pas", "akce"]:
+        if self.typ_dat in ["samostatny_nalez", "akce"]:
             self.picker_org = self.setup_picker(
                 "Organizace",
                 'organizace',
@@ -286,7 +286,7 @@ class AmcrFilterDialog(QDialog):
         self.picker_obdobi = self.setup_picker("Období", 'obdobi', OBDOBI)
         layout.addWidget(self.picker_obdobi)
 
-        if self.typ_dat == "pas":
+        if self.typ_dat == "samostatny_nalez":
             self.picker_nalez_kategorie = self.setup_picker(
                 "Kategorie nálezu",
                 'nalez_kategorie',
@@ -322,7 +322,7 @@ class AmcrFilterDialog(QDialog):
             )
             layout.addWidget(self.picker_nalezce)
 
-        if self.typ_dat != "pas":
+        if self.typ_dat != "samostatny_nalez":
             self.picker_areal = self.setup_picker("Areál", 'areal', AREAL)
             layout.addWidget(self.picker_areal)
 
@@ -344,7 +344,7 @@ class AmcrFilterDialog(QDialog):
         self.lbl_komponenty_warning.setVisible(False)
         layout.addWidget(self.lbl_komponenty_warning)
 
-        if self.typ_dat != "pas":
+        if self.typ_dat != "samostatny_nalez":
             self.chk_komponenty.toggled.connect(
                 self.lbl_komponenty_warning.setVisible
             )
