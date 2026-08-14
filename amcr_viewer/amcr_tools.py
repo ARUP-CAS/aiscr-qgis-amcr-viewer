@@ -725,7 +725,88 @@ def load_amcr_data(canvas, bb, filters=None,
 
                 actions_with_geom += 1
 
+                sn_id = g(
+                    doc,
+                    "ident_cely"
+                )
+                sn_nalezce = g(
+                    doc,
+                    "samostatny_nalez_nalezce"
+                )
+                sn_hloubka = g(
+                    doc,
+                    "samostatny_nalez_hloubka"
+                )
+                sn_pristupnost = g(
+                    doc,
+                    "pristupnost"
+                )
+                sn_datum = g(
+                    doc,
+                    "samostatny_nalez_datum_nalezu"
+                )
+                sn_poznamka = g(
+                    doc,
+                    "samostatny_nalez_poznamka"
+                )
+                sn_spec = tr_code(g(
+                    doc,
+                    "samostatny_nalez_specifikace"
+                ))
+                sn_evidencni = g(
+                    doc,
+                    "samostatny_nalez_evidencni_cislo"
+                )
+                sn_obdobi = tr_code(g(
+                    doc,
+                    "samostatny_nalez_obdobi"
+                ))
+                sn_presna = g(
+                    doc,
+                    "samostatny_nalez_presna_datace"
+                )
+                sn_okres = g(
+                    doc,
+                    "samostatny_nalez_okres"
+                )
+                sn_pocet = g(
+                    doc,
+                    "samostatny_nalez_pocet"
+                )
+                sn_druh = tr_code(g(
+                    doc,
+                    "samostatny_nalez_druh_nalezu"
+                ))
+                sn_predano = tr_code(g(
+                    doc,
+                    "samostatny_nalez_predano_organizace"
+                ))
+                sn_okolnosti = tr_code(g(
+                    doc,
+                    "samostatny_nalez_okolnosti"
+                ))
+                sn_projekt = g(
+                    doc,
+                    "samostatny_nalez_projekt"
+                )
+
                 sn_chranene = doc.get("samostatny_nalez_chranene_udaje") or {}
+
+                sn_lokalizace = g(
+                    sn_chranene,
+                    "lokalizace"
+                )
+                sn_katastr = sn_chranene.get('katastr', {}).get('value')
+                wkt = None
+                wkt_is_wgs = False
+                if sn_chranene.get('geom_sjtsk_wkt'):
+                    wkt = sn_chranene.get('geom_sjtsk_wkt', {}).get('value')
+                elif sn_chranene.get('geom_wkt'):
+                    # Fallback geometry is in WGS-84 and must be
+                    # transformed to S-JTSK before use
+                    wkt = sn_chranene.get('geom_wkt', {}).get('value')
+                    wkt_is_wgs = True
+
 
                 
 
