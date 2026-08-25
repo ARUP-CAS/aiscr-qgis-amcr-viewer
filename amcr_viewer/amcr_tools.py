@@ -719,8 +719,8 @@ def load_amcr_data(canvas, bb, filters=None,
 
         elif typ_dat == "samostatny_nalez":
             for doc in docs:
-                loc = g(doc, "loc", [])
-                if not loc:
+                sn_loc = g_list(doc, "loc")
+                if not sn_loc:
                     continue
 
                 actions_with_geom += 1
@@ -777,7 +777,7 @@ def load_amcr_data(canvas, bb, filters=None,
                     doc,
                     "samostatny_nalez_druh_nalezu"
                 ))
-                sn_predano = tr_code(g(
+                sn_predano_org = tr_code(g(
                     doc,
                     "samostatny_nalez_predano_organizace"
                 ))
@@ -806,6 +806,28 @@ def load_amcr_data(canvas, bb, filters=None,
                     # transformed to S-JTSK before use
                     wkt = sn_chranene.get('geom_wkt', {}).get('value')
                     wkt_is_wgs = True
+
+                meta = {
+                    "ident_cely": sn_id,
+                    "projekt": sn_projekt,
+                    "okres": sn_okres,
+                    "katastr": sn_katastr,
+                    "nalezce": sn_nalezce,
+                    "datum": sn_datum,
+                    "okolnosti": sn_okolnosti,
+                    "hloubka_cm": sn_hloubka,
+                    "loc": sn_loc,
+                    "lokalizace": sn_lokalizace,
+                    "obdobi": sn_obdobi,
+                    "presna_datace": sn_presna,
+                    "nalez": sn_druh,
+                    "material": sn_spec,
+                    "pocet": sn_pocet,
+                    "poznamka": sn_poznamka,
+                    "pred_org": sn_predano_org,
+                    "evidencni": sn_evidencni,
+                    "pristupnost": sn_pristupnost,
+                }
 
 
                 
