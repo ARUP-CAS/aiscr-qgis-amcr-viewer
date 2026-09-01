@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QUrl
-from qgis.PyQt.QtGui import QIcon, QDesktopServices
-from qgis.PyQt.QtWidgets import QMenu, QAction, QToolButton, QDialog
-from qgis.core import Qgis
-
-from .amcr_tools import load_amcr_data, login_to_api
-from .amcr_dialog import AmcrFilterDialog, LoginDialog
 import os.path
+
+from qgis.core import Qgis
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QTranslator, QUrl
+from qgis.PyQt.QtGui import QDesktopServices, QIcon
+from qgis.PyQt.QtWidgets import QAction, QDialog, QMenu, QToolButton
+
+from .amcr_dialog import AmcrFilterDialog, LoginDialog
+from .amcr_tools import load_amcr_data, login_to_api
 
 
 class AmcrViewer:
@@ -29,7 +30,7 @@ class AmcrViewer:
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'AmcrViewer_{}.qm'.format(locale)
+            f'AmcrViewer_{locale}.qm'
         )
 
         # Install the translator if a translation file
@@ -41,7 +42,7 @@ class AmcrViewer:
 
         # Initialize internal state
         self.actions = []
-        self.menu = self.tr(u'&AMČR Viewer')
+        self.menu = self.tr('&AMČR Viewer')
         self.first_start = None
 
     def tr(self, message):
@@ -102,7 +103,7 @@ class AmcrViewer:
         # custom dropdown menu
         self.action_download_akce = self.add_action(
             icon_path=icon_akce_path,
-            text=self.tr(u'Stáhnout data akcí | AMČR Viewer'),
+            text=self.tr('Stáhnout data akcí | AMČR Viewer'),
             callback=lambda checked=False: self.run_download('akce'),
             parent=self.iface.mainWindow(),
             add_to_menu=False,
@@ -112,8 +113,9 @@ class AmcrViewer:
 
         self.action_download_pas = self.add_action(
             icon_path=icon_pas_path,
-            text=self.tr(u'Stáhnout data samostatných nálezů | AMČR Viewer'),
-            callback=lambda checked=False: self.run_download('samostatny_nalez'),
+            text=self.tr('Stáhnout data samostatných nálezů | AMČR Viewer'),
+            callback=lambda checked=False: self.run_download(
+                'samostatny_nalez'),
             parent=self.iface.mainWindow(),
             add_to_menu=False,
             add_to_toolbar=False
@@ -122,7 +124,7 @@ class AmcrViewer:
 
         self.action_download_lokality = self.add_action(
             icon_path=icon_lokality_path,
-            text=self.tr(u'Stáhnout data lokalit | AMČR Viewer'),
+            text=self.tr('Stáhnout data lokalit | AMČR Viewer'),
             callback=lambda checked=False: self.run_download('lokalita'),
             parent=self.iface.mainWindow(),
             add_to_menu=False,
@@ -132,7 +134,7 @@ class AmcrViewer:
 
         self.action_login_dialog = self.add_action(
             icon_path=icon_pas_path,
-            text=self.tr(u'Přihlásit se | AMČR Viewer'),
+            text=self.tr('Přihlásit se | AMČR Viewer'),
             callback=lambda checked=False: self.login(),
             parent=self.iface.mainWindow(),
             add_to_menu=False,
@@ -142,7 +144,7 @@ class AmcrViewer:
 
         self.action_amcr_help = self.add_action(
             icon_path=icon_amcr_help_path,
-            text=self.tr(u'Nápověda AMČR Help | AMČR Viewer'),
+            text=self.tr('Nápověda AMČR Help | AMČR Viewer'),
             callback=lambda checked=False: self.open_help(),
             parent=self.iface.mainWindow(),
             add_to_menu=False,

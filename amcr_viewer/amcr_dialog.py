@@ -1,23 +1,57 @@
-﻿# -*- coding: utf-8 -*-
-from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout,
-                                 QLineEdit, QDialogButtonBox,
-                                 QCheckBox, QGroupBox, QPushButton,
-                                 QListWidget, QListWidgetItem, QHBoxLayout,
-                                 QMessageBox, QLabel, QFormLayout,
-                                 QGridLayout, QScrollArea, QFrame, QWidget)
-from qgis.PyQt.QtCore import Qt, QSettings
-from qgis.core import (QgsTask, QgsApplication,
-                       QgsMessageLog, Qgis, QgsAuthMethodConfig)
+# -*- coding: utf-8 -*-
+from qgis.core import (
+    Qgis,
+    QgsApplication,
+    QgsAuthMethodConfig,
+    QgsMessageLog,
+    QgsTask,
+)
 from qgis.gui import QgsDateEdit
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QFrame,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 from qgis.utils import iface
-from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
-                             OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST,
-                             TYP_LOKALITY, DRUH_LOKALITY, JISTOTA,
-                             LOKALITA_ZACHOVALOST, PRISTUPNOST, 
-                             NALEZ_KATEGORIE, DRUH_NALEZU, SPECIFIKACE,
-                             NALEZOVE_OKOLNOSTI, NALEZCE,
-                             download_heslare, refresh_globals)
 
+from .amcr_codelists import (
+    AREAL,
+    DRUH_LOKALITY,
+    DRUH_NALEZU,
+    JISTOTA,
+    KATASTRY,
+    KRAJE,
+    LOKALITA_ZACHOVALOST,
+    NALEZ_KATEGORIE,
+    NALEZCE,
+    NALEZOVE_OKOLNOSTI,
+    OBDOBI,
+    OKRESY,
+    ORGANIZACE,
+    PIAN_PRESNOST,
+    PRISTUPNOST,
+    SPECIFIKACE,
+    TYP_AKCE,
+    TYP_LOKALITY,
+    VEDOUCI,
+    download_heslare,
+    refresh_globals,
+)
 
 # The date filter of the API requires both bounds; a one-sided range makes
 # the server fail with an ArrayIndexOutOfBoundsException and '*' is not
@@ -38,7 +72,7 @@ _ACTIVE_TASKS = []
 
 class UpdateCodelistsTask(QgsTask):
     def __init__(self, description):
-        super().__init__(description, QgsTask.CanCancel)
+        super().__init__(description, QgsTask.Flag.CanCancel)
         self.success = False
         self.exception = None
 
@@ -59,18 +93,18 @@ class UpdateCodelistsTask(QgsTask):
             refresh_globals()
             QgsMessageLog.logMessage(
                 "Hesláře AMČR byly úspěšně aktualizovány.",
-                "AMČR", Qgis.Info
+                "AMČR", Qgis.MessageLevel.Info
             )
         else:
             if self.isCanceled():
                 QgsMessageLog.logMessage(
                     "Aktualizace heslářů byla zrušena.",
-                    "AMČR", Qgis.Warning
+                    "AMČR", Qgis.MessageLevel.Warning
                 )
             else:
                 QgsMessageLog.logMessage(
                     f"Chyba aktualizace: {self.exception}",
-                    "AMČR", Qgis.Critical
+                    "AMČR", Qgis.MessageLevel.Critical
                 )
 
 
@@ -608,7 +642,7 @@ class AmcrFilterDialog(QDialog):
                 # This will show exactly what went wrong (e.g. PermissionError)
                 msg = (
                     "Aktualizace selhala z důvodu chyby:\n"
-                    f"{str(task.exception)}"
+                    f"{task.exception!s}"
                 )
             else:
                 msg = "Aktualizace byla zrušena uživatelem."
@@ -660,7 +694,7 @@ class AmcrFilterDialog(QDialog):
             filters['f_vedouci'] = self.selection_cache['vedouci']
 
         if self.selection_cache['organizace']:
-            filters['f_organizace'] = self.selection_cache['organizace']                
+            filters['f_organizace'] = self.selection_cache['organizace']
 
         if self.selection_cache['typ_lokality']:
             filters['f_typ_lokality'] = self.selection_cache['typ_lokality']
@@ -669,7 +703,9 @@ class AmcrFilterDialog(QDialog):
         if self.selection_cache['jistota']:
             filters['f_jistota'] = self.selection_cache['jistota']
         if self.selection_cache['lokalita_zachovalost']:
-            filters['f_lokalita_zachovalost'] = self.selection_cache['lokalita_zachovalost']
+            filters['f_lokalita_zachovalost'] = (
+                self.selection_cache['lokalita_zachovalost']
+            )
 
         # Samostatné nálezy
         if self.selection_cache['nalez_kategorie']:
@@ -679,7 +715,9 @@ class AmcrFilterDialog(QDialog):
         if self.selection_cache['specifikace']:
             filters['f_specifikace'] = self.selection_cache['specifikace']
         if self.selection_cache['nalezove_okolnosti']:
-            filters['f_nalezove_okolnosti'] = self.selection_cache['nalezove_okolnosti']
+            filters['f_nalezove_okolnosti'] = (
+                self.selection_cache['nalezove_okolnosti']
+            )
         if self.selection_cache['nalezce']:
             filters['f_nalezce'] = self.selection_cache['nalezce']
 
@@ -718,7 +756,8 @@ class LoginDialog(QDialog):
     - storeAuthenticationConfig() and loadAuthenticationConfig() both have
       SIP_INOUT on their config parameter, so Python bindings return a tuple
       (bool, QgsAuthMethodConfig) rather than just bool. Always unpack both.
-    - loadAuthenticationConfig() with full=False loads only metadata (name, method,
+    - loadAuthenticationConfig() with full=False loads only metadata
+      (name, method,
       id) but NOT the config() values like username/password. Use full=True to
       access those.
     """
@@ -949,7 +988,7 @@ class LoginDialog(QDialog):
         # We skip hasConfigId() as it may return False
         # despite the config existing
         # (in-memory cache may not be populated yet in QGIS 4).
-        ok_load, existing_cfg = (
+        ok_load, _ = (
             self._load_config(existing_id, full=False)
             if existing_id
             else (False, None)
@@ -978,7 +1017,9 @@ class LoginDialog(QDialog):
         settings = QSettings()
         existing_id = settings.value(self.SETTINGS_KEY, "")
         if existing_id:
-            QgsApplication.authManager().removeAuthenticationConfig(existing_id)
+            QgsApplication.authManager().removeAuthenticationConfig(
+                existing_id
+            )
             settings.remove(self.SETTINGS_KEY)
         QMessageBox.information(
             self,
@@ -1013,4 +1054,5 @@ class LoginDialog(QDialog):
         if not ok:
             return "", ""
 
-        return cfg.config("username", ""), cfg.config("password", "")  # nosec B106
+        return (cfg.config("username", ""),
+                cfg.config("password", ""))  # nosec B106

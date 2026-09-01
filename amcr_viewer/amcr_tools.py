@@ -1,14 +1,23 @@
-﻿# -*- coding: utf-8 -*-
-from qgis.core import (QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry,
-                       QgsField, QgsCoordinateReferenceSystem,
-                       QgsCoordinateTransform, QgsWkbTypes, Qgis,
-                       QgsMessageLog)
-from qgis.utils import iface
-from qgis.PyQt.QtCore import Qt, QMetaType
-from qgis.PyQt.QtWidgets import QApplication
-from qgis.PyQt.QtGui import QCursor
-import requests
+# -*- coding: utf-8 -*-
 import json
+
+import requests
+from qgis.core import (
+    Qgis,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsFeature,
+    QgsField,
+    QgsGeometry,
+    QgsMessageLog,
+    QgsProject,
+    QgsVectorLayer,
+    QgsWkbTypes,
+)
+from qgis.PyQt.QtCore import QMetaType, Qt
+from qgis.PyQt.QtGui import QCursor
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.utils import iface
 
 # Global cache to store translated terms from the Digital Archive
 TRANSLATIONS = {}
@@ -109,8 +118,9 @@ def login_to_api(username: str, password: str):
 
     except requests.exceptions.HTTPError as e:
         status = e.response.status_code if e.response is not None else None
-        _log(f"CHYBA HTTP {status if status else '?'}: "
-             f"{e.response.text[:300] if e.response is not None else 'žádná odpověď'}",
+        telo = (e.response.text[:300] if e.response is not None
+                else "žádná odpověď")
+        _log(f"CHYBA HTTP {status if status else '?'}: {telo}",
              Qgis.MessageLevel.Critical)
         LAST_LOGIN_ERROR = 'auth' if status in (401, 403) else 'network'
         return None
@@ -623,7 +633,8 @@ def load_amcr_data(canvas, bb, filters=None,
 
                 for dj in djs:
                     # Skip negative evidence units if requested
-                    if skip_negativni and dj.get('dj_negativni_jednotka') is True:
+                    if (skip_negativni
+                            and dj.get('dj_negativni_jednotka') is True):
                         continue
 
                     komps = dj.get('dj_komponenta', [])
@@ -643,7 +654,8 @@ def load_amcr_data(canvas, bb, filters=None,
                     dj_id = dj.get('ident_cely')
                     dj_typ = dj.get('dj_typ')
 
-                    # Merge shared metadata with documentation unit-specific fields
+                    # Merge shared metadata with documentation
+                    # unit-specific fields
                     dj_meta = {
                         **meta,
                         'dj_id': dj_id,
@@ -690,7 +702,8 @@ def load_amcr_data(canvas, bb, filters=None,
                                                 or {}
                                             ).get('value', ""),
                                         }
-                                        pian_lookup[dj_pian_value].append(komp_meta)
+                                        pian_lookup[dj_pian_value].append(
+                                            komp_meta)
                                         target_pian_ids_count += 1
                                 else:
                                     # DJ without components — still include
@@ -704,7 +717,8 @@ def load_amcr_data(canvas, bb, filters=None,
                                         'komponenta_areal': "",
                                         'komponenta_obdobi': "",
                                     }
-                                    pian_lookup[dj_pian_value].append(empty_meta)
+                                    pian_lookup[dj_pian_value].append(
+                                        empty_meta)
                                     target_pian_ids_count += 1
                             else:
                                 target_pian_ids_count += 1
@@ -907,9 +921,6 @@ def load_amcr_data(canvas, bb, filters=None,
                 )
                 return
 
-
-                
-
         # ==========================================
         # D) LAYER CREATION (QGIS Memory Layers)
         # ==========================================
@@ -946,7 +957,6 @@ def load_amcr_data(canvas, bb, filters=None,
                 QgsField("dj", QMetaType.Type.QString),
                 QgsField("typ_dj", QMetaType.Type.QString),
             ]
-
 
         cols += [
             QgsField(typ_dat, QMetaType.Type.QString),
@@ -1138,11 +1148,11 @@ def load_amcr_data(canvas, bb, filters=None,
                         if geom.isGeosValid():
                             t = geom.type()
                             target_list = None
-                            if t == QgsWkbTypes.PolygonGeometry:
+                            if t == QgsWkbTypes.GeometryType.PolygonGeometry:
                                 target_list = feats_p
-                            elif t == QgsWkbTypes.LineGeometry:
+                            elif t == QgsWkbTypes.GeometryType.LineGeometry:
                                 target_list = feats_l
-                            elif t == QgsWkbTypes.PointGeometry:
+                            elif t == QgsWkbTypes.GeometryType.PointGeometry:
                                 target_list = feats_pt
 
                             if target_list is None:
@@ -1227,11 +1237,11 @@ def load_amcr_data(canvas, bb, filters=None,
                         if geom.isGeosValid():
                             t = geom.type()
                             target_list = None
-                            if t == QgsWkbTypes.PolygonGeometry:
+                            if t == QgsWkbTypes.GeometryType.PolygonGeometry:
                                 target_list = feats_p
-                            elif t == QgsWkbTypes.LineGeometry:
+                            elif t == QgsWkbTypes.GeometryType.LineGeometry:
                                 target_list = feats_l
-                            elif t == QgsWkbTypes.PointGeometry:
+                            elif t == QgsWkbTypes.GeometryType.PointGeometry:
                                 target_list = feats_pt
 
                             if target_list is None:
@@ -1265,7 +1275,7 @@ def load_amcr_data(canvas, bb, filters=None,
                             ]
                             feat.setAttributes(atributy)
                             target_list.append(feat)
-                
+
                 except Exception as ex:
                     QgsMessageLog.logMessage(
                         f"Chyba při tvorbě feature: {ex}",

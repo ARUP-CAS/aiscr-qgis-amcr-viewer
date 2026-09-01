@@ -83,6 +83,58 @@ Další pravidla:
   definice pole (`QgsField`), naplnění hodnoty z dokumentu, překlad hlavičky
   sloupce a export atributů.
 
+### Kompatibilita s Qt6 / QGIS 4
+
+Plugin cílí na QGIS 3.44 i na QGIS 4 (`qgisMaximumVersion=4.99.0`), tedy na
+Qt5 i Qt6 zároveň. **Tohle se drží rigorózně** – ne až před releasem, ale při
+každé změně kódu. Chování obou větví se liší tiše: pod Qt5 projde i to, co
+QGIS 4 odmítne, takže lokální „funguje mi to“ nic nedokazuje.
+
+Závazná pravidla:
+
+- **Nikdy neimportuj přímo z `PyQt5` ani z `PyQt6`.** Vždy přes shim
+  `qgis.PyQt.*`. Ten mimo jiné pod Qt6 přetahuje `QAction`, `QActionGroup`
+  a `QShortcut` z `QtGui`, takže import z `qgis.PyQt.QtWidgets` je správně.
+- **Enumy vždy plně kvalifikované (scoped).** `Qgis.MessageLevel.Info`, ne
+  `Qgis.Info`; `QgsTask.Flag.CanCancel`, ne `QgsTask.CanCancel`;
+  `QgsWkbTypes.GeometryType.PointGeometry`, ne `QgsWkbTypes.PointGeometry`.
+  Totéž pro Qt: `Qt.CheckState.Checked`, `QDialogButtonBox.StandardButton.Ok`.
+  Zkrácené tvary sice v QGIS 4.2 zatím fungují, ale oficiální kontrola je
+  hlásí a do budoucna mizí.
+- **Zdrojové `.py` soubory ukládej bez BOM.** Kontrolní skript čte soubor
+  jako UTF-8 bez `utf-8-sig` a na BOM spadne s
+  `SyntaxError: invalid non-printable character U+FEFF`, takže se takový
+  soubor **vůbec nezkontroluje**. (`codelists/heslar.csv` BOM mít smí, tam je
+  kvůli Excelu.)
+- Nepoužívej API zrušená v Qt6: `exec_()`, `QRegExp`, `QDesktopWidget`,
+  `QApplication.desktop()`, `Qt.MidButton`, `QFontMetrics.width()`,
+  `setResizeMode`, atributy `AA_EnableHighDpiScaling` / `AA_UseHighDpiPixmaps`.
+- `supportsQt6=True` v `metadata.txt` **nepatří** – bylo zrušeno; o zařazení
+  mezi „QGIS 4 Ready“ rozhoduje rozsah `qgisMinimumVersion` až
+  `qgisMaximumVersion`.
+
+Ověření před PR, který mění Python kód:
+
+```sh
+# oficiální kontrola, kterou pouští i plugins.qgis.org (pyqgis4-checker)
+docker run --rm --pull always --user $(id -u):$(id -g) \
+  --workdir /workspace/ -v "$(pwd):/workspace/" \
+  ghcr.io/qgis/pyqgis4-checker:main-ubuntu \
+  pyqt5_to_pyqt6.py --dry_run --logfile /workspace/pyqt6_checker.log .
+```
+
+Prázdný log = čisté. Kontrola je na plugins.qgis.org informativní
+(neblokuje schválení), ale nález znamená, že plugin v QGIS 4 dříve nebo
+později přestane fungovat.
+
+Když je po ruce QGIS 4 (např. flatpak `org.qgis.qgis`), ověř navíc, že se
+plugin pod Qt6 opravdu načte:
+
+```sh
+flatpak run --command=sh org.qgis.qgis -c \
+  'PYTHONPATH=/app/share/qgis/python python3 -c "import qgis.core"'
+```
+
 ## Verzování a release
 
 - Verze pluginu žije v **`amcr_viewer/metadata.txt`** (`version=`).
