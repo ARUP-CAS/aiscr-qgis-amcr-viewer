@@ -90,10 +90,16 @@ Další pravidla:
   `changelog=` v `metadata.txt` (formát `vX.Y.Z (RRRR-MM-DD)` + odrážky).
 - Datum v changelogu ber z **deterministického zdroje**, ne z paměti, např.
   `python -c "import datetime; print(datetime.date.today().isoformat())"`.
-- Release se vytváří publikací GitHub Release; workflow
-  `.github/workflows/release_plugin.yml` zabalí složku `amcr_viewer/` do
-  `amcr_viewer.zip` a přiloží ji k releasu. Do ZIPu se nesmí dostat `.git*`
-  soubory.
+- Release se spouští **pushnutím tagu `vX.Y.Z`**, ne publikací releasu
+  v UI. Workflow `.github/workflows/release_plugin.yml` zabalí složku
+  `amcr_viewer/` do `amcr_viewer.zip` a založí **koncept** releasu i s touto
+  přílohou; text se dopíše a release zveřejní ručně. Do ZIPu se nesmí dostat
+  `.git*` soubory.
+- Organizace má zapnuté **immutable releases** – k publikovanému releasu už
+  nelze nic přiložit. Proto příloha vzniká na konceptu, ještě před
+  zveřejněním; workflow spouštěný na `release: published` by vždy selhal.
+- Workflow se čte z commitu, na který **tag ukazuje**. Tag proto zakládej až
+  na commitu, který obsahuje aktuální podobu workflow – jinak se nespustí nic.
 
 ## Pull requesty
 

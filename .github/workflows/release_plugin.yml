@@ -1,15 +1,26 @@
 name: Release QGIS Plugin
 
+# Spouští se na push tagu, ne na publikaci releasu. Organizace má zapnuté
+# immutable releases: k už publikovanému releasu nelze nic přiložit, příloha
+# tedy musí vzniknout dřív, než se release zveřejní. Workflow proto založí
+# koncept releasu i se ZIPem; text se dopisuje a publikuje ručně.
+#
+# Pozor: workflow se čte z commitu, na který tag ukazuje. Tag musí být
+# založen až na commitu, který tento soubor obsahuje.
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    
+
     steps:
-      # 1. Stáhne kód z repozitáře
+      # 1. Stáhne kód z tagu, který běh spustil
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -20,11 +31,14 @@ jobs:
           # -r = rekurzivně, -x = ignorovat skryté git soubory
           zip -r amcr_viewer.zip amcr_viewer -x "*.git*"
 
-      # 3. Nahraje ZIP k Releasu
-      - name: Upload Release Asset
+      # 3. Založí koncept releasu i s přílohou
+      #    Tagy s pomlčkou (v2.0.0-alpha.1) se označí jako pre-release.
+      - name: Create draft release with asset
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: amcr_viewer.zip
+          draft: true
+          name: AMCR Viewer ${{ github.ref_name }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
