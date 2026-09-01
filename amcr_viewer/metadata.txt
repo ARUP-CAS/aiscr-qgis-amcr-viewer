@@ -8,7 +8,7 @@ name=AMČR Viewer
 qgisMinimumVersion=3.44.0
 qgisMaximumVersion=4.99.0
 description=Viewing and downloading the AMČR data.
-version=2.0.2
+version=2.1.0
 author=David Spáčil
 email=spacil@arub.cz
 
@@ -23,9 +23,16 @@ repository=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
-  Aktualizace na verzi 2.0.0 výrazně mění chování pluginu. Před updatem je doporučeno přečíst si seznam změn níže.
-  Version 2.0.0 changes the plugin behavior dramatically. It is advised to check the changelog below.
-  Plný seznam změn v češtině je dostupný zde: https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases/tag/v2.0.0
+  Plný seznam změn v češtině je dostupný zde: https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases/tag/v2.1.0
+  v2.1.0 (2026-09-01)
+   * Added download of Individual finds (PAS), including a dedicated menu entry
+   * Added filtering by date
+   * Added filtering of project fieldwork events and a Project column in the attribute table
+   * Codelists are now built from the Digiarchiv API as well, not only from OAI-PMH; persons come from its facets by role (finder, fieldwork leader)
+   * Updated the bundled codelist file
+   * Filter dialog is now scrollable
+   * Empty API results are now diagnosable from the Messages panel: the query URL and API errors are logged
+   * Code clean-up
   v2.0.2 (2026-06-13)
    * Plugin-wide fixes and optimalizations (details https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/pull/49)
   v2.0.1 (2026-06-10)
