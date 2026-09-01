@@ -26,6 +26,17 @@ LAST_LOGIN_ERROR: str | None = None
 # a second download while the first one is still running
 _LOADING = False
 
+archeologicky_zaznam_l = [
+    "akce",
+    "lokalita",
+]
+
+typ_dat_vocab = {
+    "akce": "Akce",
+    "lokalita": "Lokalita",
+    "samostatny_nalez": "Samostatný nález",
+}
+
 
 def _log(msg: str, level=Qgis.MessageLevel.Info):
     """
@@ -421,7 +432,7 @@ def load_amcr_data(canvas, bb, filters=None,
         # to a list of its associated metadata
         pian_lookup = {}
         target_pian_ids = set()
-        actions_with_geom = 0
+        entries_with_geom = 0
 
         # Helper: safely extract a single value
         def g(doc, key, default=""):
@@ -440,304 +451,442 @@ def load_amcr_data(canvas, bb, filters=None,
             return ", ".join([str(x) for x in val if x])
 
         # Process each downloaded metadata record
-        for doc in docs:
-            piani = doc.get('az_dj_pian', [])
-            if not piani:
-                continue
-
-            if only_projektove_akce and not doc.get("akce_projekt", False):
-                continue
-
-            actions_with_geom += 1
-
-            # Extract protected fields ('or {}' – key may hold None)
-            az_chranene = doc.get('az_chranene_udaje') or {}
-            chranene = (
-                doc.get('akce_chranene_udaje')
-                or doc.get('lokalita_chranene_udaje')
-                or {}
-            )
-
-            # Format additional cadastral areas from nested dicts
-            dalsi_kat = az_chranene.get('dalsi_katastr', [])
-            dalsi_kat_str = ""
-            if isinstance(dalsi_kat, list):
-                items = [
-                    x.get('value', '') if isinstance(x, dict) else str(x)
-                    for x in dalsi_kat
-                ]
-                dalsi_kat_str = ", ".join([i for i in items if i])
-
-            lokalizace = chranene.get('lokalizace_okolnosti', "")
-            lokalita_nazev = chranene.get('nazev', "")
-            lokalita_popis = chranene.get('popis', "")
-
-            # Core metadata structure
-            meta = {
-                "ident_cely": doc.get('ident_cely', ''),
-                "az_okres": g(doc, 'az_okres'),
-                "katastr": g_list(doc, 'katastr'),
-                "dalsi_katastr": dalsi_kat_str,
-                "pristupnost": g(doc, 'pristupnost'),
-                "loc": g_list(doc, 'loc'),
-            }
-
-            # Add entity-specific metadata
-            if typ_dat == "akce":
-                meta.update({
-                    "akce_hlavni_vedouci": g(
-                        doc,
-                        'akce_hlavni_vedouci'
-                    ),
-                    "akce_organizace": tr_code(g(
-                        doc,
-                        'akce_organizace'
-                    )),
-                    "akce_specifikace_data": tr_code(g(
-                        doc,
-                        'akce_specifikace_data'
-                    )),
-                    "akce_datum_zahajeni": g(
-                        doc,
-                        'akce_datum_zahajeni'
-                    ),
-                    "akce_datum_ukonceni": g(
-                        doc,
-                        'akce_datum_ukonceni'
-                    ),
-                    "akce_hlavni_typ": tr_code(g(
-                        doc,
-                        'akce_hlavni_typ'
-                    )),
-                    "akce_vedlejsi_typ": g_list(
-                        doc,
-                        'akce_vedlejsi_typ',
-                        translate=True
-                    ),
-                    "lokalizace_okolnosti": (
-                        str(lokalizace)
-                        if lokalizace
-                        else ""
-                    ),
-                    "akce_je_nz": (
-                        "Ano"
-                        if doc.get('akce_je_nz') is True
-                        else "Ne"
-                    ),
-                    "projekt": g(
-                        doc,
-                        'akce_projekt',
-                        ""
-                    ),
-                })
-
-            elif typ_dat == "lokalita":
-                meta.update({
-                    "lokalita_nazev": lokalita_nazev,
-                    "lokalita_popis": lokalita_popis,
-                    "lokalita_zachovalost": tr_code(g(
-                        doc,
-                        'lokalita_zachovalost'
-                    )),
-                    "lokalita_druh": tr_code(g(
-                        doc,
-                        'lokalita_druh'
-                    )),
-                    "lokalita_typ": tr_code(g(
-                        doc,
-                        'lokalita_typ_lokality'
-                    )),
-                })
-
-            # Documentation units (DJ) within the record
-            djs = doc.get('az_dokumentacni_jednotka', [])
-
-            for dj in djs:
-                # Skip negative evidence units if requested
-                if skip_negativni and dj.get('dj_negativni_jednotka') is True:
+        if typ_dat in archeologicky_zaznam_l:
+            for doc in docs:
+                piani = doc.get('az_dj_pian', [])
+                if not piani:
                     continue
 
-                komps = dj.get('dj_komponenta', [])
+                if only_projektove_akce and not doc.get("akce_projekt", False):
+                    continue
 
-                if filter_areal or filter_datace:
-                    if not komps:
-                        continue
-                    if not any(
-                        komp_projde_filtrem(
-                            komp, filter_areal,
-                            filter_datace, filters
-                        )
-                        for komp in komps
-                    ):
-                        continue
+                entries_with_geom += 1
 
-                dj_id = dj.get('ident_cely')
-                dj_typ = dj.get('dj_typ')
+                # Extract protected fields ('or {}' – key may hold None)
+                az_chranene = doc.get('az_chranene_udaje') or {}
+                chranene = (
+                    doc.get('akce_chranene_udaje')
+                    or doc.get('lokalita_chranene_udaje')
+                    or {}
+                )
 
-                # Merge shared metadata with documentation unit-specific fields
-                dj_meta = {
-                    **meta,
-                    'dj_id': dj_id,
-                    'dj_typ_value': dj_typ.get('value') if dj_typ else "",
-                    'dj_negativni': (
-                        "Negativní"
-                        if dj.get('dj_negativni_jednotka') is True
-                        else "Pozitivní"
-                    )
+                # Format additional cadastral areas from nested dicts
+                dalsi_kat = az_chranene.get('dalsi_katastr', [])
+                dalsi_kat_str = ""
+                if isinstance(dalsi_kat, list):
+                    items = [
+                        x.get('value', '') if isinstance(x, dict) else str(x)
+                        for x in dalsi_kat
+                    ]
+                    dalsi_kat_str = ", ".join([i for i in items if i])
+
+                lokalizace = chranene.get('lokalizace_okolnosti', "")
+                lokalita_nazev = chranene.get('nazev', "")
+                lokalita_popis = chranene.get('popis', "")
+
+                # Core metadata structure
+                meta = {
+                    "ident_cely": doc.get('ident_cely', ''),
+                    "az_okres": g(doc, 'az_okres'),
+                    "katastr": g_list(doc, 'katastr'),
+                    "dalsi_katastr": dalsi_kat_str,
+                    "pristupnost": g(doc, 'pristupnost'),
+                    "loc": g_list(doc, 'loc'),
                 }
 
-                # Link Documentation Unit to Geometry (PIAN)
-                dj_pian = dj.get('dj_pian')
-                if dj_pian:
-                    dj_pian_value = dj_pian.get('id')
-                    if dj_pian_value:
-                        target_pian_ids.add(dj_pian_value)
-                        if dj_pian_value not in pian_lookup:
-                            pian_lookup[dj_pian_value] = []
+                # Add entity-specific metadata
+                if typ_dat == "akce":
+                    meta.update({
+                        "akce_hlavni_vedouci": g(
+                            doc,
+                            'akce_hlavni_vedouci'
+                        ),
+                        "akce_organizace": tr_code(g(
+                            doc,
+                            'akce_organizace'
+                        )),
+                        "akce_specifikace_data": tr_code(g(
+                            doc,
+                            'akce_specifikace_data'
+                        )),
+                        "akce_datum_zahajeni": g(
+                            doc,
+                            'akce_datum_zahajeni'
+                        ),
+                        "akce_datum_ukonceni": g(
+                            doc,
+                            'akce_datum_ukonceni'
+                        ),
+                        "akce_hlavni_typ": tr_code(g(
+                            doc,
+                            'akce_hlavni_typ'
+                        )),
+                        "akce_vedlejsi_typ": g_list(
+                            doc,
+                            'akce_vedlejsi_typ',
+                            translate=True
+                        ),
+                        "lokalizace_okolnosti": (
+                            str(lokalizace)
+                            if lokalizace
+                            else ""
+                        ),
+                        "akce_je_nz": (
+                            "Ano"
+                            if doc.get('akce_je_nz') is True
+                            else "Ne"
+                        ),
+                        "projekt": g(
+                            doc,
+                            'akce_projekt',
+                            ""
+                        ),
+                    })
 
-                        if komponenty == "true":
-                            # One feature per component –
-                            # all data on a single row, no relations needed
-                            if komps:
-                                for komp in komps:
-                                    if not komp_projde_filtrem(
-                                        komp, filter_areal,
-                                        filter_datace, filters
-                                    ):
+                elif typ_dat == "lokalita":
+                    meta.update({
+                        "lokalita_nazev": lokalita_nazev,
+                        "lokalita_popis": lokalita_popis,
+                        "lokalita_zachovalost": tr_code(g(
+                            doc,
+                            'lokalita_zachovalost'
+                        )),
+                        "lokalita_druh": tr_code(g(
+                            doc,
+                            'lokalita_druh'
+                        )),
+                        "lokalita_typ": tr_code(g(
+                            doc,
+                            'lokalita_typ_lokality'
+                        )),
+                    })
+
+                # Documentation units (DJ) within the record
+                djs = doc.get('az_dokumentacni_jednotka', [])
+
+                for dj in djs:
+                    # Skip negative evidence units if requested
+                    if skip_negativni and dj.get('dj_negativni_jednotka') is True:
+                        continue
+
+                    komps = dj.get('dj_komponenta', [])
+
+                    if filter_areal or filter_datace:
+                        if not komps:
+                            continue
+                        if not any(
+                            komp_projde_filtrem(
+                                komp, filter_areal,
+                                filter_datace, filters
+                            )
+                            for komp in komps
+                        ):
+                            continue
+
+                    dj_id = dj.get('ident_cely')
+                    dj_typ = dj.get('dj_typ')
+
+                    # Merge shared metadata with documentation unit-specific fields
+                    dj_meta = {
+                        **meta,
+                        'dj_id': dj_id,
+                        'dj_typ_value': dj_typ.get('value') if dj_typ else "",
+                        'dj_negativni': (
+                            "Negativní"
+                            if dj.get('dj_negativni_jednotka') is True
+                            else "Pozitivní"
+                        )
+                    }
+
+                    # Link Documentation Unit to Geometry (PIAN)
+                    dj_pian = dj.get('dj_pian')
+                    if dj_pian:
+                        dj_pian_value = dj_pian.get('id')
+                        if dj_pian_value:
+                            target_pian_ids.add(dj_pian_value)
+                            if dj_pian_value not in pian_lookup:
+                                pian_lookup[dj_pian_value] = []
+
+                            if komponenty == "true":
+                                # One feature per component –
+                                # all data on a single row, no relations needed
+                                if komps:
+                                    for komp in komps:
+                                        if not komp_projde_filtrem(
+                                            komp, filter_areal,
+                                            filter_datace, filters
+                                        ):
+                                            continue
+
+                                        komp_meta = {
+                                            **dj_meta,
+                                            'komponenta_id': komp.get(
+                                                'ident_cely',
+                                                ""
+                                                ),
+                                            'komponenta_areal': (
+                                                komp.get('komponenta_areal')
+                                                or {}
+                                            ).get('value', ""),
+                                            'komponenta_obdobi': (
+                                                komp.get('komponenta_obdobi')
+                                                or {}
+                                            ).get('value', ""),
+                                        }
+                                        pian_lookup[dj_pian_value].append(komp_meta)
+                                        target_pian_ids_count += 1
+                                else:
+                                    # DJ without components — still include
+                                    # with empty component fields
+                                    if filter_areal or filter_datace:
                                         continue
 
-                                    komp_meta = {
+                                    empty_meta = {
                                         **dj_meta,
-                                        'komponenta_id': komp.get(
-                                            'ident_cely',
-                                            ""
-                                            ),
-                                        'komponenta_areal': (
-                                            komp.get('komponenta_areal')
-                                            or {}
-                                        ).get('value', ""),
-                                        'komponenta_obdobi': (
-                                            komp.get('komponenta_obdobi')
-                                            or {}
-                                        ).get('value', ""),
+                                        'komponenta_id': "",
+                                        'komponenta_areal': "",
+                                        'komponenta_obdobi': "",
                                     }
-                                    pian_lookup[dj_pian_value].append(komp_meta)
+                                    pian_lookup[dj_pian_value].append(empty_meta)
                                     target_pian_ids_count += 1
                             else:
-                                # DJ without components — still include
-                                # with empty component fields
-                                if filter_areal or filter_datace:
-                                    continue
-
-                                empty_meta = {
-                                    **dj_meta,
-                                    'komponenta_id': "",
-                                    'komponenta_areal': "",
-                                    'komponenta_obdobi': "",
-                                }
-                                pian_lookup[dj_pian_value].append(empty_meta)
                                 target_pian_ids_count += 1
-                        else:
-                            target_pian_ids_count += 1
-                            pian_lookup[dj_pian_value].append(dj_meta)
+                                pian_lookup[dj_pian_value].append(dj_meta)
 
-        if not target_pian_ids:
+            if not target_pian_ids:
+                iface.messageBar().pushMessage(
+                    "AMCR",
+                    f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.",
+                    level=Qgis.MessageLevel.Warning
+                )
+                return
+
+            # ==========================================
+            # C) GEOMETRY FETCHING (PIAN)
+            # ==========================================
+            ids_list = list(target_pian_ids)
+            total_pians = len(ids_list)
+            docs_pian = []
+            # Geometry requests are batch-processed
+            # to stay under URL length limits:
+            BATCH_PIAN = 200
+
             iface.messageBar().pushMessage(
                 "AMCR",
-                f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.",
-                level=Qgis.MessageLevel.Warning
+                f"Záznamů: {len(docs)} (z toho {entries_with_geom} s mapou). "
+                f"Stahuji {total_pians} unikátních geometrií, "
+                f"vykresluji {target_pian_ids_count} geometrií...",
+                level=Qgis.MessageLevel.Info
             )
-            return
 
-        # ==========================================
-        # C) GEOMETRY FETCHING (PIAN)
-        # ==========================================
-        ids_list = list(target_pian_ids)
-        total_pians = len(ids_list)
-        docs_pian = []
-        # Geometry requests are batch-processed
-        # to stay under URL length limits:
-        BATCH_PIAN = 200
+            fl_pian = [
+                "ident_cely",
+                "pian_typ",
+                "pian_chranene_udaje",
+                "pian_presnost",
+            ]
 
-        iface.messageBar().pushMessage(
-            "AMCR",
-            f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). "
-            f"Stahuji {total_pians} unikátních geometrií, "
-            f"vykresluji {target_pian_ids_count} geometrií...",
-            level=Qgis.MessageLevel.Info
-        )
+            for i in range(0, total_pians, BATCH_PIAN):
+                batch = ids_list[i: i + BATCH_PIAN]
+                or_query = " OR ".join(batch)
+                fq_pian = f"ident_cely:({or_query})"
 
-        fl_pian = [
-            "ident_cely",
-            "pian_typ",
-            "pian_chranene_udaje",
-            "pian_presnost",
-        ]
+                params_pian = {
+                    "mapa": "true",
+                    "entity": "pian",
+                    "q": fq_pian,
+                    "rows": len(batch),
+                    "fl": ",".join(fl_pian),
+                }
+                try:
+                    QApplication.processEvents()
+                    r_json = _api_get_json(url, params=params_pian, timeout=15)
+                    docs_pian.extend(r_json.get('response', {}).get('docs', []))
+                except requests.exceptions.RequestException as e:
+                    # Network is down – stop immediately instead of
+                    # uselessly retrying every remaining batch
+                    network_error = True
+                    QgsMessageLog.logMessage(
+                        f"Chyba sítě při stahování geometrií PIAN: {e}",
+                        "AMČR", Qgis.MessageLevel.Critical
+                    )
+                    break
+                except Exception as e:
+                    QgsMessageLog.logMessage(
+                        f"Chyba PIAN: {e}",
+                        "AMČR", Qgis.MessageLevel.Warning
+                    )
 
-        for i in range(0, total_pians, BATCH_PIAN):
-            batch = ids_list[i: i + BATCH_PIAN]
-            or_query = " OR ".join(batch)
-            fq_pian = f"ident_cely:({or_query})"
+        elif typ_dat == "samostatny_nalez":
+            nalezy = {}
 
-            params_pian = {
-                "mapa": "true",
-                "entity": "pian",
-                "q": fq_pian,
-                "rows": len(batch),
-                "fl": ",".join(fl_pian),
-            }
-            try:
-                QApplication.processEvents()
-                r_json = _api_get_json(url, params=params_pian, timeout=15)
-                docs_pian.extend(r_json.get('response', {}).get('docs', []))
-            except requests.exceptions.RequestException as e:
-                # Network is down – stop immediately instead of
-                # uselessly retrying every remaining batch
-                network_error = True
-                QgsMessageLog.logMessage(
-                    f"Chyba sítě při stahování geometrií PIAN: {e}",
-                    "AMČR", Qgis.MessageLevel.Critical
+            for doc in docs:
+                sn_loc = g_list(doc, "loc")
+                if not sn_loc:
+                    continue
+
+                entries_with_geom += 1
+
+                sn_id = g(
+                    doc,
+                    "ident_cely"
                 )
-                break
-            except Exception as e:
-                QgsMessageLog.logMessage(
-                    f"Chyba PIAN: {e}",
-                    "AMČR", Qgis.MessageLevel.Warning
+                sn_nalezce = g(
+                    doc,
+                    "samostatny_nalez_nalezce"
                 )
+                sn_hloubka = g(
+                    doc,
+                    "samostatny_nalez_hloubka"
+                )
+                sn_pristupnost = g(
+                    doc,
+                    "pristupnost"
+                )
+                sn_datum = g(
+                    doc,
+                    "samostatny_nalez_datum_nalezu"
+                )
+                sn_poznamka = g(
+                    doc,
+                    "samostatny_nalez_poznamka"
+                )
+                sn_spec = tr_code(g(
+                    doc,
+                    "samostatny_nalez_specifikace"
+                ))
+                sn_evidencni = g(
+                    doc,
+                    "samostatny_nalez_evidencni_cislo"
+                )
+                sn_obdobi = tr_code(g(
+                    doc,
+                    "samostatny_nalez_obdobi"
+                ))
+                sn_presna = g(
+                    doc,
+                    "samostatny_nalez_presna_datace"
+                )
+                sn_okres = g(
+                    doc,
+                    "samostatny_nalez_okres"
+                )
+                sn_pocet = g(
+                    doc,
+                    "samostatny_nalez_pocet"
+                )
+                sn_druh = tr_code(g(
+                    doc,
+                    "samostatny_nalez_druh_nalezu"
+                ))
+                sn_predano_org = tr_code(g(
+                    doc,
+                    "samostatny_nalez_predano_organizace"
+                ))
+                sn_okolnosti = tr_code(g(
+                    doc,
+                    "samostatny_nalez_okolnosti"
+                ))
+                sn_projekt = g(
+                    doc,
+                    "samostatny_nalez_projekt"
+                )
+
+                sn_chranene = doc.get("samostatny_nalez_chranene_udaje") or {}
+
+                sn_lokalizace = g(
+                    sn_chranene,
+                    "lokalizace"
+                )
+                sn_katastr = sn_chranene.get('katastr', {}).get('value')
+                wkt = None
+                wkt_is_wgs = False
+                if sn_chranene.get('geom_sjtsk_wkt'):
+                    wkt = sn_chranene.get('geom_sjtsk_wkt', {}).get('value')
+                elif sn_chranene.get('geom_wkt'):
+                    # Fallback geometry is in WGS-84 and must be
+                    # transformed to S-JTSK before use
+                    wkt = sn_chranene.get('geom_wkt', {}).get('value')
+                    wkt_is_wgs = True
+
+                meta = {
+                    "ident_cely": sn_id,
+                    "projekt": sn_projekt,
+                    "okres": sn_okres,
+                    "katastr": sn_katastr,
+                    "nalezce": sn_nalezce,
+                    "datum": sn_datum,
+                    "okolnosti": sn_okolnosti,
+                    "hloubka_cm": sn_hloubka,
+                    "loc": sn_loc,
+                    "lokalizace": sn_lokalizace,
+                    "obdobi": sn_obdobi,
+                    "presna_datace": sn_presna,
+                    "nalez": sn_druh,
+                    "material": sn_spec,
+                    "pocet": sn_pocet,
+                    "poznamka": sn_poznamka,
+                    "pred_org": sn_predano_org,
+                    "evidencni": sn_evidencni,
+                    "pristupnost": sn_pristupnost,
+                    "wkt": wkt,
+                    "wkt_is_wgs": wkt_is_wgs,
+                }
+
+                nalezy[sn_id] = meta
+
+            if not entries_with_geom:
+                iface.messageBar().pushMessage(
+                    "AMCR",
+                    f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.",
+                    level=Qgis.MessageLevel.Warning
+                )
+                return
+
+
+                
 
         # ==========================================
         # D) LAYER CREATION (QGIS Memory Layers)
         # ==========================================
 
-        archeologicky_zaznam = "Akce" if typ_dat == "akce" else "Lokalita"
+        archeologicky_zaznam = typ_dat_vocab[typ_dat]
 
         # Initialize three layers for different geometry types (S-JTSK CRS)
+        archeologicky_zaznam_esc = archeologicky_zaznam.replace(" ", "_")
         vl_poly = QgsVectorLayer(
             "Polygon?crs=epsg:5514",
-            f"AMCR_{archeologicky_zaznam}_Polygony",
+            f"AMCR_{archeologicky_zaznam_esc}_Polygony",
             "memory"
         )
         vl_line = QgsVectorLayer(
             "LineString?crs=epsg:5514",
-            f"AMCR_{archeologicky_zaznam}_Linie",
+            f"AMCR_{archeologicky_zaznam_esc}_Linie",
             "memory"
         )
         vl_point = QgsVectorLayer(
             "Point?crs=epsg:5514",
-            f"AMCR_{archeologicky_zaznam}_Body",
+            f"AMCR_{archeologicky_zaznam_esc}_Body",
             "memory"
         )
         layers = [vl_poly, vl_line, vl_point]
 
         # Define attribute table structure
-        cols = [
-            QgsField("pian", QMetaType.Type.QString),
-            QgsField("presnost", QMetaType.Type.QString),
-            QgsField("pian_typ", QMetaType.Type.QString),
-            QgsField("dj", QMetaType.Type.QString),
-            QgsField("typ_dj", QMetaType.Type.QString),
-            QgsField("definicni_body", QMetaType.Type.QString),
+        cols = []
+
+        if typ_dat in ["akce", "lokalita"]:
+            cols = [
+                QgsField("pian", QMetaType.Type.QString),
+                QgsField("presnost", QMetaType.Type.QString),
+                QgsField("pian_typ", QMetaType.Type.QString),
+                QgsField("dj", QMetaType.Type.QString),
+                QgsField("typ_dj", QMetaType.Type.QString),
+            ]
+
+
+        cols += [
             QgsField(typ_dat, QMetaType.Type.QString),
+            QgsField("definicni_body", QMetaType.Type.QString),
             QgsField("odkaz_do_digiarchivu", QMetaType.Type.QString),
             QgsField("okres", QMetaType.Type.QString),
             QgsField("katastr", QMetaType.Type.QString),
@@ -767,8 +916,25 @@ def load_amcr_data(canvas, bb, filters=None,
                 QgsField("druh_lokality", QMetaType.Type.QString),
                 QgsField("zachovalost", QMetaType.Type.QString),
             ]
+        elif typ_dat == "samostatny_nalez":
+            cols += [
+                QgsField("projekt", QMetaType.Type.QString),
+                QgsField("nalezce", QMetaType.Type.QString),
+                QgsField("datum", QMetaType.Type.QString),
+                QgsField("okolnosti", QMetaType.Type.QString),
+                QgsField("hloubka_cm", QMetaType.Type.QString),
+                QgsField("lokalizace", QMetaType.Type.QString),
+                QgsField("obdobi", QMetaType.Type.QString),
+                QgsField("presna_datace", QMetaType.Type.QString),
+                QgsField("nalez", QMetaType.Type.QString),
+                QgsField("material", QMetaType.Type.QString),
+                QgsField("pocet", QMetaType.Type.QString),
+                QgsField("poznamka", QMetaType.Type.QString),
+                QgsField("pred_org", QMetaType.Type.QString),
+                QgsField("evidencni", QMetaType.Type.QString),
+            ]
 
-        cols.append(QgsField("Přístupnost", QMetaType.Type.QString))
+        cols.append(QgsField("pristupnost", QMetaType.Type.QString))
 
         # Use aliases for technical field names
         alias_map = {
@@ -802,6 +968,20 @@ def load_amcr_data(canvas, bb, filters=None,
             "komponenta_areal": "Areál",
             "komponenta_obdobi": "Období",
             "projekt": "Projekt",
+            "pristupnost": "Přístupnost",
+            "nalezce": "Nálezce",
+            "datum": "Datum nálezu",
+            "okolnosti": "Nálezové okolnosti",
+            "hloubka_cm": "Hloubka (cm)",
+            "lokalizace": "Lokalizace",
+            "obdobi": "Období",
+            "presna_datace": "Přesná datace",
+            "nalez": "Nález",
+            "material": "Materiál",
+            "pocet": "Počet předmětů",
+            "poznamka": "Poznámka/bližší popis",
+            "pred_org": "Předáno organizaci",
+            "evidencni": "Evidenční číslo",
         }
 
         if komponenty == "true":
@@ -831,139 +1011,202 @@ def load_amcr_data(canvas, bb, filters=None,
         )
 
         # --- FEATURE POPULATION ---
-        for doc in docs_pian:
-            try:
-                pid = doc.get('ident_cely', '')
-                if pid not in pian_lookup:
-                    continue
-
-                metas = pian_lookup[pid]
-
-                # Extract WKT geometry from protected JSON data
-                raw = doc.get('pian_chranene_udaje')
-                if isinstance(raw, list) and raw:
-                    raw = raw[0]
-                jdata = (
-                    json.loads(raw)
-                    if isinstance(raw, str)
-                    else (raw or {})
-                )
-
-                wkt = None
-                wkt_is_wgs = False
-                if jdata.get('geom_sjtsk_wkt'):
-                    wkt = jdata.get('geom_sjtsk_wkt', {}).get('value')
-                elif jdata.get('geom_wkt'):
-                    # Fallback geometry is in WGS-84 and must be
-                    # transformed to S-JTSK before use
-                    wkt = jdata.get('geom_wkt', {}).get('value')
-                    wkt_is_wgs = True
-
-                # The API may return the value as a single-item list –
-                # normalize before comparing against filter codes
-                raw_presnost = doc.get('pian_presnost', '')
-                if isinstance(raw_presnost, list):
-                    raw_presnost = raw_presnost[0] if raw_presnost else ''
-                raw_typ = doc.get('pian_typ', '')
-                if isinstance(raw_typ, list):
-                    raw_typ = raw_typ[0] if raw_typ else ''
-
-                pian_presnost = tr_code(str(raw_presnost))
-                pian_typ = tr_code(str(raw_typ))
-
-                # Final precision filter check
-                if (
-                    filters
-                    and filters.get('f_pian_presnost')
-                    and str(raw_presnost)
-                    not in filters.get('f_pian_presnost')
-                ):
-                    continue
-
-                if wkt:
-                    geom = QgsGeometry.fromWkt(wkt)
-                    if geom.isNull():
+        if typ_dat in ["akce", "lokalita"]:
+            for doc in docs_pian:
+                try:
+                    pid = doc.get('ident_cely', '')
+                    if pid not in pian_lookup:
                         continue
-                    if wkt_is_wgs:
-                        geom.transform(xform_wgs_to_sjtsk)
-                    if not geom.isGeosValid():
-                        # Try to repair (e.g. self-intersections)
-                        # instead of silently dropping the feature
-                        geom = geom.makeValid()
-                    if geom.isGeosValid():
-                        t = geom.type()
-                        target_list = None
-                        if t == QgsWkbTypes.PolygonGeometry:
-                            target_list = feats_p
-                        elif t == QgsWkbTypes.LineGeometry:
-                            target_list = feats_l
-                        elif t == QgsWkbTypes.PointGeometry:
-                            target_list = feats_pt
 
-                        if target_list is None:
+                    metas = pian_lookup[pid]
+
+                    # Extract WKT geometry from protected JSON data
+                    raw = doc.get('pian_chranene_udaje')
+                    if isinstance(raw, list) and raw:
+                        raw = raw[0]
+                    jdata = (
+                        json.loads(raw)
+                        if isinstance(raw, str)
+                        else (raw or {})
+                    )
+
+                    wkt = None
+                    wkt_is_wgs = False
+                    if jdata.get('geom_sjtsk_wkt'):
+                        wkt = jdata.get('geom_sjtsk_wkt', {}).get('value')
+                    elif jdata.get('geom_wkt'):
+                        # Fallback geometry is in WGS-84 and must be
+                        # transformed to S-JTSK before use
+                        wkt = jdata.get('geom_wkt', {}).get('value')
+                        wkt_is_wgs = True
+
+                    # The API may return the value as a single-item list –
+                    # normalize before comparing against filter codes
+                    raw_presnost = doc.get('pian_presnost', '')
+                    if isinstance(raw_presnost, list):
+                        raw_presnost = raw_presnost[0] if raw_presnost else ''
+                    raw_typ = doc.get('pian_typ', '')
+                    if isinstance(raw_typ, list):
+                        raw_typ = raw_typ[0] if raw_typ else ''
+
+                    pian_presnost = tr_code(str(raw_presnost))
+                    pian_typ = tr_code(str(raw_typ))
+
+                    # Final precision filter check
+                    if (
+                        filters
+                        and filters.get('f_pian_presnost')
+                        and str(raw_presnost)
+                        not in filters.get('f_pian_presnost')
+                    ):
+                        continue
+
+                    if wkt:
+                        geom = QgsGeometry.fromWkt(wkt)
+                        if geom.isNull():
                             continue
+                        if wkt_is_wgs:
+                            geom.transform(xform_wgs_to_sjtsk)
+                        if not geom.isGeosValid():
+                            # Try to repair (e.g. self-intersections)
+                            # instead of silently dropping the feature
+                            geom = geom.makeValid()
+                        if geom.isGeosValid():
+                            t = geom.type()
+                            target_list = None
+                            if t == QgsWkbTypes.PolygonGeometry:
+                                target_list = feats_p
+                            elif t == QgsWkbTypes.LineGeometry:
+                                target_list = feats_l
+                            elif t == QgsWkbTypes.PointGeometry:
+                                target_list = feats_pt
 
-                        is_akce = (typ_dat == "akce")
+                            if target_list is None:
+                                continue
 
-                        # Create a QGIS feature for each documentation unit
-                        # associated with this geometry
-                        for meta in metas:
+                            is_akce = (typ_dat == "akce")
+
+                            # Create a QGIS feature for each documentation unit
+                            # associated with this geometry
+                            for meta in metas:
+                                feat = QgsFeature()
+                                feat.setGeometry(geom)
+                                atributy = [
+                                    pid,
+                                    pian_presnost,
+                                    pian_typ,
+                                    meta['dj_id'],
+                                    meta['dj_typ_value'],
+                                    meta['ident_cely'],
+                                    meta['loc'],
+                                    "https://digiarchiv.aiscr.cz/id/"
+                                    + meta['ident_cely'],
+                                    meta['az_okres'],
+                                    meta['katastr'],
+                                    meta['dalsi_katastr'],
+                                ]
+                                if is_akce:
+                                    atributy.extend([
+                                        meta['lokalizace_okolnosti'],
+                                        meta['akce_hlavni_vedouci'],
+                                        meta['akce_organizace'],
+                                        meta['akce_specifikace_data'],
+                                        meta['akce_datum_zahajeni'],
+                                        meta['akce_datum_ukonceni'],
+                                        meta['akce_hlavni_typ'],
+                                        meta['akce_vedlejsi_typ'],
+                                        meta['dj_negativni'],
+                                        meta['akce_je_nz'],
+                                        meta['projekt'],
+                                    ])
+                                else:
+                                    atributy.extend([
+                                        meta['lokalita_nazev'],
+                                        meta['lokalita_popis'],
+                                        meta['lokalita_typ'],
+                                        meta['lokalita_druh'],
+                                        meta['lokalita_zachovalost'],
+                                    ])
+
+                                atributy.append(meta['pristupnost'])
+
+                                if komponenty == "true":
+                                    atributy.extend([
+                                        meta.get('komponenta_id', ""),
+                                        meta.get('komponenta_areal', ""),
+                                        meta.get('komponenta_obdobi', ""),
+                                    ])
+
+                                feat.setAttributes(atributy)
+                                target_list.append(feat)
+
+                except Exception as ex:
+                    QgsMessageLog.logMessage(
+                        f"Chyba při tvorbě feature: {ex}",
+                        "AMČR", Qgis.MessageLevel.Warning
+                    )
+
+        elif typ_dat == "samostatny_nalez":
+            for n in nalezy.values():
+                try:
+                    wkt = n["wkt"]
+                    wkt_is_wgs = n["wkt_is_wgs"]
+
+                    if wkt:
+                        geom = QgsGeometry.fromWkt(wkt)
+                        if geom.isNull():
+                            continue
+                        if wkt_is_wgs:
+                            geom.transform(xform_wgs_to_sjtsk)
+                        if not geom.isGeosValid():
+                            geom = geom.makeValid()
+                        if geom.isGeosValid():
+                            t = geom.type()
+                            target_list = None
+                            if t == QgsWkbTypes.PolygonGeometry:
+                                target_list = feats_p
+                            elif t == QgsWkbTypes.LineGeometry:
+                                target_list = feats_l
+                            elif t == QgsWkbTypes.PointGeometry:
+                                target_list = feats_pt
+
+                            if target_list is None:
+                                continue
+
                             feat = QgsFeature()
                             feat.setGeometry(geom)
                             atributy = [
-                                pid,
-                                pian_presnost,
-                                pian_typ,
-                                meta['dj_id'],
-                                meta['dj_typ_value'],
-                                meta['loc'],
-                                meta['ident_cely'],
+                                n["ident_cely"],
+                                n["loc"],
                                 "https://digiarchiv.aiscr.cz/id/"
-                                + meta['ident_cely'],
-                                meta['az_okres'],
-                                meta['katastr'],
-                                meta['dalsi_katastr'],
+                                + n['ident_cely'],
+                                n["okres"],
+                                n["katastr"],
+                                "",
+                                n["projekt"],
+                                n["nalezce"],
+                                n["datum"],
+                                n["okolnosti"],
+                                n["hloubka_cm"],
+                                n["lokalizace"],
+                                n["obdobi"],
+                                n["presna_datace"],
+                                n["nalez"],
+                                n["material"],
+                                n["pocet"],
+                                n["poznamka"],
+                                n["pred_org"],
+                                n["evidencni"],
+                                n["pristupnost"],
                             ]
-                            if is_akce:
-                                atributy.extend([
-                                    meta['lokalizace_okolnosti'],
-                                    meta['akce_hlavni_vedouci'],
-                                    meta['akce_organizace'],
-                                    meta['akce_specifikace_data'],
-                                    meta['akce_datum_zahajeni'],
-                                    meta['akce_datum_ukonceni'],
-                                    meta['akce_hlavni_typ'],
-                                    meta['akce_vedlejsi_typ'],
-                                    meta['dj_negativni'],
-                                    meta['akce_je_nz'],
-                                    meta['projekt'],
-                                ])
-                            else:
-                                atributy.extend([
-                                    meta['lokalita_nazev'],
-                                    meta['lokalita_popis'],
-                                    meta['lokalita_typ'],
-                                    meta['lokalita_druh'],
-                                    meta['lokalita_zachovalost'],
-                                ])
-
-                            atributy.append(meta['pristupnost'])
-
-                            if komponenty == "true":
-                                atributy.extend([
-                                    meta.get('komponenta_id', ""),
-                                    meta.get('komponenta_areal', ""),
-                                    meta.get('komponenta_obdobi', ""),
-                                ])
-
                             feat.setAttributes(atributy)
                             target_list.append(feat)
-
-            except Exception as ex:
-                QgsMessageLog.logMessage(
-                    f"Chyba při tvorbě feature: {ex}",
-                    "AMČR", Qgis.MessageLevel.Warning
-                )
+                
+                except Exception as ex:
+                    QgsMessageLog.logMessage(
+                        f"Chyba při tvorbě feature: {ex}",
+                        "AMČR", Qgis.MessageLevel.Warning
+                    )
 
 # --- ADDING TO QGIS INTERFACE ---
         proj = QgsProject.instance()
@@ -978,7 +1221,7 @@ def load_amcr_data(canvas, bb, filters=None,
             if f:
                 L.dataProvider().addFeatures(f)
                 L.updateExtents()
-                L.setName(f"AMCR_{archeologicky_zaznam}_{n}")
+                L.setName(f"AMCR_{archeologicky_zaznam_esc}_{n}")
                 proj.addMapLayer(L)
                 added += len(f)
 
@@ -997,7 +1240,7 @@ def load_amcr_data(canvas, bb, filters=None,
         elif added > 0:
             iface.messageBar().pushMessage(
                 "AMCR",
-                f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). "
+                f"Hotovo. Záznamů: {len(docs)} (s geom: {entries_with_geom}). "
                 f"Vykresleno: {added} prvků.",
                 level=Qgis.MessageLevel.Success
             )

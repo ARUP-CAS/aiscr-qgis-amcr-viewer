@@ -11,7 +11,9 @@ from qgis.utils import iface
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
                              OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST,
                              TYP_LOKALITY, DRUH_LOKALITY, JISTOTA,
-                             LOKALITA_ZACHOVALOST, PRISTUPNOST,
+                             LOKALITA_ZACHOVALOST, PRISTUPNOST, 
+                             NALEZ_KATEGORIE, DRUH_NALEZU, SPECIFIKACE,
+                             NALEZOVE_OKOLNOSTI, NALEZCE,
                              download_heslare, refresh_globals)
 
 
@@ -168,6 +170,11 @@ class AmcrFilterDialog(QDialog):
             'druh_lokality': [],
             'jistota': [],
             'lokalita_zachovalost': [],
+            'nalez_kategorie': [],
+            'druh_nalezu': [],
+            'specifikace': [],
+            'nalezove_okolnosti': [],
+            'nalezce': [],
         }
 
         layout = QVBoxLayout()
@@ -202,13 +209,6 @@ class AmcrFilterDialog(QDialog):
         )
         layout.addWidget(self.picker_katastr)
 
-        self.picker_presnost = self.setup_picker(
-            "PIAN – přesnost",
-            'pian_presnost',
-            PIAN_PRESNOST
-        )
-        layout.addWidget(self.picker_presnost)
-
         self.picker_pristupnost = self.setup_picker(
             "Přístupnost",
             'pristupnost',
@@ -218,7 +218,15 @@ class AmcrFilterDialog(QDialog):
 
         # Filters valid for Akce
 
-        if self.typ_dat == "akce":
+        if self.typ_dat in ["lokalita", "akce"]:
+            self.picker_presnost = self.setup_picker(
+                "PIAN – přesnost",
+                'pian_presnost',
+                PIAN_PRESNOST
+            )
+            layout.addWidget(self.picker_presnost)
+
+        if self.typ_dat in ["samostatny_nalez", "akce"]:
             self.picker_org = self.setup_picker(
                 "Organizace",
                 'organizace',
@@ -226,6 +234,7 @@ class AmcrFilterDialog(QDialog):
             )
             layout.addWidget(self.picker_org)
 
+        if self.typ_dat == "akce":
             self.picker_vedouci = self.setup_picker(
                 "Vedoucí výzkumu",
                 'vedouci',
@@ -278,12 +287,49 @@ class AmcrFilterDialog(QDialog):
         self.picker_obdobi = self.setup_picker("Období", 'obdobi', OBDOBI)
         layout.addWidget(self.picker_obdobi)
 
-        self.picker_areal = self.setup_picker("Areál", 'areal', AREAL)
-        layout.addWidget(self.picker_areal)
+        if self.typ_dat == "samostatny_nalez":
+            self.picker_nalez_kategorie = self.setup_picker(
+                "Kategorie nálezu",
+                'nalez_kategorie',
+                NALEZ_KATEGORIE
+            )
+            layout.addWidget(self.picker_nalez_kategorie)
 
-        # Option to download related components table
-        self.chk_komponenty = QCheckBox("Načíst komponenty")
-        layout.addWidget(self.chk_komponenty)
+            self.picker_druh_nalezu = self.setup_picker(
+                "Druh nálezu",
+                'druh_nalezu',
+                DRUH_NALEZU
+            )
+            layout.addWidget(self.picker_druh_nalezu)
+
+            self.picker_specifikace = self.setup_picker(
+                "Specifikace nálezu",
+                'specifikace',
+                SPECIFIKACE
+            )
+            layout.addWidget(self.picker_specifikace)
+
+            self.picker_nalezove_okolnosti = self.setup_picker(
+                "Okolnosti nálezu",
+                'nalezove_okolnosti',
+                NALEZOVE_OKOLNOSTI
+            )
+            layout.addWidget(self.picker_nalezove_okolnosti)
+
+            self.picker_nalezce = self.setup_picker(
+                "Nálezce",
+                'nalezce',
+                NALEZCE
+            )
+            layout.addWidget(self.picker_nalezce)
+
+        if self.typ_dat != "samostatny_nalez":
+            self.picker_areal = self.setup_picker("Areál", 'areal', AREAL)
+            layout.addWidget(self.picker_areal)
+
+            # Option to download related components table
+            self.chk_komponenty = QCheckBox("Načíst komponenty")
+            layout.addWidget(self.chk_komponenty)
 
         # Warning label
         self.lbl_komponenty_warning = QLabel(
@@ -299,9 +345,10 @@ class AmcrFilterDialog(QDialog):
         self.lbl_komponenty_warning.setVisible(False)
         layout.addWidget(self.lbl_komponenty_warning)
 
-        self.chk_komponenty.toggled.connect(
-            self.lbl_komponenty_warning.setVisible
-        )
+        if self.typ_dat != "samostatny_nalez":
+            self.chk_komponenty.toggled.connect(
+                self.lbl_komponenty_warning.setVisible
+            )
 
         # Pushes everything above to the top
         layout.addStretch(1)
@@ -443,7 +490,10 @@ class AmcrFilterDialog(QDialog):
         return "true" if self.chk_bbox.isChecked() else "false"
 
     def get_komponenty(self):
-        return "true" if self.chk_komponenty.isChecked() else "false"
+        if self.typ_dat in ["akce", "lokalita"]:
+            return "true" if self.chk_komponenty.isChecked() else "false"
+        else:
+            return "false"
 
     def get_filters(self):
         """Compiles the user selections from the cache into
@@ -470,22 +520,36 @@ class AmcrFilterDialog(QDialog):
                 filters['posevidence'] = 'true'
             if self.chk_proj_akce.isChecked():
                 filters['proj_akce'] = 'true'
-            if self.selection_cache['organizace']:
-                filters['f_organizace'] = self.selection_cache['organizace']
-            if self.selection_cache['typ_akce']:
-                filters['f_typ_vyzkumu'] = self.selection_cache['typ_akce']
-            if self.selection_cache['vedouci']:
-                filters['f_vedouci'] = self.selection_cache['vedouci']
 
-        if self.typ_dat == "lokalita":
-            if self.selection_cache['typ_lokality']:
-                filters['f_typ_lokality'] = self.selection_cache['typ_lokality']
-            if self.selection_cache['druh_lokality']:
-                filters['f_druh_lokality'] = self.selection_cache['druh_lokality']
-            if self.selection_cache['jistota']:
-                filters['f_jistota'] = self.selection_cache['jistota']
-            if self.selection_cache['lokalita_zachovalost']:
-                filters['f_lokalita_zachovalost'] = self.selection_cache['lokalita_zachovalost']
+        if self.selection_cache['typ_akce']:
+            filters['f_typ_vyzkumu'] = self.selection_cache['typ_akce']
+        if self.selection_cache['vedouci']:
+            filters['f_vedouci'] = self.selection_cache['vedouci']
+
+        if self.selection_cache['organizace']:
+            filters['f_organizace'] = self.selection_cache['organizace']                
+
+        if self.selection_cache['typ_lokality']:
+            filters['f_typ_lokality'] = self.selection_cache['typ_lokality']
+        if self.selection_cache['druh_lokality']:
+            filters['f_druh_lokality'] = self.selection_cache['druh_lokality']
+        if self.selection_cache['jistota']:
+            filters['f_jistota'] = self.selection_cache['jistota']
+        if self.selection_cache['lokalita_zachovalost']:
+            filters['f_lokalita_zachovalost'] = self.selection_cache['lokalita_zachovalost']
+
+        # Samostatné nálezy
+        if self.selection_cache['nalez_kategorie']:
+            filters['f_kategorie'] = self.selection_cache['nalez_kategorie']
+        if self.selection_cache['druh_nalezu']:
+            filters['f_druh_nalezu'] = self.selection_cache['druh_nalezu']
+        if self.selection_cache['specifikace']:
+            filters['f_specifikace'] = self.selection_cache['specifikace']
+        if self.selection_cache['nalezove_okolnosti']:
+            filters['f_nalezove_okolnosti'] = self.selection_cache['nalezove_okolnosti']
+        if self.selection_cache['nalezce']:
+            filters['f_nalezce'] = self.selection_cache['nalezce']
+
 
         return filters
 
