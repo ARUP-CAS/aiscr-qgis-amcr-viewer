@@ -872,14 +872,21 @@ def load_amcr_data(canvas, bb, filters=None,
         layers = [vl_poly, vl_line, vl_point]
 
         # Define attribute table structure
-        cols = [
-            QgsField("pian", QMetaType.Type.QString),
-            QgsField("presnost", QMetaType.Type.QString),
-            QgsField("pian_typ", QMetaType.Type.QString),
-            QgsField("dj", QMetaType.Type.QString),
-            QgsField("typ_dj", QMetaType.Type.QString),
-            QgsField("definicni_body", QMetaType.Type.QString),
+        cols = []
+
+        if typ_dat in ["akce", "lokalita"]:
+            cols = [
+                QgsField("pian", QMetaType.Type.QString),
+                QgsField("presnost", QMetaType.Type.QString),
+                QgsField("pian_typ", QMetaType.Type.QString),
+                QgsField("dj", QMetaType.Type.QString),
+                QgsField("typ_dj", QMetaType.Type.QString),
+            ]
+
+
+        cols += [
             QgsField(typ_dat, QMetaType.Type.QString),
+            QgsField("definicni_body", QMetaType.Type.QString),
             QgsField("odkaz_do_digiarchivu", QMetaType.Type.QString),
             QgsField("okres", QMetaType.Type.QString),
             QgsField("katastr", QMetaType.Type.QString),
@@ -908,6 +915,23 @@ def load_amcr_data(canvas, bb, filters=None,
                 QgsField("typ_lokality", QMetaType.Type.QString),
                 QgsField("druh_lokality", QMetaType.Type.QString),
                 QgsField("zachovalost", QMetaType.Type.QString),
+            ]
+        elif typ_dat == "samostatny_nalez":
+            cols += [
+                QgsField("projekt", QMetaType.Type.QString),
+                QgsField("nalezce", QMetaType.Type.QString),
+                QgsField("datum", QMetaType.Type.QString),
+                QgsField("okolnosti", QMetaType.Type.QString),
+                QgsField("hloubka_cm", QMetaType.Type.QString),
+                QgsField("lokalizace", QMetaType.Type.QString),
+                QgsField("obdobi", QMetaType.Type.QString),
+                QgsField("presna_datace", QMetaType.Type.QString),
+                QgsField("nalez", QMetaType.Type.QString),
+                QgsField("material", QMetaType.Type.QString),
+                QgsField("pocet", QMetaType.Type.QString),
+                QgsField("poznamka", QMetaType.Type.QString),
+                QgsField("pred_org", QMetaType.Type.QString),
+                QgsField("evidencni", QMetaType.Type.QString),
             ]
 
         cols.append(QgsField("pristupnost", QMetaType.Type.QString))
@@ -944,7 +968,20 @@ def load_amcr_data(canvas, bb, filters=None,
             "komponenta_areal": "Areál",
             "komponenta_obdobi": "Období",
             "projekt": "Projekt",
-            "pristupnost": "Přístupnost"
+            "pristupnost": "Přístupnost",
+            "nalezce": "Nálezce",
+            "datum": "Datum nálezu",
+            "okolnosti": "Nálezové okolnosti",
+            "hloubka_cm": "Hloubka (cm)",
+            "lokalizace": "Lokalizace",
+            "obdobi": "Období",
+            "presna_datace": "Přesná datace",
+            "nalez": "Nález",
+            "material": "Materiál",
+            "pocet": "Počet předmětů",
+            "poznamka": "Poznámka/bližší popis",
+            "pred_org": "Předáno organizaci",
+            "evidencni": "Evidenční číslo",
         }
 
         if komponenty == "true":
@@ -974,139 +1011,202 @@ def load_amcr_data(canvas, bb, filters=None,
         )
 
         # --- FEATURE POPULATION ---
-        for doc in docs_pian:
-            try:
-                pid = doc.get('ident_cely', '')
-                if pid not in pian_lookup:
-                    continue
-
-                metas = pian_lookup[pid]
-
-                # Extract WKT geometry from protected JSON data
-                raw = doc.get('pian_chranene_udaje')
-                if isinstance(raw, list) and raw:
-                    raw = raw[0]
-                jdata = (
-                    json.loads(raw)
-                    if isinstance(raw, str)
-                    else (raw or {})
-                )
-
-                wkt = None
-                wkt_is_wgs = False
-                if jdata.get('geom_sjtsk_wkt'):
-                    wkt = jdata.get('geom_sjtsk_wkt', {}).get('value')
-                elif jdata.get('geom_wkt'):
-                    # Fallback geometry is in WGS-84 and must be
-                    # transformed to S-JTSK before use
-                    wkt = jdata.get('geom_wkt', {}).get('value')
-                    wkt_is_wgs = True
-
-                # The API may return the value as a single-item list –
-                # normalize before comparing against filter codes
-                raw_presnost = doc.get('pian_presnost', '')
-                if isinstance(raw_presnost, list):
-                    raw_presnost = raw_presnost[0] if raw_presnost else ''
-                raw_typ = doc.get('pian_typ', '')
-                if isinstance(raw_typ, list):
-                    raw_typ = raw_typ[0] if raw_typ else ''
-
-                pian_presnost = tr_code(str(raw_presnost))
-                pian_typ = tr_code(str(raw_typ))
-
-                # Final precision filter check
-                if (
-                    filters
-                    and filters.get('f_pian_presnost')
-                    and str(raw_presnost)
-                    not in filters.get('f_pian_presnost')
-                ):
-                    continue
-
-                if wkt:
-                    geom = QgsGeometry.fromWkt(wkt)
-                    if geom.isNull():
+        if typ_dat in ["akce", "lokalita"]:
+            for doc in docs_pian:
+                try:
+                    pid = doc.get('ident_cely', '')
+                    if pid not in pian_lookup:
                         continue
-                    if wkt_is_wgs:
-                        geom.transform(xform_wgs_to_sjtsk)
-                    if not geom.isGeosValid():
-                        # Try to repair (e.g. self-intersections)
-                        # instead of silently dropping the feature
-                        geom = geom.makeValid()
-                    if geom.isGeosValid():
-                        t = geom.type()
-                        target_list = None
-                        if t == QgsWkbTypes.PolygonGeometry:
-                            target_list = feats_p
-                        elif t == QgsWkbTypes.LineGeometry:
-                            target_list = feats_l
-                        elif t == QgsWkbTypes.PointGeometry:
-                            target_list = feats_pt
 
-                        if target_list is None:
+                    metas = pian_lookup[pid]
+
+                    # Extract WKT geometry from protected JSON data
+                    raw = doc.get('pian_chranene_udaje')
+                    if isinstance(raw, list) and raw:
+                        raw = raw[0]
+                    jdata = (
+                        json.loads(raw)
+                        if isinstance(raw, str)
+                        else (raw or {})
+                    )
+
+                    wkt = None
+                    wkt_is_wgs = False
+                    if jdata.get('geom_sjtsk_wkt'):
+                        wkt = jdata.get('geom_sjtsk_wkt', {}).get('value')
+                    elif jdata.get('geom_wkt'):
+                        # Fallback geometry is in WGS-84 and must be
+                        # transformed to S-JTSK before use
+                        wkt = jdata.get('geom_wkt', {}).get('value')
+                        wkt_is_wgs = True
+
+                    # The API may return the value as a single-item list –
+                    # normalize before comparing against filter codes
+                    raw_presnost = doc.get('pian_presnost', '')
+                    if isinstance(raw_presnost, list):
+                        raw_presnost = raw_presnost[0] if raw_presnost else ''
+                    raw_typ = doc.get('pian_typ', '')
+                    if isinstance(raw_typ, list):
+                        raw_typ = raw_typ[0] if raw_typ else ''
+
+                    pian_presnost = tr_code(str(raw_presnost))
+                    pian_typ = tr_code(str(raw_typ))
+
+                    # Final precision filter check
+                    if (
+                        filters
+                        and filters.get('f_pian_presnost')
+                        and str(raw_presnost)
+                        not in filters.get('f_pian_presnost')
+                    ):
+                        continue
+
+                    if wkt:
+                        geom = QgsGeometry.fromWkt(wkt)
+                        if geom.isNull():
                             continue
+                        if wkt_is_wgs:
+                            geom.transform(xform_wgs_to_sjtsk)
+                        if not geom.isGeosValid():
+                            # Try to repair (e.g. self-intersections)
+                            # instead of silently dropping the feature
+                            geom = geom.makeValid()
+                        if geom.isGeosValid():
+                            t = geom.type()
+                            target_list = None
+                            if t == QgsWkbTypes.PolygonGeometry:
+                                target_list = feats_p
+                            elif t == QgsWkbTypes.LineGeometry:
+                                target_list = feats_l
+                            elif t == QgsWkbTypes.PointGeometry:
+                                target_list = feats_pt
 
-                        is_akce = (typ_dat == "akce")
+                            if target_list is None:
+                                continue
 
-                        # Create a QGIS feature for each documentation unit
-                        # associated with this geometry
-                        for meta in metas:
+                            is_akce = (typ_dat == "akce")
+
+                            # Create a QGIS feature for each documentation unit
+                            # associated with this geometry
+                            for meta in metas:
+                                feat = QgsFeature()
+                                feat.setGeometry(geom)
+                                atributy = [
+                                    pid,
+                                    pian_presnost,
+                                    pian_typ,
+                                    meta['dj_id'],
+                                    meta['dj_typ_value'],
+                                    meta['ident_cely'],
+                                    meta['loc'],
+                                    "https://digiarchiv.aiscr.cz/id/"
+                                    + meta['ident_cely'],
+                                    meta['az_okres'],
+                                    meta['katastr'],
+                                    meta['dalsi_katastr'],
+                                ]
+                                if is_akce:
+                                    atributy.extend([
+                                        meta['lokalizace_okolnosti'],
+                                        meta['akce_hlavni_vedouci'],
+                                        meta['akce_organizace'],
+                                        meta['akce_specifikace_data'],
+                                        meta['akce_datum_zahajeni'],
+                                        meta['akce_datum_ukonceni'],
+                                        meta['akce_hlavni_typ'],
+                                        meta['akce_vedlejsi_typ'],
+                                        meta['dj_negativni'],
+                                        meta['akce_je_nz'],
+                                        meta['projekt'],
+                                    ])
+                                else:
+                                    atributy.extend([
+                                        meta['lokalita_nazev'],
+                                        meta['lokalita_popis'],
+                                        meta['lokalita_typ'],
+                                        meta['lokalita_druh'],
+                                        meta['lokalita_zachovalost'],
+                                    ])
+
+                                atributy.append(meta['pristupnost'])
+
+                                if komponenty == "true":
+                                    atributy.extend([
+                                        meta.get('komponenta_id', ""),
+                                        meta.get('komponenta_areal', ""),
+                                        meta.get('komponenta_obdobi', ""),
+                                    ])
+
+                                feat.setAttributes(atributy)
+                                target_list.append(feat)
+
+                except Exception as ex:
+                    QgsMessageLog.logMessage(
+                        f"Chyba při tvorbě feature: {ex}",
+                        "AMČR", Qgis.MessageLevel.Warning
+                    )
+
+        elif typ_dat == "samostatny_nalez":
+            for n in nalezy.values():
+                try:
+                    wkt = n["wkt"]
+                    wkt_is_wgs = n["wkt_is_wgs"]
+
+                    if wkt:
+                        geom = QgsGeometry.fromWkt(wkt)
+                        if geom.isNull():
+                            continue
+                        if wkt_is_wgs:
+                            geom.transform(xform_wgs_to_sjtsk)
+                        if not geom.isGeosValid():
+                            geom = geom.makeValid()
+                        if geom.isGeosValid():
+                            t = geom.type()
+                            target_list = None
+                            if t == QgsWkbTypes.PolygonGeometry:
+                                target_list = feats_p
+                            elif t == QgsWkbTypes.LineGeometry:
+                                target_list = feats_l
+                            elif t == QgsWkbTypes.PointGeometry:
+                                target_list = feats_pt
+
+                            if target_list is None:
+                                continue
+
                             feat = QgsFeature()
                             feat.setGeometry(geom)
                             atributy = [
-                                pid,
-                                pian_presnost,
-                                pian_typ,
-                                meta['dj_id'],
-                                meta['dj_typ_value'],
-                                meta['loc'],
-                                meta['ident_cely'],
+                                n["ident_cely"],
+                                n["loc"],
                                 "https://digiarchiv.aiscr.cz/id/"
-                                + meta['ident_cely'],
-                                meta['az_okres'],
-                                meta['katastr'],
-                                meta['dalsi_katastr'],
+                                + n['ident_cely'],
+                                n["okres"],
+                                n["katastr"],
+                                "",
+                                n["projekt"],
+                                n["nalezce"],
+                                n["datum"],
+                                n["okolnosti"],
+                                n["hloubka_cm"],
+                                n["lokalizace"],
+                                n["obdobi"],
+                                n["presna_datace"],
+                                n["nalez"],
+                                n["material"],
+                                n["pocet"],
+                                n["poznamka"],
+                                n["pred_org"],
+                                n["evidencni"],
+                                n["pristupnost"],
                             ]
-                            if is_akce:
-                                atributy.extend([
-                                    meta['lokalizace_okolnosti'],
-                                    meta['akce_hlavni_vedouci'],
-                                    meta['akce_organizace'],
-                                    meta['akce_specifikace_data'],
-                                    meta['akce_datum_zahajeni'],
-                                    meta['akce_datum_ukonceni'],
-                                    meta['akce_hlavni_typ'],
-                                    meta['akce_vedlejsi_typ'],
-                                    meta['dj_negativni'],
-                                    meta['akce_je_nz'],
-                                    meta['projekt'],
-                                ])
-                            else:
-                                atributy.extend([
-                                    meta['lokalita_nazev'],
-                                    meta['lokalita_popis'],
-                                    meta['lokalita_typ'],
-                                    meta['lokalita_druh'],
-                                    meta['lokalita_zachovalost'],
-                                ])
-
-                            atributy.append(meta['pristupnost'])
-
-                            if komponenty == "true":
-                                atributy.extend([
-                                    meta.get('komponenta_id', ""),
-                                    meta.get('komponenta_areal', ""),
-                                    meta.get('komponenta_obdobi', ""),
-                                ])
-
                             feat.setAttributes(atributy)
                             target_list.append(feat)
-
-            except Exception as ex:
-                QgsMessageLog.logMessage(
-                    f"Chyba při tvorbě feature: {ex}",
-                    "AMČR", Qgis.MessageLevel.Warning
-                )
+                
+                except Exception as ex:
+                    QgsMessageLog.logMessage(
+                        f"Chyba při tvorbě feature: {ex}",
+                        "AMČR", Qgis.MessageLevel.Warning
+                    )
 
 # --- ADDING TO QGIS INTERFACE ---
         proj = QgsProject.instance()
