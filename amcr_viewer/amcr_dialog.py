@@ -3,7 +3,8 @@ from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout,
                                  QLineEdit, QDialogButtonBox,
                                  QCheckBox, QGroupBox, QPushButton,
                                  QListWidget, QListWidgetItem, QHBoxLayout,
-                                 QMessageBox, QLabel, QFormLayout)
+                                 QMessageBox, QLabel, QFormLayout,
+                                 QScrollArea, QFrame, QWidget)
 from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.core import (QgsTask, QgsApplication,
                        QgsMessageLog, Qgis, QgsAuthMethodConfig)
@@ -353,6 +354,21 @@ class AmcrFilterDialog(QDialog):
         # Pushes everything above to the top
         layout.addStretch(1)
 
+        # The filter stack is taller than the window on every entity
+        # (over 1000 px for 'akce'), so it scrolls. The buttons stay
+        # outside the scroll area, otherwise the user would have to
+        # scroll to the bottom just to confirm the dialog.
+        content = QWidget()
+        content.setLayout(layout)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidget(content)
+
+        outer = QVBoxLayout()
+        outer.addWidget(scroll)
+
         # Main dialog OK/Cancel/Update buttons
 
         buttons = QDialogButtonBox()
@@ -373,9 +389,9 @@ class AmcrFilterDialog(QDialog):
 
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        outer.addWidget(buttons)
 
-        self.setLayout(layout)
+        self.setLayout(outer)
 
     def setup_picker(self, label_text, cache_key, data_source, extra_btn=None):
         """
