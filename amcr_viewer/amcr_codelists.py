@@ -98,7 +98,7 @@ def parse_codelist_file(filename, target_dict=None):
 def load_all_data():
     """Loads the codelist during plugin startup."""
     ensure_codelists_dir()
-    categorized_data = {k: {} for k in slovnicek.keys()}
+    categorized_data = {k: {} for k in slovnicek}
     parse_codelist_file('heslar.csv', categorized_data)
     return categorized_data
 
@@ -124,7 +124,9 @@ def fetch_set(base_url, internal_name, api_set, task=None):
 
         try:
             if "digiarchiv" not in base_url:
-                response = requests.get(base_url, params=params_amcr, timeout=30)
+                response = requests.get(
+                    base_url, params=params_amcr, timeout=30
+                )
                 response.raise_for_status()
                 root = ET.fromstring(response.content)  # nosec
 
@@ -193,7 +195,7 @@ def fetch_set(base_url, internal_name, api_set, task=None):
                     time.sleep(0.5)
                 else:
                     break
-            
+
             else:
                 response = requests.get(base_url, params=params_da, timeout=30)
                 response.raise_for_status()
@@ -210,8 +212,8 @@ def fetch_set(base_url, internal_name, api_set, task=None):
                             'Kód': nazev,
                             'Kategorie': internal_name
                         })
-                
-                break                    
+
+                break
 
         except Exception as e:
             QgsMessageLog.logMessage(
