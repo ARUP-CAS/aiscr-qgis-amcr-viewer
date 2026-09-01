@@ -46,6 +46,14 @@ def _log(msg: str, level=Qgis.MessageLevel.Info):
     QgsMessageLog.logMessage(msg, "AMČR login", level)
 
 
+def _log_data(msg: str, level=Qgis.MessageLevel.Info):
+    """
+    Shortcut: writes a message to the QGIS log used by the data download
+    (Messages panel → AMČR tab).
+    """
+    QgsMessageLog.logMessage(msg, "AMČR", level)
+
+
 def login_to_api(username: str, password: str):
     """
     Logs in to the Digiarchiv API using a username and password.
@@ -190,6 +198,21 @@ def _api_get_json(url, params, timeout=30) -> dict:
             _log("Přihlašovací údaje nejsou uloženy – pokračuji anonymně.",
                  Qgis.MessageLevel.Warning)
 
+    # Log the URL that was actually sent, so a query returning nothing can
+    # be replayed in a browser instead of being reconstructed from the code
+    url_log = resp.url
+    if len(url_log) > 500:
+        url_log = f"{url_log[:500]}… (celkem {len(resp.url)} znaků)"
+    _log_data(f"GET {url_log}")
+
+    # The API reports errors with HTTP 200 and an 'error' key instead of
+    # a 'response' block – without this the caller sees only empty results
+    if isinstance(body, dict) and body.get("error"):
+        _log_data(
+            f"API vrátilo chybu: {body['error']}",
+            Qgis.MessageLevel.Critical
+        )
+
     if body is None:
         raise ValueError(
             f"API nevrátilo platný JSON (HTTP {resp.status_code})"
@@ -312,6 +335,14 @@ def load_amcr_data(canvas, bb, filters=None,
                 else:
                     base_params[key] = str(value).strip()
 
+        # Filters exactly as they arrived from the dialog – an empty result
+        # caused by a stray filter is otherwise indistinguishable from an
+        # empty map window
+        _log_data(
+            f"Stahuji '{typ_dat}' (bbox={bb}, komponenty={komponenty}), "
+            f"filtry: {filters if filters else 'žádné'}"
+        )
+
         docs = []
         current_page = 0
         BATCH_DOCS = 500   # Records per API request
@@ -342,6 +373,10 @@ def load_amcr_data(canvas, bb, filters=None,
         # gets an explicit error/warning instead of a silent partial result
         network_error = False
 
+        # Set when the API answers with an error instead of a result set –
+        # keeps an invalid parameter distinguishable from an empty result
+        api_error = False
+
         # --- API PAGINATION LOOP ---
         while True:
             base_params['rows'] = BATCH_DOCS
@@ -352,11 +387,24 @@ def load_amcr_data(canvas, bb, filters=None,
 
             try:
                 resp_json = _api_get_json(url, params=base_params, timeout=30)
-                data = resp_json.get('response', {})
+
+                # Errors arrive with HTTP 200 and no 'response' block;
+                # _api_get_json has already logged the reason
+                if 'response' not in resp_json:
+                    api_error = True
+                    break
+
+                data = resp_json['response']
                 batch_docs = data.get('docs', [])
                 num_found = data.get('numFound', 0)
 
                 if not batch_docs:
+                    if current_page == 0:
+                        _log_data(
+                            "Dotaz proběhl v pořádku, ale nevrátil žádný "
+                            f"záznam (numFound={num_found}).",
+                            Qgis.MessageLevel.Warning
+                        )
                     break
 
                 fetched_total += len(batch_docs)
@@ -412,6 +460,15 @@ def load_amcr_data(canvas, bb, filters=None,
                 "AMCR",
                 "Stahování selhalo: chyba sítě. "
                 "Zkontrolujte připojení k internetu.",
+                level=Qgis.MessageLevel.Critical
+            )
+            return
+
+        if api_error and not docs:
+            iface.messageBar().pushMessage(
+                "AMCR",
+                "Dotaz na API selhal – podrobnosti v panelu Zprávy, "
+                "záložka AMČR.",
                 level=Qgis.MessageLevel.Critical
             )
             return
@@ -701,7 +758,14 @@ def load_amcr_data(canvas, bb, filters=None,
                 try:
                     QApplication.processEvents()
                     r_json = _api_get_json(url, params=params_pian, timeout=15)
-                    docs_pian.extend(r_json.get('response', {}).get('docs', []))
+                    if 'response' not in r_json:
+                        QgsMessageLog.logMessage(
+                            "API nevrátilo geometrie PIAN pro dávku "
+                            f"{i // BATCH_PIAN + 1} – viz chyba výše.",
+                            "AMČR", Qgis.MessageLevel.Warning
+                        )
+                        continue
+                    docs_pian.extend(r_json['response'].get('docs', []))
                 except requests.exceptions.RequestException as e:
                     # Network is down – stop immediately instead of
                     # uselessly retrying every remaining batch
