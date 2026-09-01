@@ -234,8 +234,8 @@ rýžoviště;HES-000035;areal
 areál těžby;HES-000032;areal
 místo sběru;HES-000057;areal
 samostatná usedlost;HES-000067;areal
-Liberecký kraj;ruian-78;kraj
 Středočeský kraj;ruian-27;kraj
+Liberecký kraj;ruian-78;kraj
 Jihomoravský kraj;ruian-116;kraj
 Pardubický kraj;ruian-94;kraj
 Kraj Vysočina;ruian-108;kraj
@@ -248,6 +248,7 @@ Karlovarský kraj;ruian-51;kraj
 Plzeňský kraj;ruian-43;kraj
 Jihočeský kraj;ruian-35;kraj
 Hlavní město Praha;ruian-19;kraj
+Galerie a muzeum Vysočiny Havlíčkův Brod;ORG-000128;organizace
 Středočeské muzeum, příspěvková organizace;ORG-000193;organizace
 Vlastivědné muzeum Jesenicka, příspěvková organizace;ORG-000024;organizace
 Západočeské muzeum v Plzni, příspěvková organizace;ORG-000184;organizace
@@ -387,7 +388,6 @@ Sládečkovo vlastivědné muzeum v Kladně, příspěvková organizace;ORG-0001
 Muzeum Karlovy Vary, příspěvková organizace Karlovarského kraje;ORG-000139;organizace
 Muzeum Jindřichohradecka;ORG-000138;organizace
 Regionální muzeum v Jílovém u Prahy, příspěvková organizace;ORG-000159;organizace
-Galerie a muzeum Vysočiny Havlíčkův Brod;ORG-000128;organizace
 Muzeum Vysočiny Jihlava, příspěvková organizace;ORG-000137;organizace
 Regionální muzeum a galerie v Jičíně;ORG-000136;organizace
 Muzeum skla a bižuterie v Jablonci nad Nisou;ORG-000157;organizace
@@ -523,6 +523,16 @@ Děčín;Děčín;okres
 Česká Lípa;Česká Lípa;okres
 Beroun;Beroun;okres
 Benešov;Benešov;okres
+Komárov;Komárov;katastr
+Ivanovice;Ivanovice;katastr
+Těšetice u Olomouce;Těšetice u Olomouce;katastr
+Uničov;Uničov;katastr
+Troubelice;Troubelice;katastr
+Majetín;Majetín;katastr
+Košíky;Košíky;katastr
+Horka nad Moravou;Horka nad Moravou;katastr
+Holásky;Holásky;katastr
+Pavlovice u Přerova;Pavlovice u Přerova;katastr
 Lubná u Kroměříže;Lubná u Kroměříže;katastr
 Černovice;Černovice;katastr
 Černá Pole;Černá Pole;katastr
@@ -1892,7 +1902,6 @@ Bezvěrov I;Bezvěrov I;katastr
 Nahošice;Nahošice;katastr
 Milavče;Milavče;katastr
 Luženičky;Luženičky;katastr
-Holásky;Holásky;katastr
 Horní Světlé Hory;Horní Světlé Hory;katastr
 Milov;Milov;katastr
 Úbislav;Úbislav;katastr
@@ -3517,7 +3526,6 @@ Bolíkovice;Bolíkovice;katastr
 Brníčko;Brníčko;katastr
 Javorovec;Javorovec;katastr
 Medlovice u Uherského Hradiště;Medlovice u Uherského Hradiště;katastr
-Košíky;Košíky;katastr
 Jančí;Jančí;katastr
 Velehrad;Velehrad;katastr
 Uherský Ostroh;Uherský Ostroh;katastr
@@ -8839,7 +8847,6 @@ Branišovice u Ratiboře;Branišovice u Ratiboře;katastr
 Hunčice;Hunčice;katastr
 Sedlnice;Sedlnice;katastr
 Žehuň;Žehuň;katastr
-Majetín;Majetín;katastr
 Dřešín;Dřešín;katastr
 Vrbka u Postoloprt;Vrbka u Postoloprt;katastr
 Bříza nad Ohří;Bříza nad Ohří;katastr
@@ -9882,7 +9889,6 @@ Kadov u Blatné;Kadov u Blatné;katastr
 Bošilec;Bošilec;katastr
 Nová Ves u Litomyšle;Nová Ves u Litomyšle;katastr
 Rakůvka;Rakůvka;katastr
-Ivanovice;Ivanovice;katastr
 Dolenice;Dolenice;katastr
 Chlístovice;Chlístovice;katastr
 Držovice;Držovice;katastr
@@ -10008,7 +10014,6 @@ Rakousy;Rakousy;katastr
 Verneřice;Verneřice;katastr
 Líšťany u Cítolib;Líšťany u Cítolib;katastr
 Kotaneč;Kotaneč;katastr
-Horka nad Moravou;Horka nad Moravou;katastr
 Černošín;Černošín;katastr
 Obora u Tachova;Obora u Tachova;katastr
 Horka u Bakova nad Jizerou;Horka u Bakova nad Jizerou;katastr
@@ -11221,7 +11226,6 @@ Křivá Voda;Křivá Voda;katastr
 Letkov;Letkov;katastr
 Červeněves;Červeněves;katastr
 Libná;Libná;katastr
-Komárov;Komárov;katastr
 Sudovo Hlavno;Sudovo Hlavno;katastr
 Rozsíčka;Rozsíčka;katastr
 Kolešov u Žlutic;Kolešov u Žlutic;katastr
@@ -11360,7 +11364,6 @@ Kojkovičky;Kojkovičky;katastr
 Košinov;Košinov;katastr
 Krapice;Krapice;katastr
 Svatý Jan pod Skalou;Svatý Jan pod Skalou;katastr
-Uničov;Uničov;katastr
 Zdětín na Moravě;Zdětín na Moravě;katastr
 Hlincová Hora;Hlincová Hora;katastr
 Loukonosy;Loukonosy;katastr
@@ -12443,7 +12446,6 @@ Senohraby;Senohraby;katastr
 Zálší u Chocně;Zálší u Chocně;katastr
 Hoštice u Vodochod;Hoštice u Vodochod;katastr
 Bílá Voda u Javorníka;Bílá Voda u Javorníka;katastr
-Těšetice u Olomouce;Těšetice u Olomouce;katastr
 Lhota u Šternberka;Lhota u Šternberka;katastr
 Bezděčín u Obrataně;Bezděčín u Obrataně;katastr
 Štěpánov u Olomouce;Štěpánov u Olomouce;katastr
@@ -12574,7 +12576,6 @@ Cunkov;Cunkov;katastr
 Podhoří na Moravě;Podhoří na Moravě;katastr
 Jelmo;Jelmo;katastr
 Penčičky;Penčičky;katastr
-Pavlovice u Přerova;Pavlovice u Přerova;katastr
 Červený Hrádek u Plzně;Červený Hrádek u Plzně;katastr
 Železná;Železná;katastr
 Touškov;Touškov;katastr
@@ -12839,7 +12840,6 @@ Lšelín;Lšelín;katastr
 Krbice;Krbice;katastr
 Dolní Dobrá Voda;Dolní Dobrá Voda;katastr
 Hošťka;Hošťka;katastr
-Troubelice;Troubelice;katastr
 Strahov;Strahov;katastr
 Lažany u Černošína;Lažany u Černošína;katastr
 Býkovec;Býkovec;katastr
@@ -13953,8 +13953,8 @@ Prostředník, Jan;Prostředník, Jan;vedouci
 Beková, Martina;Beková, Martina;vedouci
 Vích, David;Vích, David;vedouci
 Hušták, Pavel;Hušták, Pavel;vedouci
-Tůma, Ondřej;Tůma, Ondřej;vedouci
 Popelka, Miroslav;Popelka, Miroslav;vedouci
+Tůma, Ondřej;Tůma, Ondřej;vedouci
 Novák, Radek;Novák, Radek;vedouci
 Stolz, Daniel;Stolz, Daniel;vedouci
 Šumberová, Radka;Šumberová, Radka;vedouci
@@ -13966,62 +13966,62 @@ Dragoun, Bohumír;Dragoun, Bohumír;vedouci
 Smejtek, Lubor;Smejtek, Lubor;vedouci
 Musil, Jan;Musil, Jan;vedouci
 Juchelka, Jiří;Juchelka, Jiří;vedouci
-Michálek, Jan;Michálek, Jan;vedouci
 Beneš, Zdeněk;Beneš, Zdeněk;vedouci
-Baloun, Lukáš;Baloun, Lukáš;vedouci
+Michálek, Jan;Michálek, Jan;vedouci
 Unger, Jiří;Unger, Jiří;vedouci
+Baloun, Lukáš;Baloun, Lukáš;vedouci
+Fojtík, Pavel;Fojtík, Pavel;vedouci
 Němcová, Jana;Němcová, Jana;vedouci
 Jenč, Petr;Jenč, Petr;vedouci
-Durdík, Tomáš;Durdík, Tomáš;vedouci
-Fojtík, Pavel;Fojtík, Pavel;vedouci
-Bureš, Michal;Bureš, Michal;vedouci
+Štohandlová, Jitka;Štohandlová, Jitka;vedouci
 Široký, Radek;Široký, Radek;vedouci
 Kukla, Milan;Kukla, Milan;vedouci
-Vávra, Miloš;Vávra, Miloš;vedouci
+Durdík, Tomáš;Durdík, Tomáš;vedouci
+Bureš, Michal;Bureš, Michal;vedouci
 Velímský, Filip;Velímský, Filip;vedouci
-Štohandlová, Jitka;Štohandlová, Jitka;vedouci
+Vávra, Miloš;Vávra, Miloš;vedouci
 Záruba, Tomáš;Záruba, Tomáš;vedouci
 Bláha, Radek;Bláha, Radek;vedouci
 Janda, František;Janda, František;vedouci
 Mašková, Pavla;Mašková, Pavla;vedouci
-Dvořáček, Daniel;Dvořáček, Daniel;vedouci
 Doubek, František;Doubek, František;vedouci
+Dvořáček, Daniel;Dvořáček, Daniel;vedouci
 Dufek, Josef;Dufek, Josef;vedouci
-Fröhlich, Jiří;Fröhlich, Jiří;vedouci
-Mikulková, Blanka;Mikulková, Blanka;vedouci
-Zavoral, Tomáš;Zavoral, Tomáš;vedouci
 Zavřel, Petr;Zavřel, Petr;vedouci
+Mikulková, Blanka;Mikulková, Blanka;vedouci
+Fröhlich, Jiří;Fröhlich, Jiří;vedouci
+Zavoral, Tomáš;Zavoral, Tomáš;vedouci
 Behenský, Pavel;Behenský, Pavel;vedouci
 Davidová, Tereza;Davidová, Tereza;vedouci
+Košťál, Jan;Košťál, Jan;vedouci
 Meduna, Petr;Meduna, Petr;vedouci
 Frolík, Jan;Frolík, Jan;vedouci
-Košťál, Jan;Košťál, Jan;vedouci
 Křivánek, Roman;Křivánek, Roman;vedouci
 Kos, Luděk;Kos, Luděk;vedouci
 Paulus, Martin;Paulus, Martin;vedouci
 Zemanová, Petra;Zemanová, Petra;vedouci
 Beneš, Antonín;Beneš, Antonín;vedouci
-Ulrychová, Eva;Ulrychová, Eva;vedouci
 Chvojka, Ondřej;Chvojka, Ondřej;vedouci
+Ulrychová, Eva;Ulrychová, Eva;vedouci
 Vokolek, Vít;Vokolek, Vít;vedouci
 Veselá, Alena;Veselá, Alena;vedouci
+Sirovátka, Roman;Sirovátka, Roman;vedouci
 Bernat, Jiří;Bernat, Jiří;vedouci
 Novák, Miroslav;Novák, Miroslav;vedouci
 Holodňák, Petr;Holodňák, Petr;vedouci
+Kočí Dudková, Veronika;Kočí Dudková, Veronika;vedouci
 Čtverák, Vladimír;Čtverák, Vladimír;vedouci
 Bradáčová, Michaela;Bradáčová, Michaela;vedouci
-Sirovátka, Roman;Sirovátka, Roman;vedouci
 Janovská, Nikola;Janovská, Nikola;vedouci
-Kočí Dudková, Veronika;Kočí Dudková, Veronika;vedouci
 Sigl, Jiří;Sigl, Jiří;vedouci
 Fojtík, Adam;Fojtík, Adam;vedouci
-Kopřivová, Jana;Kopřivová, Jana;vedouci
 Martyčák, Stanislav;Martyčák, Stanislav;vedouci
+Kopřivová, Jana;Kopřivová, Jana;vedouci
 Humpola, David;Humpola, David;vedouci
+Blažková, Kateřina;Blažková, Kateřina;vedouci
+Korený, Rastislav;Korený, Rastislav;vedouci
 Parkman, Marek;Parkman, Marek;vedouci
 Červenka, Eduard;Červenka, Eduard;vedouci
-Korený, Rastislav;Korený, Rastislav;vedouci
-Blažková, Kateřina;Blažková, Kateřina;vedouci
 Nový, Petr;Nový, Petr;vedouci
 Hůrková, Jindra;Hůrková, Jindra;vedouci
 Mattiello, Lucia;Mattiello, Lucia;vedouci
@@ -14031,43 +14031,43 @@ Horník, Pavel;Horník, Pavel;vedouci
 Čižmář, Ivan;Čižmář, Ivan;vedouci
 Kuna, Martin;Kuna, Martin;vedouci
 Hylmarová, Lucie;Hylmarová, Lucie;vedouci
+Kocina, Jan;Kocina, Jan;vedouci
+Turek, Jan;Turek, Jan;vedouci
+Španihel, Samuel;Španihel, Samuel;vedouci
 Waldhauser, Jiří;Waldhauser, Jiří;vedouci
 Balý, Radek;Balý, Radek;vedouci
-Španihel, Samuel;Španihel, Samuel;vedouci
-Turek, Jan;Turek, Jan;vedouci
+Hudec, Jaroslav;Hudec, Jaroslav;vedouci
 Břicháček, Pavel;Břicháček, Pavel;vedouci
 Kašpar, Vojtěch;Kašpar, Vojtěch;vedouci
 Wiesławski, Łukasz;Wiesławski, Łukasz;vedouci
 Burdychová, Hana;Burdychová, Hana;vedouci
-Hudec, Jaroslav;Hudec, Jaroslav;vedouci
-Kocina, Jan;Kocina, Jan;vedouci
-Boček, Jan;Boček, Jan;vedouci
 Kos, Petr;Kos, Petr;vedouci
+Boček, Jan;Boček, Jan;vedouci
 Metlička, Milan;Metlička, Milan;vedouci
-Děcký, Dominik;Děcký, Dominik;vedouci
 Bek, Tomáš;Bek, Tomáš;vedouci
+Děcký, Dominik;Děcký, Dominik;vedouci
 Burešová, Hana;Burešová, Hana;vedouci
 Přichystal, Michal;Přichystal, Michal;vedouci
 Stolzová, Dana;Stolzová, Dana;vedouci
 Sedláčková, Jarmila;Sedláčková, Jarmila;vedouci
 Novák, Marek;Novák, Marek;vedouci
-Tůma, Jan;Tůma, Jan;vedouci
 Volf, Vojtěch;Volf, Vojtěch;vedouci
+Tůma, Jan;Tůma, Jan;vedouci
 Parma, David;Parma, David;vedouci
+Valkony, Jiří;Valkony, Jiří;vedouci
 Bouda, Jiří;Bouda, Jiří;vedouci
 Postránecká, Kateřina;Postránecká, Kateřina;vedouci
-Valkony, Jiří;Valkony, Jiří;vedouci
+Roháček, Miloš;Roháček, Miloš;vedouci
 Čiháčková, Lucie;Čiháčková, Lucie;vedouci
 Kotyza, Oldřich;Kotyza, Oldřich;vedouci
-Roháček, Miloš;Roháček, Miloš;vedouci
 Hereit, Petr;Hereit, Petr;vedouci
 Němcová, Eliška;Němcová, Eliška;vedouci
-Frolíková, Drahomíra;Frolíková, Drahomíra;vedouci
-Rypka, Luboš;Rypka, Luboš;vedouci
-Malík, Pavel;Malík, Pavel;vedouci
-Crkal, Jiří;Crkal, Jiří;vedouci
-Bíško, Richard;Bíško, Richard;vedouci
 Pokorný, Michal;Pokorný, Michal;vedouci
+Crkal, Jiří;Crkal, Jiří;vedouci
+Malík, Pavel;Malík, Pavel;vedouci
+Rypka, Luboš;Rypka, Luboš;vedouci
+Frolíková, Drahomíra;Frolíková, Drahomíra;vedouci
+Bíško, Richard;Bíško, Richard;vedouci
 Braun, Peter;Braun, Peter;vedouci
 Gabriel, František;Gabriel, František;vedouci
 Němcová, Andrea;Němcová, Andrea;vedouci
@@ -14078,33 +14078,33 @@ Pavlů, Ivan;Pavlů, Ivan;vedouci
 Kašpárek, František;Kašpárek, František;vedouci
 Knor, Antonín;Knor, Antonín;vedouci
 Koutecký, Drahomír;Koutecký, Drahomír;vedouci
+Bedáň, Lukáš;Bedáň, Lukáš;vedouci
 Jiřík, Jaroslav;Jiřík, Jaroslav;vedouci
-Kalferst, Jiří;Kalferst, Jiří;vedouci
 Brejcha, Roman;Brejcha, Roman;vedouci
+Kalferst, Jiří;Kalferst, Jiří;vedouci
 Vencl, Slavomil;Vencl, Slavomil;vedouci
 Halama, Jakub;Halama, Jakub;vedouci
-Švédová, Jarmila;Švédová, Jarmila;vedouci
-Bedáň, Lukáš;Bedáň, Lukáš;vedouci
 Krpálek, Josef;Krpálek, Josef;vedouci
+Švédová, Jarmila;Švédová, Jarmila;vedouci
 Řezáč, Milan;Řezáč, Milan;vedouci
 Chlup, Tomáš;Chlup, Tomáš;vedouci
 Hartmanová, Olga;Hartmanová, Olga;vedouci
 Papáková, Kateřina;Papáková, Kateřina;vedouci
+Bergerová, Alžběta;Bergerová, Alžběta;vedouci
 Peksa, Vojtěch;Peksa, Vojtěch;vedouci
 Smrž, Zdeněk;Smrž, Zdeněk;vedouci
+Bulvová, Kristýna;Bulvová, Kristýna;vedouci
+Kuchařík, Milan;Kuchařík, Milan;vedouci
 Janicki, Rafael;Janicki, Rafael;vedouci
 Kudrnáč, Jaroslav;Kudrnáč, Jaroslav;vedouci
 Rataj, Petr;Rataj, Petr;vedouci
-Bulvová, Kristýna;Bulvová, Kristýna;vedouci
 Kiecoň, Marek;Kiecoň, Marek;vedouci
 Šulová, Lucia;Šulová, Lucia;vedouci
-Kuchařík, Milan;Kuchařík, Milan;vedouci
-Bergerová, Alžběta;Bergerová, Alžběta;vedouci
-Selmi Wallisová, Michaela;Selmi Wallisová, Michaela;vedouci
 Káčerik, Aleš;Káčerik, Aleš;vedouci
+Selmi Wallisová, Michaela;Selmi Wallisová, Michaela;vedouci
+Daněček, David;Daněček, David;vedouci
 Peša, Vladimír;Peša, Vladimír;vedouci
 Krutina, Ivan;Krutina, Ivan;vedouci
-Daněček, David;Daněček, David;vedouci
 Krolmus, Václav;Krolmus, Václav;vedouci
 Kaiser, Ladislav;Kaiser, Ladislav;vedouci
 Hlas, Jindřich;Hlas, Jindřich;vedouci
@@ -14119,12 +14119,12 @@ Schmidtová, Dominika;Schmidtová, Dominika;vedouci
 Levínský, Ondřej;Levínský, Ondřej;vedouci
 Čechura, Martin;Čechura, Martin;vedouci
 Stará, Marcela;Stará, Marcela;vedouci
+Lečbych, Marek;Lečbych, Marek;vedouci
 Kalábek, Marek;Kalábek, Marek;vedouci
 Dubský, Bedřich;Dubský, Bedřich;vedouci
-Lečbych, Marek;Lečbych, Marek;vedouci
-Zadák, Jan;Zadák, Jan;vedouci
 Hrubý, Petr;Hrubý, Petr;vedouci
 Smetana, Jiří;Smetana, Jiří;vedouci
+Zadák, Jan;Zadák, Jan;vedouci
 Rous, Pavel;Rous, Pavel;vedouci
 Stráník, Daniel;Stráník, Daniel;vedouci
 Tomešová, Barbora;Tomešová, Barbora;vedouci
@@ -14132,18 +14132,18 @@ Havrda, Jan;Havrda, Jan;vedouci
 Šteffl, Jindřich;Šteffl, Jindřich;vedouci
 Vávra, Jiří;Vávra, Jiří;vedouci
 Bubeník, Josef;Bubeník, Josef;vedouci
-Nováček, Karel;Nováček, Karel;vedouci
 Effenberková, Petra;Effenberková, Petra;vedouci
+Nováček, Karel;Nováček, Karel;vedouci
 Šmíd, Miroslav;Šmíd, Miroslav;vedouci
 Fencl, Václav;Fencl, Václav;vedouci
+Matějíčková, Andrea;Matějíčková, Andrea;vedouci
 Juřina, Petr;Juřina, Petr;vedouci
 Zubalík, Jiří;Zubalík, Jiří;vedouci
 Král, Vlastimil;Král, Vlastimil;vedouci
 Pipková, Petra;Pipková, Petra;vedouci
 Hájek, Zdeněk;Hájek, Zdeněk;vedouci
-Moucha, Václav;Moucha, Václav;vedouci
-Matějíčková, Andrea;Matějíčková, Andrea;vedouci
 Dehnerová, Hana;Dehnerová, Hana;vedouci
+Moucha, Václav;Moucha, Václav;vedouci
 Zelenka, Antonín;Zelenka, Antonín;vedouci
 Chrástek, Tomáš;Chrástek, Tomáš;vedouci
 Komoróczy, Balázs;Komoróczy, Balázs;vedouci
@@ -14160,67 +14160,67 @@ Neustupný, Evžen;Neustupný, Evžen;vedouci
 Cebová, Kristýna;Cebová, Kristýna;vedouci
 Pleinerová, Ivana;Pleinerová, Ivana;vedouci
 Benková, Irena;Benková, Irena;vedouci
+Vrána, Jakub;Vrána, Jakub;vedouci
 Duffek, Petr;Duffek, Petr;vedouci
 Procházka, Milan;Procházka, Milan;vedouci
 Baštová, Dara;Baštová, Dara;vedouci
 Benešová, Jana;Benešová, Jana;vedouci
 Klápště, Jan;Klápště, Jan;vedouci
+Thomová, Zuzana;Thomová, Zuzana;vedouci
+Kala, Jiří;Kala, Jiří;vedouci
 Lissek, Petr;Lissek, Petr;vedouci
 Vágner, Jindřich;Vágner, Jindřich;vedouci
 Militký, Jiří;Militký, Jiří;vedouci
-Vrána, Jakub;Vrána, Jakub;vedouci
 Tomková, Kateřina;Tomková, Kateřina;vedouci
-Böhm, Jaroslav;Böhm, Jaroslav;vedouci
 Přerostová, Hana;Přerostová, Hana;vedouci
+Böhm, Jaroslav;Böhm, Jaroslav;vedouci
 Zimola, David;Zimola, David;vedouci
 Žebera, Karel;Žebera, Karel;vedouci
 Boháčová, Ivana;Boháčová, Ivana;vedouci
 Jarůšková, Zuzana;Jarůšková, Zuzana;vedouci
-Kala, Jiří;Kala, Jiří;vedouci
 Šebesta, Pavel;Šebesta, Pavel;vedouci
 Kuchař, Zdeněk;Kuchař, Zdeněk;vedouci
 Zeman, Tomáš;Zeman, Tomáš;vedouci
-Pták, Martin;Pták, Martin;vedouci
 Valentová, Jarmila;Valentová, Jarmila;vedouci
+Pták, Martin;Pták, Martin;vedouci
 Čižmář, Zdeněk;Čižmář, Zdeněk;vedouci
 Vepřeková, Jana;Vepřeková, Jana;vedouci
 Andrísek, Lubomír;Andrísek, Lubomír;vedouci
 Čiháková, Jarmila;Čiháková, Jarmila;vedouci
-Thomová, Zuzana;Thomová, Zuzana;vedouci
 Bubeníková, Simona;Bubeníková, Simona;vedouci
-Chlevišťan, Jiří;Chlevišťan, Jiří;vedouci
+Johančík, Radek;Johančík, Radek;vedouci
 Černý, Martin;Černý, Martin;vedouci
-Merta, David;Merta, David;vedouci
+Chlevišťan, Jiří;Chlevišťan, Jiří;vedouci
 Krasnokutská, Tereza;Krasnokutská, Tereza;vedouci
+Merta, David;Merta, David;vedouci
 Podliska, Jaroslav;Podliska, Jaroslav;vedouci
 Šmahelová, Lucie;Šmahelová, Lucie;vedouci
 Tvrdík, Radek;Tvrdík, Radek;vedouci
+Chalánek, Martin;Chalánek, Martin;vedouci
 Haišmanová, Libuše;Haišmanová, Libuše;vedouci
 Velímský, Tomáš;Velímský, Tomáš;vedouci
 Geisler, Martin;Geisler, Martin;vedouci
-Tryml, Michal;Tryml, Michal;vedouci
 Stanovská, Johana;Stanovská, Johana;vedouci
-Chalánek, Martin;Chalánek, Martin;vedouci
+Tryml, Michal;Tryml, Michal;vedouci
 Hendrychová, Soňa;Hendrychová, Soňa;vedouci
 Krajíc, Rudolf;Krajíc, Rudolf;vedouci
 Šída, Petr;Šída, Petr;vedouci
-Johančík, Radek;Johančík, Radek;vedouci
 Nechvátal, Bořivoj;Nechvátal, Bořivoj;vedouci
 Tetour, Michal;Tetour, Michal;vedouci
 Zůbek, Antonín;Zůbek, Antonín;vedouci
 Kováčik, Peter;Kováčik, Peter;vedouci
 Uhlářová, Martina;Uhlářová, Martina;vedouci
 Trefný, Martin;Trefný, Martin;vedouci
+Motyková, Karla;Motyková, Karla;vedouci
 Ernée, Michal;Ernée, Michal;vedouci
 Horák, Jan;Horák, Jan;vedouci
-Motyková, Karla;Motyková, Karla;vedouci
 Němcová, Ludmila;Němcová, Ludmila;vedouci
 Bašta, Jaroslav;Bašta, Jaroslav;vedouci
 Dobeš, Miroslav;Dobeš, Miroslav;vedouci
 Hammer, Friedrich;Hammer, Friedrich;vedouci
 Jančo, Milan;Jančo, Milan;vedouci
-Čurda, Tomáš;Čurda, Tomáš;vedouci
 Schenk, Zdeněk;Schenk, Zdeněk;vedouci
+Čurda, Tomáš;Čurda, Tomáš;vedouci
 Starec, Petr;Starec, Petr;vedouci
 Zápotocký, Milan;Zápotocký, Milan;vedouci
 Kašák, Karel;Kašák, Karel;vedouci
@@ -14228,32 +14228,32 @@ Kohoutová, Pavla;Kohoutová, Pavla;vedouci
 Muška, Jiří;Muška, Jiří;vedouci
 Smetánka, Zdeněk;Smetánka, Zdeněk;vedouci
 Orna, Jiří;Orna, Jiří;vedouci
+Kacl, Pavel;Kacl, Pavel;vedouci
 Trampota, František;Trampota, František;vedouci
 Čuláková, Katarína;Čuláková, Katarína;vedouci
 Beránek, Michal;Beránek, Michal;vedouci
 Bartík, Jaroslav;Bartík, Jaroslav;vedouci
-Kacl, Pavel;Kacl, Pavel;vedouci
-Kamenická, Eva;Kamenická, Eva;vedouci
+Psohlavcová, Monika;Psohlavcová, Monika;vedouci
 Říha, Karel;Říha, Karel;vedouci
+Kamenická, Eva;Kamenická, Eva;vedouci
 Krásný, Filip;Krásný, Filip;vedouci
 Vokáč, Milan;Vokáč, Milan;vedouci
 Končelová, Markéta;Končelová, Markéta;vedouci
-Psohlavcová, Monika;Psohlavcová, Monika;vedouci
 Hrala, Jiří;Hrala, Jiří;vedouci
 Borkovský, Ivan;Borkovský, Ivan;vedouci
 Huml, Václav;Huml, Václav;vedouci
 Kubný, Martin;Kubný, Martin;vedouci
 Rulf, Jan;Rulf, Jan;vedouci
 Holub, Petr;Holub, Petr;vedouci
+Rybářová, Klára;Rybářová, Klára;vedouci
+Hosnedlová, Hana;Hosnedlová, Hana;vedouci
+Kordíková, Alena;Kordíková, Alena;vedouci
 Kraus, Miroslav;Kraus, Miroslav;vedouci
 Kubalova, Ivana;Kubalova, Ivana;vedouci
 Matoušek, Václav;Matoušek, Václav;vedouci
 Sedláček, Radko;Sedláček, Radko;vedouci
-Rybářová, Klára;Rybářová, Klára;vedouci
 Cvrková, Marta;Cvrková, Marta;vedouci
-Hosnedlová, Hana;Hosnedlová, Hana;vedouci
 Kalčík, Libor;Kalčík, Libor;vedouci
-Kordíková, Alena;Kordíková, Alena;vedouci
 Reichertová, Květoslava;Reichertová, Květoslava;vedouci
 Šolle, Miloš;Šolle, Miloš;vedouci
 Chytráček, Miloslav;Chytráček, Miloslav;vedouci
@@ -14267,53 +14267,55 @@ Rusó, Alexandra;Rusó, Alexandra;vedouci
 Řehounková, Jana;Řehounková, Jana;vedouci
 Vitula, Petr;Vitula, Petr;vedouci
 Kalinová, Michaela;Kalinová, Michaela;vedouci
-Kabát, Josef;Kabát, Josef;vedouci
-Píč, Josef Ladislav;Píč, Josef Ladislav;vedouci
 Stedinová, Veronika;Stedinová, Veronika;vedouci
+Kabát, Josef;Kabát, Josef;vedouci
 Knápek, Aleš;Knápek, Aleš;vedouci
+Píč, Josef Ladislav;Píč, Josef Ladislav;vedouci
 Těsnohlídek, Jakub;Těsnohlídek, Jakub;vedouci
 Hájek, Ladislav;Hájek, Ladislav;vedouci
 Mařík, Tomáš;Mařík, Tomáš;vedouci
 Moureček, Radek;Moureček, Radek;vedouci
+Tajer, Jan;Tajer, Jan;vedouci
 Šulcová, Julie;Šulcová, Julie;vedouci
 Venclová, Natalie;Venclová, Natalie;vedouci
 John, Jan;John, Jan;vedouci
 Mádl, Josef;Mádl, Josef;vedouci
 Rytíř, Ladislav;Rytíř, Ladislav;vedouci
 Sehnoutková, Petra;Sehnoutková, Petra;vedouci
+Smíšek, Kamil;Smíšek, Kamil;vedouci
 Limburský, Petr;Limburský, Petr;vedouci
 Peška, Jaroslav;Peška, Jaroslav;vedouci
-Tajer, Jan;Tajer, Jan;vedouci
 Beneš, Jaromír;Beneš, Jaromír;vedouci
 Beneš, Jiří;Beneš, Jiří;vedouci
 Petera Rohoznický, František;Petera Rohoznický, František;vedouci
+Havlice, Jiří;Havlice, Jiří;vedouci
 Lutovský, Michal;Lutovský, Michal;vedouci
 Vnoučková, Darina;Vnoučková, Darina;vedouci
 Čižmář, Miloš;Čižmář, Miloš;vedouci
-Havlice, Jiří;Havlice, Jiří;vedouci
 Maličký, Josef;Maličký, Josef;vedouci
 Nejedlá, Alena;Nejedlá, Alena;vedouci
 Salač, Vladimír;Salač, Vladimír;vedouci
 Zavřel, Jan;Zavřel, Jan;vedouci
 Frýda, František;Frýda, František;vedouci
 Marethová, Barbara;Marethová, Barbara;vedouci
+Procházka, Rudolf;Procházka, Rudolf;vedouci
 Zelená, Petra;Zelená, Petra;vedouci
 Břeň, David;Břeň, David;vedouci
 Pavelčík, Jiří;Pavelčík, Jiří;vedouci
 Polcar, David;Polcar, David;vedouci
-Procházka, Rudolf;Procházka, Rudolf;vedouci
 Kostka, Michal;Kostka, Michal;vedouci
 Půlpán, Marek;Půlpán, Marek;vedouci
 Sušická, Věra;Sušická, Věra;vedouci
 Tajer, Arkadiusz;Tajer, Arkadiusz;vedouci
 Menšík, Petr;Menšík, Petr;vedouci
 Volf, Martin;Volf, Martin;vedouci
-Smíšek, Kamil;Smíšek, Kamil;vedouci
+Zlámal, Tomáš;Zlámal, Tomáš;vedouci
+Šebesta, Kryštof;Šebesta, Kryštof;vedouci
 Sakař, Vladimír;Sakař, Vladimír;vedouci
+Tichá Krasnokutská, Tereza;Tichá Krasnokutská, Tereza;vedouci
 Zatloukal, Richard;Zatloukal, Richard;vedouci
 Kalferstová, Jana;Kalferstová, Jana;vedouci
 Pecinovská, Monika;Pecinovská, Monika;vedouci
-Tichá Krasnokutská, Tereza;Tichá Krasnokutská, Tereza;vedouci
 Wolf, Vladimír;Wolf, Vladimír;vedouci
 Blažek, Jan;Blažek, Jan;vedouci
 Bártová Pavelková, Taťána;Bártová Pavelková, Taťána;vedouci
@@ -14325,54 +14327,53 @@ Nechvíle, Martin;Nechvíle, Martin;vedouci
 Sedláček, František;Sedláček, František;vedouci
 Čujanová, Eva;Čujanová, Eva;vedouci
 Krumplová, Michaela;Krumplová, Michaela;vedouci
+Lungová, Veronika;Lungová, Veronika;vedouci
 Richter, Miroslav;Richter, Miroslav;vedouci
 Čech, Petr;Čech, Petr;vedouci
 Čtrnáct, Václav;Čtrnáct, Václav;vedouci
-Zlámal, Tomáš;Zlámal, Tomáš;vedouci
+Procházka, Čestmír;Procházka, Čestmír;vedouci
+Wiesnerová, Eliška;Wiesnerová, Eliška;vedouci
 Kohoutek, Jiří;Kohoutek, Jiří;vedouci
 Kolář, František;Kolář, František;vedouci
+Navrátil, Aleš;Navrátil, Aleš;vedouci
 Teuerová, Eva;Teuerová, Eva;vedouci
 Dreslerová, Dagmar;Dreslerová, Dagmar;vedouci
 Hrdlička, Ladislav;Hrdlička, Ladislav;vedouci
-Navrátil, Aleš;Navrátil, Aleš;vedouci
-Wiesnerová, Eliška;Wiesnerová, Eliška;vedouci
 Zezula, Michal;Zezula, Michal;vedouci
 Šmerda, Jaromír;Šmerda, Jaromír;vedouci
 Chotěbor, Petr;Chotěbor, Petr;vedouci
 Hejna, Antonín;Hejna, Antonín;vedouci
 Krasanovská, Hana;Krasanovská, Hana;vedouci
+Schirmeisen, Karl;Schirmeisen, Karl;vedouci
+Bučová Čerňavová, Katarína;Bučová Čerňavová, Katarína;vedouci
 Horáková, Libuše;Horáková, Libuše;vedouci
 Koppová, Eva;Koppová, Eva;vedouci
 Rataj, Jan;Rataj, Jan;vedouci
+Sochorová, Markéta;Sochorová, Markéta;vedouci
 Trnka, Robert;Trnka, Robert;vedouci
 Derner, Kryštof;Derner, Kryštof;vedouci
 Forst, Matěj;Forst, Matěj;vedouci
 Hlubek, Lukáš;Hlubek, Lukáš;vedouci
-Schirmeisen, Karl;Schirmeisen, Karl;vedouci
 Hejhal, Petr;Hejhal, Petr;vedouci
 Neruda, Petr;Neruda, Petr;vedouci
 Soukup, Michal;Soukup, Michal;vedouci
 Fajtová, Veronika;Fajtová, Veronika;vedouci
 Fridrichová, Marie;Fridrichová, Marie;vedouci
 Klementová, Jana;Klementová, Jana;vedouci
-Sochorová, Markéta;Sochorová, Markéta;vedouci
 Teryngerová, Hana;Teryngerová, Hana;vedouci
-Bučová Čerňavová, Katarína;Bučová Čerňavová, Katarína;vedouci
-Lungová, Veronika;Lungová, Veronika;vedouci
+Kabeláčová, Petra;Kabeláčová, Petra;vedouci
 Plaštiaková, Miroslava;Plaštiaková, Miroslava;vedouci
 Sedláčková, Hedvika;Sedláčková, Hedvika;vedouci
 Šíma, František;Šíma, František;vedouci
-Kabeláčová, Petra;Kabeláčová, Petra;vedouci
 Klsák, Jiří;Klsák, Jiří;vedouci
 Kvietok, Martin;Kvietok, Martin;vedouci
 Lanta, Martin;Lanta, Martin;vedouci
 Olmerová, Helena;Olmerová, Helena;vedouci
 Prošek, František;Prošek, František;vedouci
 Werens, Piotr;Werens, Piotr;vedouci
+Klíma, Bohuslav;Klíma, Bohuslav;vedouci
 Lomecká, Jana;Lomecká, Jana;vedouci
 Bartůněk, Jiří;Bartůněk, Jiří;vedouci
-Klíma, Bohuslav;Klíma, Bohuslav;vedouci
-Procházka, Čestmír;Procházka, Čestmír;vedouci
 Šmejdová, Martina;Šmejdová, Martina;vedouci
 Dvořák, Petr;Dvořák, Petr;vedouci
 Pleiner, Radomír;Pleiner, Radomír;vedouci
@@ -14394,10 +14395,10 @@ Cejpová, Miroslava;Cejpová, Miroslava;vedouci
 Chybová, Helena;Chybová, Helena;vedouci
 Hložek, Josef;Hložek, Josef;vedouci
 Nováková, Ludmila;Nováková, Ludmila;vedouci
-Šebesta, Kryštof;Šebesta, Kryštof;vedouci
 Novák, Vojtěch;Novák, Vojtěch;vedouci
 Rybová, Alena;Rybová, Alena;vedouci
 Stocký, Albín;Stocký, Albín;vedouci
+Cymbalak, Tomasz;Cymbalak, Tomasz;vedouci
 Herčík, Ondřej;Herčík, Ondřej;vedouci
 Skalická, Pavla;Skalická, Pavla;vedouci
 Sklenář, Karel;Sklenář, Karel;vedouci
@@ -14415,7 +14416,6 @@ Sokol, Petr;Sokol, Petr;vedouci
 Veselý, Josef;Veselý, Josef;vedouci
 Šrůtek, Filip;Šrůtek, Filip;vedouci
 Štefanová, Věra;Štefanová, Věra;vedouci
-Cymbalak, Tomasz;Cymbalak, Tomasz;vedouci
 Drda, Petr;Drda, Petr;vedouci
 Foster, Linda;Foster, Linda;vedouci
 Paulus, Filip;Paulus, Filip;vedouci
@@ -14430,11 +14430,16 @@ Nekvasil, Jindra;Nekvasil, Jindra;vedouci
 Poledne, Jan;Poledne, Jan;vedouci
 Profantová, Naďa;Profantová, Naďa;vedouci
 Domečka, Ludvík;Domečka, Ludvík;vedouci
+Kolejáková, Klára;Kolejáková, Klára;vedouci
+Neustupný, Zdeněk;Neustupný, Zdeněk;vedouci
+Poulík, Josef;Poulík, Josef;vedouci
 Rožmberský, Petr;Rožmberský, Petr;vedouci
 Spurný, Václav;Spurný, Václav;vedouci
 Štauber, Bedřich;Štauber, Bedřich;vedouci
+Bezděka, Jindřich Václav;Bezděka, Jindřich Václav;vedouci
 Dragoun, Zvonimír;Dragoun, Zvonimír;vedouci
 Hendrych, Vladimír;Hendrych, Vladimír;vedouci
+Pleska, Miroslav;Pleska, Miroslav;vedouci
 Vladař, Jan;Vladař, Jan;vedouci
 Šrámek, Filip;Šrámek, Filip;vedouci
 Caletka, Jan;Caletka, Jan;vedouci
@@ -14442,48 +14447,46 @@ Hoch, Aleš;Hoch, Aleš;vedouci
 Koucký, Karel;Koucký, Karel;vedouci
 Soudská, Eva;Soudská, Eva;vedouci
 Weber, Vít;Weber, Vít;vedouci
-Bezděka, Jindřich Václav;Bezděka, Jindřich Václav;vedouci
 Bálek, Miroslav;Bálek, Miroslav;vedouci
 Jíra, Josef Antonín;Jíra, Josef Antonín;vedouci
 Mazač, Zdeněk;Mazač, Zdeněk;vedouci
 Staňková, Veronika;Staňková, Veronika;vedouci
 Šaldová, Věra;Šaldová, Věra;vedouci
-Kruta, Václav;Kruta, Václav;vedouci
-Neustupný, Zdeněk;Neustupný, Zdeněk;vedouci
-Plesl, Evžen;Plesl, Evžen;vedouci
 Bezáková, Jana;Bezáková, Jana;vedouci
+Kruta, Václav;Kruta, Václav;vedouci
+Plesl, Evžen;Plesl, Evžen;vedouci
+Taibl, Pavel;Taibl, Pavel;vedouci
 Novák, Jakub;Novák, Jakub;vedouci
 Petrlík, Jindřich;Petrlík, Jindřich;vedouci
-Pleska, Miroslav;Pleska, Miroslav;vedouci
-Taibl, Pavel;Taibl, Pavel;vedouci
 Tichý, Radomír;Tichý, Radomír;vedouci
 Eigner, Jan;Eigner, Jan;vedouci
 Hellich, Jan;Hellich, Jan;vedouci
 Kolařík, Václav;Kolařík, Václav;vedouci
+Loukota, Martin;Loukota, Martin;vedouci
 Marešová, Daniela;Marešová, Daniela;vedouci
 Schneiderwinklová, Pavlína;Schneiderwinklová, Pavlína;vedouci
+Sedláčková, Lenka;Sedláčková, Lenka;vedouci
 Slavík, Jiří;Slavík, Jiří;vedouci
 Čermáková, Kateřina;Čermáková, Kateřina;vedouci
 Šálková, Tereza;Šálková, Tereza;vedouci
+Dejmal, Miroslav;Dejmal, Miroslav;vedouci
 Eisenhammer, Patrik;Eisenhammer, Patrik;vedouci
 Hrubá, Hana;Hrubá, Hana;vedouci
+Junková, Andrea;Junková, Andrea;vedouci
 Lička, Milan;Lička, Milan;vedouci
 Peška, Marek;Peška, Marek;vedouci
 Rakovský, Ivo;Rakovský, Ivo;vedouci
 Váňa, Zdeněk;Váňa, Zdeněk;vedouci
 Čermák, Josef;Čermák, Josef;vedouci
-Dejmal, Miroslav;Dejmal, Miroslav;vedouci
 Havel, Josef;Havel, Josef;vedouci
-Sedláčková, Lenka;Sedláčková, Lenka;vedouci
+Tišerová, Renata;Tišerová, Renata;vedouci
 Šlézar, Pavel;Šlézar, Pavel;vedouci
 Dohnal, Vít;Dohnal, Vít;vedouci
-Junková, Andrea;Junková, Andrea;vedouci
 Smola, Adam;Smola, Adam;vedouci
 Bařinka, Jan;Bařinka, Jan;vedouci
 Cílek, Václav;Cílek, Václav;vedouci
 Kočár, Petr;Kočár, Petr;vedouci
 Kytlicová, Olga;Kytlicová, Olga;vedouci
-Loukota, Martin;Loukota, Martin;vedouci
 Novotný, Bohuslav;Novotný, Bohuslav;vedouci
 Petříčková, Jitka;Petříčková, Jitka;vedouci
 Princ, Milan;Princ, Milan;vedouci
@@ -14494,18 +14497,18 @@ Buchtela, Karel;Buchtela, Karel;vedouci
 Doubová, Marie;Doubová, Marie;vedouci
 Hraše, Jan Karel;Hraše, Jan Karel;vedouci
 Jílek, Jan;Jílek, Jan;vedouci
+Kašpar, Pavel;Kašpar, Pavel;vedouci
+Říhovský, Jiří;Říhovský, Jiří;vedouci
+Hentschová, Radka;Hentschová, Radka;vedouci
 Hlaváčová, Veronika;Hlaváčová, Veronika;vedouci
 Kutílková, Pavla;Kutílková, Pavla;vedouci
 Nerudová, Zdeňka;Nerudová, Zdeňka;vedouci
 Turek, Rudolf;Turek, Rudolf;vedouci
+Zeman, Jiří;Zeman, Jiří;vedouci
 Beneš, František;Beneš, František;vedouci
-Hentschová, Radka;Hentschová, Radka;vedouci
-Kolejáková, Klára;Kolejáková, Klára;vedouci
 Kovárník, Jaromír;Kovárník, Jaromír;vedouci
 Mařík, Jan;Mařík, Jan;vedouci
 Pleslová, Emilie;Pleslová, Emilie;vedouci
-Zeman, Jiří;Zeman, Jiří;vedouci
-Říhovský, Jiří;Říhovský, Jiří;vedouci
 Štrof, Antonín;Štrof, Antonín;vedouci
 Lehečková, Eva;Lehečková, Eva;vedouci
 Procházka, Zdeněk;Procházka, Zdeněk;vedouci
@@ -14520,10 +14523,9 @@ Hieke, Erik;Hieke, Erik;vedouci
 Kožíšek, Jan;Kožíšek, Jan;vedouci
 Pelc, V.;Pelc, V.;vedouci
 Slabina, Miloslav;Slabina, Miloslav;vedouci
-Filip, Jan;Filip, Jan;vedouci
 Fridrichová-Sýkorová, Ivana;Fridrichová-Sýkorová, Ivana;vedouci
+Kapustka, Katarína;Kapustka, Katarína;vedouci
 Kausek, Petr;Kausek, Petr;vedouci
-Kašpar, Pavel;Kašpar, Pavel;vedouci
 Lochmann, Zdeněk;Lochmann, Zdeněk;vedouci
 Ondráček, Jaromír;Ondráček, Jaromír;vedouci
 Sakařová, Jana;Sakařová, Jana;vedouci
@@ -14531,37 +14533,41 @@ Vyšohlíd, Martin;Vyšohlíd, Martin;vedouci
 Šnajdr, Ludvík;Šnajdr, Ludvík;vedouci
 Anderle, Jan;Anderle, Jan;vedouci
 Budač, Michal;Budač, Michal;vedouci
+Filip, Jan;Filip, Jan;vedouci
 Goš, Vladimír;Goš, Vladimír;vedouci
-Kapustka, Katarína;Kapustka, Katarína;vedouci
+Hiltscher, Tomáš;Hiltscher, Tomáš;vedouci
 Zbranek, Hynek;Zbranek, Hynek;vedouci
 Charvátová, Kateřina;Charvátová, Kateřina;vedouci
 Hus, Miroslav;Hus, Miroslav;vedouci
+Král, Jaroslav;Král, Jaroslav;vedouci
 Kučera, Václav;Kučera, Václav;vedouci
+Peškař, Ivan;Peškař, Ivan;vedouci
 Stabrava, Pavel;Stabrava, Pavel;vedouci
 Zápotocká, Marie;Zápotocká, Marie;vedouci
 Švábek, Vladimír;Švábek, Vladimír;vedouci
-Hiltscher, Tomáš;Hiltscher, Tomáš;vedouci
 Ježek, Martin;Ježek, Martin;vedouci
-Král, Jaroslav;Král, Jaroslav;vedouci
-Peškař, Ivan;Peškař, Ivan;vedouci
 Vochozková, Iva;Vochozková, Iva;vedouci
 Zapletalová, Dana;Zapletalová, Dana;vedouci
+Škrdla, Petr;Škrdla, Petr;vedouci
 Geislerová, Kateřina;Geislerová, Kateřina;vedouci
 Květina, Petr;Květina, Petr;vedouci
+Tschakert, Otto;Tschakert, Otto;vedouci
+Záhorák, Vít;Záhorák, Vít;vedouci
 Zápařka, L.;Zápařka, L.;vedouci
 Šedo, Ondrej;Šedo, Ondrej;vedouci
-Škrdla, Petr;Škrdla, Petr;vedouci
 Štochl, Daniel;Štochl, Daniel;vedouci
 Bříza, Svatopluk;Bříza, Svatopluk;vedouci
+Homolová, Michaela;Homolová, Michaela;vedouci
 Koderová, Marie;Koderová, Marie;vedouci
 Kovářík, Jan;Kovářík, Jan;vedouci
 Novotný, Jakub;Novotný, Jakub;vedouci
+Prekop, Filip;Prekop, Filip;vedouci
 Sankot, Pavel;Sankot, Pavel;vedouci
-Tschakert, Otto;Tschakert, Otto;vedouci
 Varadzin, Ladislav;Varadzin, Ladislav;vedouci
 Budinský, Peter;Budinský, Peter;vedouci
 Březinová, Helena;Březinová, Helena;vedouci
 Cejnková, Dana;Cejnková, Dana;vedouci
+Jelínek, Petr;Jelínek, Petr;vedouci
 Kotýnek, Michal;Kotýnek, Michal;vedouci
 Kouřil, Pavel;Kouřil, Pavel;vedouci
 Neustupný, Jiří;Neustupný, Jiří;vedouci
@@ -14571,6 +14577,7 @@ Sobota, M.;Sobota, M.;vedouci
 Felcman, Jan;Felcman, Jan;vedouci
 Hamberger, T.;Hamberger, T.;vedouci
 Lebeda, V.;Lebeda, V.;vedouci
+Ludikovský, Karel;Ludikovský, Karel;vedouci
 Martinec, Vladimír;Martinec, Vladimír;vedouci
 Moravec, Josef;Moravec, Josef;vedouci
 Princová-Justová, Jarmila;Princová-Justová, Jarmila;vedouci
@@ -14578,6 +14585,7 @@ Staňa, Čeněk;Staňa, Čeněk;vedouci
 Řídký, Jaroslav;Řídký, Jaroslav;vedouci
 Švácha, Hynek;Švácha, Hynek;vedouci
 Bartošková, Andrea;Bartošková, Andrea;vedouci
+Kout, Adam;Kout, Adam;vedouci
 Laube, Gustav;Laube, Gustav;vedouci
 Novotná, Alena;Novotná, Alena;vedouci
 Prkno, Jaroslav;Prkno, Jaroslav;vedouci
@@ -14589,7 +14597,6 @@ Hanzl, Lukáš;Hanzl, Lukáš;vedouci
 Hořínková, Andrea;Hořínková, Andrea;vedouci
 Kovář, Daniel;Kovář, Daniel;vedouci
 Loskotová, Irena;Loskotová, Irena;vedouci
-Ludikovský, Karel;Ludikovský, Karel;vedouci
 Michna, Pavel;Michna, Pavel;vedouci
 Miller, Antonín;Miller, Antonín;vedouci
 Ryšková, Anastázie;Ryšková, Anastázie;vedouci
@@ -14598,18 +14605,15 @@ Waldmannová, Marcela;Waldmannová, Marcela;vedouci
 Červený, Ivan;Červený, Ivan;vedouci
 Drda, Miloš;Drda, Miloš;vedouci
 Fencl, Josef;Fencl, Josef;vedouci
-Homolová, Michaela;Homolová, Michaela;vedouci
 Horáková-Jansová, Libuše;Horáková-Jansová, Libuše;vedouci
 Jílková, Eva;Jílková, Eva;vedouci
 Kern, Josef;Kern, Josef;vedouci
 Kolegar, Tomáš;Kolegar, Tomáš;vedouci
 Majer, Antonín;Majer, Antonín;vedouci
 Pischnothová, Marcela;Pischnothová, Marcela;vedouci
-Prekop, Filip;Prekop, Filip;vedouci
 Vlášek, Milan;Vlášek, Milan;vedouci
 Waněk, Jan;Waněk, Jan;vedouci
 Weinzierl von Weinberg, Robert Karl;Weinzierl von Weinberg, Robert Karl;vedouci
-Woldřich, Jan Nepomuk;Woldřich, Jan Nepomuk;vedouci
 Franc, František Xaver;Franc, František Xaver;vedouci
 Jiráň, Luboš;Jiráň, Luboš;vedouci
 Kalina von Jäthenstein, Mathias;Kalina von Jäthenstein, Mathias;vedouci
@@ -14617,17 +14621,16 @@ Kosina, Jan;Kosina, Jan;vedouci
 Kostka, Josef;Kostka, Josef;vedouci
 Preidel, Helmut;Preidel, Helmut;vedouci
 Schmidt, Václav;Schmidt, Václav;vedouci
+Stuchlík, Stanislav;Stuchlík, Stanislav;vedouci
+Woldřich, Jan Nepomuk;Woldřich, Jan Nepomuk;vedouci
 Štauberová, Jiřina;Štauberová, Jiřina;vedouci
 Holodňáková, Radmila;Holodňáková, Radmila;vedouci
 Hrbáčková, Alena;Hrbáčková, Alena;vedouci
 Lafková, Hana;Lafková, Hana;vedouci
 Metličková, Jarmila;Metličková, Jarmila;vedouci
 Olbricht, Franz;Olbricht, Franz;vedouci
-Poulík, Josef;Poulík, Josef;vedouci
 Semrádová, Kateřina;Semrádová, Kateřina;vedouci
 Siegel, Jaroslav;Siegel, Jaroslav;vedouci
-Stuchlík, Stanislav;Stuchlík, Stanislav;vedouci
-Tišerová, Renata;Tišerová, Renata;vedouci
 Ševčík, Alois;Ševčík, Alois;vedouci
 Brych, Vladimír;Brych, Vladimír;vedouci
 Buchvaldek, Miroslav;Buchvaldek, Miroslav;vedouci
@@ -14635,6 +14638,7 @@ Budaváry, Vojtech;Budaváry, Vojtech;vedouci
 Gajdoš, Tomáš;Gajdoš, Tomáš;vedouci
 Ihnatko, Jan;Ihnatko, Jan;vedouci
 Klen, Jan;Klen, Jan;vedouci
+Kubalová, Ivana;Kubalová, Ivana;vedouci
 Lamprecht, Andrej;Lamprecht, Andrej;vedouci
 Langová, Jana;Langová, Jana;vedouci
 Smitka, Josef;Smitka, Josef;vedouci
@@ -14644,6 +14648,7 @@ Dřevo, Václav;Dřevo, Václav;vedouci
 Kareš, Bohuš;Kareš, Bohuš;vedouci
 Král, Jiří;Král, Jiří;vedouci
 Malach, Roman;Malach, Roman;vedouci
+Omelka, Zdeněk;Omelka, Zdeněk;vedouci
 Siblík, Josef;Siblík, Josef;vedouci
 Soudský, Bohumil;Soudský, Bohumil;vedouci
 Soukupová, Dara;Soukupová, Dara;vedouci
@@ -14665,7 +14670,6 @@ Píša, Vladimír;Píša, Vladimír;vedouci
 Bednařík, Karel;Bednařík, Karel;vedouci
 Holas, Matouš;Holas, Matouš;vedouci
 Janál, Jiří;Janál, Jiří;vedouci
-Kout, Adam;Kout, Adam;vedouci
 Lung, Walter;Lung, Walter;vedouci
 Pančíková, Zuzana;Pančíková, Zuzana;vedouci
 Plekanec, Miroslav;Plekanec, Miroslav;vedouci
@@ -14697,6 +14701,7 @@ Zahrádka, V.;Zahrádka, V.;vedouci
 Šlesingerová, Lada;Šlesingerová, Lada;vedouci
 Brnič, Želimír;Brnič, Želimír;vedouci
 Daněček, Vladimír;Daněček, Vladimír;vedouci
+Freising, Hans;Freising, Hans;vedouci
 Gaža, Jan;Gaža, Jan;vedouci
 Havelka, Rudolf;Havelka, Rudolf;vedouci
 Jančák, Miroslav;Jančák, Miroslav;vedouci
@@ -14719,9 +14724,10 @@ Malý, Vladimír;Malý, Vladimír;vedouci
 Moník, Martin;Moník, Martin;vedouci
 Oliva, Martin;Oliva, Martin;vedouci
 Petrbok, Jaroslav;Petrbok, Jaroslav;vedouci
+Pilař, Daniel;Pilař, Daniel;vedouci
 Pochmanová, Kateřina;Pochmanová, Kateřina;vedouci
 Svoboda, Karel;Svoboda, Karel;vedouci
-Záhorák, Vít;Záhorák, Vít;vedouci
+Valoch, Karel;Valoch, Karel;vedouci
 Čermák, Kliment;Čermák, Kliment;vedouci
 Šimák, Josef Vítězslav;Šimák, Josef Vítězslav;vedouci
 Šimůnek, Josef;Šimůnek, Josef;vedouci
@@ -14738,10 +14744,11 @@ Mackerle, Jaroslav;Mackerle, Jaroslav;vedouci
 Matiášek, Josef;Matiášek, Josef;vedouci
 Matuška, František;Matuška, František;vedouci
 Mazuch, Marian;Mazuch, Marian;vedouci
+Meduna, Jiří;Meduna, Jiří;vedouci
 Mezenská, Eliška;Mezenská, Eliška;vedouci
-Omelka, Zdeněk;Omelka, Zdeněk;vedouci
 Pechočová, Jana;Pechočová, Jana;vedouci
 Pietsch, Petr;Pietsch, Petr;vedouci
+Skutil, Josef;Skutil, Josef;vedouci
 Trnka, Václav;Trnka, Václav;vedouci
 Urban, Jan;Urban, Jan;vedouci
 Vešta, Adolf;Vešta, Adolf;vedouci
@@ -14751,14 +14758,15 @@ Vocel, Jan Erazim;Vocel, Jan Erazim;vedouci
 Danielisová, Alžběta;Danielisová, Alžběta;vedouci
 Ernekr, Jaromír;Ernekr, Jaromír;vedouci
 Hasil, Jan;Hasil, Jan;vedouci
+Horálková, Pavla;Horálková, Pavla;vedouci
 Jančák, M.;Jančák, M.;vedouci
-Jelínek, Petr;Jelínek, Petr;vedouci
 Jelínková, Dagmar;Jelínková, Dagmar;vedouci
+Kostelníková, Marie;Kostelníková, Marie;vedouci
 Machačová, Veronika;Machačová, Veronika;vedouci
 Macháček, Jiří;Macháček, Jiří;vedouci
 Macků, Markéta;Macků, Markéta;vedouci
-Meduna, Jiří;Meduna, Jiří;vedouci
 Měřínský, Zdeněk;Měřínský, Zdeněk;vedouci
+Novotný, Boris;Novotný, Boris;vedouci
 Novák, Martin;Novák, Martin;vedouci
 Oktábec, J.;Oktábec, J.;vedouci
 Pokorná, Helena;Pokorná, Helena;vedouci
@@ -14773,29 +14781,26 @@ Bouzek, Jan;Bouzek, Jan;vedouci
 Chochol, Jaromír;Chochol, Jaromír;vedouci
 Ciglbauer, Jan;Ciglbauer, Jan;vedouci
 Cícha, Jaroslav;Cícha, Jaroslav;vedouci
+Dlabolová, Lucie;Dlabolová, Lucie;vedouci
 Ferulík, Alois;Ferulík, Alois;vedouci
 Foster, Patrick;Foster, Patrick;vedouci
 Franz, Leonhard;Franz, Leonhard;vedouci
 Gelnar, Michal;Gelnar, Michal;vedouci
 Gerstenhöfer, Anton;Gerstenhöfer, Anton;vedouci
-Horálková, Pavla;Horálková, Pavla;vedouci
+Kaván, Jaroslav;Kaván, Jaroslav;vedouci
 Klanica, Zdeněk;Klanica, Zdeněk;vedouci
-Kostelníková, Marie;Kostelníková, Marie;vedouci
+Kočtúch, Kamil;Kočtúch, Kamil;vedouci
 Milsimerová, Barbora;Milsimerová, Barbora;vedouci
-Novotný, Boris;Novotný, Boris;vedouci
 Steidl, Josef Otakar;Steidl, Josef Otakar;vedouci
 Stuchlíková, Jana;Stuchlíková, Jana;vedouci
 Tomek, O.;Tomek, O.;vedouci
-Valoch, Karel;Valoch, Karel;vedouci
 Štefan, Ivo;Štefan, Ivo;vedouci
 Andrlová, Marie;Andrlová, Marie;vedouci
 Benda, Klement;Benda, Klement;vedouci
-Dlabolová, Lucie;Dlabolová, Lucie;vedouci
 Fewkes, Vladimír J.;Fewkes, Vladimír J.;vedouci
 Födisch, Julius Ernest;Födisch, Julius Ernest;vedouci
 Gnirs, Anton;Gnirs, Anton;vedouci
 Holý, Prokop;Holý, Prokop;vedouci
-Kaván, Jaroslav;Kaván, Jaroslav;vedouci
 Krištuf, Petr;Krištuf, Petr;vedouci
 Ložek, Vojen;Ložek, Vojen;vedouci
 Macháček, Fridolín;Macháček, Fridolín;vedouci
@@ -14804,7 +14809,6 @@ Ott, Tomáš;Ott, Tomáš;vedouci
 Polická, Nikol;Polická, Nikol;vedouci
 Poláček, Lumír;Poláček, Lumír;vedouci
 Prokop, Vladimír;Prokop, Vladimír;vedouci
-Skutil, Josef;Skutil, Josef;vedouci
 Souchopová, Věra;Souchopová, Věra;vedouci
 Soukupová-Baštová, Dara;Soukupová-Baštová, Dara;vedouci
 Strach, J.;Strach, J.;vedouci
@@ -14842,8 +14846,8 @@ Sojka, V.;Sojka, V.;vedouci
 Vršek, Pavel;Vršek, Pavel;vedouci
 Wankel, Jindřich;Wankel, Jindřich;vedouci
 Wizovský, Tomáš;Wizovský, Tomáš;vedouci
+Červinka, Inocenc Ladislav;Červinka, Inocenc Ladislav;vedouci
 Diviš, Václav;Diviš, Václav;vedouci
-Freising, Hans;Freising, Hans;vedouci
 Glott, Josef;Glott, Josef;vedouci
 Golec, Martin;Golec, Martin;vedouci
 Haken, Josef;Haken, Josef;vedouci
@@ -14852,7 +14856,6 @@ Holub, J.;Holub, J.;vedouci
 Hralová, Jitka;Hralová, Jitka;vedouci
 Kmínek, Michal;Kmínek, Michal;vedouci
 Koupal, J.;Koupal, J.;vedouci
-Kočtúch, Kamil;Kočtúch, Kamil;vedouci
 Křečková, Alena;Křečková, Alena;vedouci
 Křikava, František Václav;Křikava, František Václav;vedouci
 Likovský, Jakub;Likovský, Jakub;vedouci
@@ -14861,10 +14864,12 @@ Madaj, Marek;Madaj, Marek;vedouci
 Mertl, David;Mertl, David;vedouci
 Müller, Jiří;Müller, Jiří;vedouci
 Nesměrák, Josef;Nesměrák, Josef;vedouci
+Ondráček, Přemysl;Ondráček, Přemysl;vedouci
 Panáček, Jaroslav;Panáček, Jaroslav;vedouci
 Patera, Václav;Patera, Václav;vedouci
 Pavlík, Václav;Pavlík, Václav;vedouci
 Peterková, Petra;Peterková, Petra;vedouci
+Pixová, Erika;Pixová, Erika;vedouci
 Podhorský, Karel;Podhorský, Karel;vedouci
 Snášil, Robert;Snášil, Robert;vedouci
 Svatušková, Anna;Svatušková, Anna;vedouci
@@ -14873,12 +14878,12 @@ Tencer, Tomáš;Tencer, Tomáš;vedouci
 Teryngerová, Hana Francesca;Teryngerová, Hana Francesca;vedouci
 Vohryzek, Stanislav;Vohryzek, Stanislav;vedouci
 Čedíková, Eva;Čedíková, Eva;vedouci
-Červinka, Inocenc Ladislav;Červinka, Inocenc Ladislav;vedouci
 Škojec, Jaroslav;Škojec, Jaroslav;vedouci
 Ankert, Heinrich;Ankert, Heinrich;vedouci
 Apiar, Peter;Apiar, Peter;vedouci
 Bastl, Jan;Bastl, Jan;vedouci
 Bergerová, Kateřina;Bergerová, Kateřina;vedouci
+Chleborád, Miroslav;Chleborád, Miroslav;vedouci
 Hašek, Vladimír;Hašek, Vladimír;vedouci
 Heger, Eduard;Heger, Eduard;vedouci
 Jirát, Tomáš;Jirát, Tomáš;vedouci
@@ -14887,10 +14892,12 @@ Kučera, František;Kučera, František;vedouci
 Langr, Jakub;Langr, Jakub;vedouci
 Machula, Jan;Machula, Jan;vedouci
 Mořkovský, Tomáš;Mořkovský, Tomáš;vedouci
+Müllerová, Tereza;Müllerová, Tereza;vedouci
 Novák, David;Novák, David;vedouci
 Rokoská, Petra;Rokoská, Petra;vedouci
 Sedlák, A.;Sedlák, A.;vedouci
 Sláma, Jiří;Sláma, Jiří;vedouci
+Trňáčková, Zora;Trňáčková, Zora;vedouci
 Úlovec, Jiří;Úlovec, Jiří;vedouci
 Šimek, Emanuel;Šimek, Emanuel;vedouci
 Šotola, J.;Šotola, J.;vedouci
@@ -14909,17 +14916,16 @@ Dvořák, Z.;Dvořák, Z.;vedouci
 Faltýnek, Karel;Faltýnek, Karel;vedouci
 Fořtík, František;Fořtík, František;vedouci
 Hazlbauer, Zdeněk;Hazlbauer, Zdeněk;vedouci
+Hrubý, Jiří;Hrubý, Jiří;vedouci
 Jančulová, Barbora;Jančulová, Barbora;vedouci
 Klenovec, Konrád;Klenovec, Konrád;vedouci
 Koudelka, J.;Koudelka, J.;vedouci
 Košnar, Luboš;Košnar, Luboš;vedouci
 Krejčí, Miroslav;Krejčí, Miroslav;vedouci
-Kubalová, Ivana;Kubalová, Ivana;vedouci
 Macháčková, L.;Macháčková, L.;vedouci
 Macháňová, Lenka;Macháňová, Lenka;vedouci
 Matiegka, Jindřich;Matiegka, Jindřich;vedouci
 Neuwirth, Michal;Neuwirth, Michal;vedouci
-Ondráček, Přemysl;Ondráček, Přemysl;vedouci
 Osina, Jan;Osina, Jan;vedouci
 Peřina, Ivan;Peřina, Ivan;vedouci
 Podroužek, Kamil;Podroužek, Kamil;vedouci
@@ -14931,8 +14937,8 @@ Smutný, Zdeněk;Smutný, Zdeněk;vedouci
 Staněk, Pavel;Staněk, Pavel;vedouci
 Stránská, Radmila;Stránská, Radmila;vedouci
 Tauber, Theodor;Tauber, Theodor;vedouci
+Tichý, Rudolf;Tichý, Rudolf;vedouci
 Tihelka, Karel;Tihelka, Karel;vedouci
-Trňáčková, Zora;Trňáčková, Zora;vedouci
 Veselý, E.;Veselý, E.;vedouci
 Zrůbek, Rudolf;Zrůbek, Rudolf;vedouci
 Čapek, Josef;Čapek, Josef;vedouci
@@ -14945,7 +14951,7 @@ Bergmann, Alois;Bergmann, Alois;vedouci
 Bernard, Jaroslav;Bernard, Jaroslav;vedouci
 Blajerová, Miroslava;Blajerová, Miroslava;vedouci
 Brey, H.;Brey, H.;vedouci
-Chleborád, Miroslav;Chleborád, Miroslav;vedouci
+David, Humpola;David, Humpola;vedouci
 Dohnal, Jiří;Dohnal, Jiří;vedouci
 Drenko, Zoltán;Drenko, Zoltán;vedouci
 Dubinský, V.;Dubinský, V.;vedouci
@@ -14965,9 +14971,9 @@ Mayer, Josef;Mayer, Josef;vedouci
 Novotný, František;Novotný, František;vedouci
 Novák, Jan;Novák, Jan;vedouci
 Němec, J.;Němec, J.;vedouci
-Pilař, Daniel;Pilař, Daniel;vedouci
 Pokorná, Jaroslava;Pokorná, Jaroslava;vedouci
 Pomahač, Jiří;Pomahač, Jiří;vedouci
+Pospelova, Anastasiia;Pospelova, Anastasiia;vedouci
 Radoměrský, Pavel;Radoměrský, Pavel;vedouci
 Rezler, Marcel;Rezler, Marcel;vedouci
 Rohanová, Veronika;Rohanová, Veronika;vedouci
@@ -14977,7 +14983,6 @@ Sokol, Josef;Sokol, Josef;vedouci
 Srnská, Zdena;Srnská, Zdena;vedouci
 Streitová, Camilla;Streitová, Camilla;vedouci
 Sýkora, J.;Sýkora, J.;vedouci
-Tichý, Rudolf;Tichý, Rudolf;vedouci
 Vacek, Josef;Vacek, Josef;vedouci
 Valenta, Miroslav;Valenta, Miroslav;vedouci
 Vlčková, Jitka;Vlčková, Jitka;vedouci
@@ -14998,10 +15003,10 @@ Blažková, Tereza;Blažková, Tereza;vedouci
 Brachtel, Oto;Brachtel, Oto;vedouci
 Bumerl, Jiří;Bumerl, Jiří;vedouci
 Chramosta, Emanuel;Chramosta, Emanuel;vedouci
-David, Humpola;David, Humpola;vedouci
 Dohnal, Martin;Dohnal, Martin;vedouci
 Dreslerová, Gabriela;Dreslerová, Gabriela;vedouci
 Droberjar, Eduard;Droberjar, Eduard;vedouci
+Dvořáček, Antonín;Dvořáček, Antonín;vedouci
 Friedrich, František C.;Friedrich, František C.;vedouci
 Gebauer, Emil;Gebauer, Emil;vedouci
 Gebr, J.;Gebr, J.;vedouci
@@ -15020,11 +15025,11 @@ Kolář, Martin;Kolář, Martin;vedouci
 Konopa, Prokop;Konopa, Prokop;vedouci
 Kopecký, František;Kopecký, František;vedouci
 Kuběnka, J.;Kuběnka, J.;vedouci
+Lavický, Josef;Lavický, Josef;vedouci
 Lodrová, Marcela;Lodrová, Marcela;vedouci
 Maloch, Antonín Vánkomil;Maloch, Antonín Vánkomil;vedouci
 Mašín, Karel;Mašín, Karel;vedouci
 Michel, Julius;Michel, Julius;vedouci
-Müllerová, Tereza;Müllerová, Tereza;vedouci
 Nemeškalová, Zdenka;Nemeškalová, Zdenka;vedouci
 Neumann, Vladimír;Neumann, Vladimír;vedouci
 Nečesaný, Zdeněk;Nečesaný, Zdeněk;vedouci
@@ -15035,7 +15040,6 @@ Pasternak, Jaroslav;Pasternak, Jaroslav;vedouci
 Plachý, P.;Plachý, P.;vedouci
 Plaček, Miroslav;Plaček, Miroslav;vedouci
 Podzimek, Jaroslav;Podzimek, Jaroslav;vedouci
-Pospelova, Anastasiia;Pospelova, Anastasiia;vedouci
 Procházková, Pavlína;Procházková, Pavlína;vedouci
 Pudil, Jan;Pudil, Jan;vedouci
 Rejchová, Renata;Rejchová, Renata;vedouci
@@ -15056,10 +15060,12 @@ Weinelt, K.;Weinelt, K.;vedouci
 Šebek, Svatopluk;Šebek, Svatopluk;vedouci
 Šlajsna, Jiří;Šlajsna, Jiří;vedouci
 Štefanová-Šaldová, Věra;Štefanová-Šaldová, Věra;vedouci
+Šístková, Barbora;Šístková, Barbora;vedouci
 Antal, Róbert;Antal, Róbert;vedouci
 Balášová, Michaela;Balášová, Michaela;vedouci
 Bičík, Zdeněk;Bičík, Zdeněk;vedouci
 Boček, Jiří;Boček, Jiří;vedouci
+Bílková, Jana;Bílková, Jana;vedouci
 Christen, Rudolf;Christen, Rudolf;vedouci
 Cuper, Miroslav;Cuper, Miroslav;vedouci
 Davídek, Leo;Davídek, Leo;vedouci
@@ -15087,9 +15093,11 @@ Kolbinger, Dalibor;Kolbinger, Dalibor;vedouci
 Kočiřík, Vladimír;Kočiřík, Vladimír;vedouci
 Kracíková, Lucie;Kracíková, Lucie;vedouci
 Krucký, Marian;Krucký, Marian;vedouci
+Krumlovský, Tomáš;Krumlovský, Tomáš;vedouci
 Kuklová, Eliška;Kuklová, Eliška;vedouci
 Kulhánek, Jan;Kulhánek, Jan;vedouci
 Kypta, Jan;Kypta, Jan;vedouci
+Lustig, Alois;Lustig, Alois;vedouci
 Machart, J.;Machart, J.;vedouci
 Mahr, Jan;Mahr, Jan;vedouci
 Maříková Kubková, Jana;Maříková Kubková, Jana;vedouci
@@ -15129,6 +15137,7 @@ Witkowski, Martin;Witkowski, Martin;vedouci
 Švejda, Josef;Švejda, Josef;vedouci
 Žaloudek, František;Žaloudek, František;vedouci
 Želízko, Jan Vratislav;Želízko, Jan Vratislav;vedouci
+Adámek, František;Adámek, František;vedouci
 Augustinová, Anna;Augustinová, Anna;vedouci
 Bartoš, V.;Bartoš, V.;vedouci
 Baum, Antonín;Baum, Antonín;vedouci
@@ -15137,7 +15146,6 @@ Benešová, Anna;Benešová, Anna;vedouci
 Bláhová, Zuzana;Bláhová, Zuzana;vedouci
 Brabec, J.;Brabec, J.;vedouci
 Burian, Václav;Burian, Václav;vedouci
-Bílková, Jana;Bílková, Jana;vedouci
 Dolobko, A.;Dolobko, A.;vedouci
 Dostál, Petr;Dostál, Petr;vedouci
 Dostál, Stanislav;Dostál, Stanislav;vedouci
@@ -15161,6 +15169,7 @@ Hudeček, M.;Hudeček, M.;vedouci
 Hykeš, František Josef;Hykeš, František Josef;vedouci
 Hávová, Věra;Hávová, Věra;vedouci
 Janošek Kašpárek, František;Janošek Kašpárek, František;vedouci
+Jirák, Jan;Jirák, Jan;vedouci
 Klos, Richard;Klos, Richard;vedouci
 Knauer, P.;Knauer, P.;vedouci
 Kolář, O.;Kolář, O.;vedouci
@@ -15176,11 +15185,11 @@ Lambl, František Sudimír;Lambl, František Sudimír;vedouci
 Lanc, František;Lanc, František;vedouci
 Laval, Filip;Laval, Filip;vedouci
 Linksfeilerová, Daniela;Linksfeilerová, Daniela;vedouci
-Lustig, Alois;Lustig, Alois;vedouci
 Machová, Barbora;Machová, Barbora;vedouci
 Marečková, Jana;Marečková, Jana;vedouci
 Martius, Anton;Martius, Anton;vedouci
 Martyčák, Standa;Martyčák, Standa;vedouci
+Matielo, Lucia;Matielo, Lucia;vedouci
 Maštalíř, Jiří;Maštalíř, Jiří;vedouci
 Menclová, Dobroslava;Menclová, Dobroslava;vedouci
 Mittelbach, Franz;Mittelbach, Franz;vedouci
@@ -15192,7 +15201,6 @@ Pavloň, Tomáš;Pavloň, Tomáš;vedouci
 Pažourek, Vlastimil;Pažourek, Vlastimil;vedouci
 Pelz, František;Pelz, František;vedouci
 Pilous, Z.;Pilous, Z.;vedouci
-Pixová, Erika;Pixová, Erika;vedouci
 Pleslová-Štiková, Emilie;Pleslová-Štiková, Emilie;vedouci
 Pohořálková, Helena;Pohořálková, Helena;vedouci
 Požarecký, Václav;Požarecký, Václav;vedouci
@@ -15232,7 +15240,6 @@ Zázvorka, J.;Zázvorka, J.;vedouci
 Štoncner, Ondřej;Štoncner, Ondřej;vedouci
 Švager, J.;Švager, J.;vedouci
 Žegklitzová, Jana;Žegklitzová, Jana;vedouci
-Adámek, František;Adámek, František;vedouci
 Boháček, Tomáš;Boháček, Tomáš;vedouci
 Borufka, J.;Borufka, J.;vedouci
 Bouček, V.;Bouček, V.;vedouci
@@ -15257,12 +15264,12 @@ Hertl, J.;Hertl, J.;vedouci
 Hulina, Pavel;Hulina, Pavel;vedouci
 Jaklová, Věra;Jaklová, Věra;vedouci
 Janák, Vratislav;Janák, Vratislav;vedouci
-Jirák, Jan;Jirák, Jan;vedouci
 Jirásek, J.;Jirásek, J.;vedouci
 Jáně, Zdeněk;Jáně, Zdeněk;vedouci
 Kajer, Milan;Kajer, Milan;vedouci
 Kamitz, Jozef;Kamitz, Jozef;vedouci
 Kausková, Jana;Kausková, Jana;vedouci
+Kazdová, Eliška;Kazdová, Eliška;vedouci
 Klein, J.;Klein, J.;vedouci
 Knížek, M.;Knížek, M.;vedouci
 Kobrlová, Jana;Kobrlová, Jana;vedouci
@@ -15278,7 +15285,7 @@ Kubů, František;Kubů, František;vedouci
 Kundera, Lubomír;Kundera, Lubomír;vedouci
 Kunert, Edmund;Kunert, Edmund;vedouci
 Kuča, Martin;Kuča, Martin;vedouci
-Lavický, Josef;Lavický, Josef;vedouci
+Kučerová, Iva;Kučerová, Iva;vedouci
 Leger, František;Leger, František;vedouci
 Lencová, R.;Lencová, R.;vedouci
 Libotovský, L.;Libotovský, L.;vedouci
@@ -15286,12 +15293,14 @@ Loyda, Vladimír;Loyda, Vladimír;vedouci
 Ludikar, August Česlav;Ludikar, August Česlav;vedouci
 Luft, S.;Luft, S.;vedouci
 Machulda, Karel;Machulda, Karel;vedouci
-Matielo, Lucia;Matielo, Lucia;vedouci
+Makowsky, Alexander;Makowsky, Alexander;vedouci
+Maršíčková, Martina;Maršíčková, Martina;vedouci
 Matoušová, Lucie;Matoušová, Lucie;vedouci
 Matásek, J.;Matásek, J.;vedouci
 Matějka, Jan;Matějka, Jan;vedouci
 Mevaldová, Helena;Mevaldová, Helena;vedouci
 Mikuláš, Radek;Mikuláš, Radek;vedouci
+Mikulášek, Jaroslav;Mikulášek, Jaroslav;vedouci
 Mikulík, Jan;Mikulík, Jan;vedouci
 Minide, Matěj;Minide, Matěj;vedouci
 Morávek, Josef;Morávek, Josef;vedouci
@@ -15394,6 +15403,7 @@ Filipová, Margita;Filipová, Margita;vedouci
 Fišer, František;Fišer, František;vedouci
 Foltýn, F.;Foltýn, F.;vedouci
 Formánek, A.;Formánek, A.;vedouci
+Frank, Leopold;Frank, Leopold;vedouci
 Frühauf, I.;Frühauf, I.;vedouci
 Födisch, Hermann;Födisch, Hermann;vedouci
 Fürst, J.;Fürst, J.;vedouci
@@ -15409,6 +15419,7 @@ Hetflaiš, Rostislav;Hetflaiš, Rostislav;vedouci
 Hiersche, Josef Gustav;Hiersche, Josef Gustav;vedouci
 Hierátová, Kateřina;Hierátová, Kateřina;vedouci
 Hilbert, Kamil;Hilbert, Kamil;vedouci
+Hladký, Jaroslav;Hladký, Jaroslav;vedouci
 Hlava, Miloš;Hlava, Miloš;vedouci
 Hlavatý, Jan;Hlavatý, Jan;vedouci
 Hobl, Luboš;Hobl, Luboš;vedouci
@@ -15434,7 +15445,6 @@ Kapic, Matyáš;Kapic, Matyáš;vedouci
 Kapl, Vladimír;Kapl, Vladimír;vedouci
 Karell, V.;Karell, V.;vedouci
 Kastner, Jiří;Kastner, Jiří;vedouci
-Kazdová, Eliška;Kazdová, Eliška;vedouci
 Kašpar, Josef;Kašpar, Josef;vedouci
 Khom, B.;Khom, B.;vedouci
 Klecanda, Jindřich;Klecanda, Jindřich;vedouci
@@ -15445,6 +15455,7 @@ Koláčný, František;Koláčný, František;vedouci
 Kolářová, Zdeňka;Kolářová, Zdeňka;vedouci
 Korbička, Miroslav;Korbička, Miroslav;vedouci
 Kostková, Miluše;Kostková, Miluše;vedouci
+Koudelka, František;Koudelka, František;vedouci
 Kout, Jan;Kout, Jan;vedouci
 Kovář, Miroslav;Kovář, Miroslav;vedouci
 Košťák, J.;Košťák, J.;vedouci
@@ -15472,11 +15483,10 @@ Malich, Jan;Malich, Jan;vedouci
 Malý, J.;Malý, J.;vedouci
 Marek, Otto;Marek, Otto;vedouci
 Marko, Ján;Marko, Ján;vedouci
-Maršíčková, Martina;Maršíčková, Martina;vedouci
+Markus, František;Markus, František;vedouci
 Matějka, Bohumil;Matějka, Bohumil;vedouci
 Mazáčková, Jana;Mazáčková, Jana;vedouci
 Merhautová, Anežka;Merhautová, Anežka;vedouci
-Mikulášek, Jaroslav;Mikulášek, Jaroslav;vedouci
 Monika, Psohlavcová;Monika, Psohlavcová;vedouci
 Moravec, Augustin;Moravec, Augustin;vedouci
 Motyková-Šneidrová, Karla;Motyková-Šneidrová, Karla;vedouci
@@ -15489,6 +15499,7 @@ Netáhlík, Miroslav;Netáhlík, Miroslav;vedouci
 Novák, A.;Novák, A.;vedouci
 Novák, Miloš;Novák, Miloš;vedouci
 Ondruš, Vladimír;Ondruš, Vladimír;vedouci
+Ondráček, Tomáš;Ondráček, Tomáš;vedouci
 Opravil, Emanuel;Opravil, Emanuel;vedouci
 Osvaldová, Helena;Osvaldová, Helena;vedouci
 Palacký, František;Palacký, František;vedouci
@@ -15519,6 +15530,7 @@ Prášek, J.;Prášek, J.;vedouci
 Purkyně, Cyril;Purkyně, Cyril;vedouci
 Purkyně, Jan Evangelista;Purkyně, Jan Evangelista;vedouci
 Purš, Jaroslav;Purš, Jaroslav;vedouci
+Přibyslavský, Štěpán;Přibyslavský, Štěpán;vedouci
 Přikryl, František;Přikryl, František;vedouci
 Rak, Michal;Rak, Michal;vedouci
 Raslová, Lucie;Raslová, Lucie;vedouci
@@ -15587,6 +15599,7 @@ matějíčková, andrea;matějíčková, andrea;vedouci
 Červinka, Otakar;Červinka, Otakar;vedouci
 Červinka, Z.;Červinka, Z.;vedouci
 Čišecký, Čeněk;Čišecký, Čeněk;vedouci
+Čubuk, Jiří;Čubuk, Jiří;vedouci
 Čujanová-Jílková, Eva;Čujanová-Jílková, Eva;vedouci
 Řezáč, R.;Řezáč, R.;vedouci
 Říha, V.;Říha, V.;vedouci
@@ -15734,6 +15747,7 @@ Feistmantel, K.;Feistmantel, K.;vedouci
 Fejt, Jan;Fejt, Jan;vedouci
 Fereš, B.;Fereš, B.;vedouci
 Fetter, V.;Fetter, V.;vedouci
+Fibiger, K.;Fibiger, K.;vedouci
 Fikar, K.;Fikar, K.;vedouci
 Fleková, Klára;Fleková, Klára;vedouci
 Fojtík, Martin;Fojtík, Martin;vedouci
@@ -15785,7 +15799,6 @@ Heřman, J.;Heřman, J.;vedouci
 Hilmera, J.;Hilmera, J.;vedouci
 Hirmer, F.;Hirmer, F.;vedouci
 Hirsche, G.;Hirsche, G.;vedouci
-Hladký, Jaroslav;Hladký, Jaroslav;vedouci
 Hladík, J.;Hladík, J.;vedouci
 Hladík, Josef;Hladík, Josef;vedouci
 Hloušek, J.;Hloušek, J.;vedouci
@@ -15914,7 +15927,6 @@ Kothera, K.;Kothera, K.;vedouci
 Kotrba, F.;Kotrba, F.;vedouci
 Kotyková-Rybová, Alena;Kotyková-Rybová, Alena;vedouci
 Koudelka, B.;Koudelka, B.;vedouci
-Koudelka, František;Koudelka, František;vedouci
 Koutová, Jarmila;Koutová, Jarmila;vedouci
 Kočvara, Antonín;Kočvara, Antonín;vedouci
 Kořenský, J.;Kořenský, J.;vedouci
@@ -15948,7 +15960,6 @@ Kunický, Z.;Kunický, Z.;vedouci
 Kurtiš, J.;Kurtiš, J.;vedouci
 Kuthanová, Věra;Kuthanová, Věra;vedouci
 Kučera, F;Kučera, F;vedouci
-Kučerová, Iva;Kučerová, Iva;vedouci
 Kvěchová, Eliška;Kvěchová, Eliška;vedouci
 Květinová, Sylvie;Květinová, Sylvie;vedouci
 Kysela, Jan;Kysela, Jan;vedouci
@@ -16144,6 +16155,7 @@ Popel, A.;Popel, A.;vedouci
 Pour, V.;Pour, V.;vedouci
 Prihoda, R.;Prihoda, R.;vedouci
 Princová, Jarmila;Princová, Jarmila;vedouci
+Procházka, Alois;Procházka, Alois;vedouci
 Procházka, B.;Procházka, B.;vedouci
 Procházka, F.;Procházka, F.;vedouci
 Procházka, Karel;Procházka, Karel;vedouci
@@ -16183,9 +16195,11 @@ Ruffer, J.;Ruffer, J.;vedouci
 Rutar, Radovan;Rutar, Radovan;vedouci
 Ruth, F.;Ruth, F.;vedouci
 Rybářík, V.;Rybářík, V.;vedouci
+Rychlý, Milan;Rychlý, Milan;vedouci
 Rychtaříková, Tereza;Rychtaříková, Tereza;vedouci
 Rychter, F.;Rychter, F.;vedouci
 Rygl, T.;Rygl, T.;vedouci
+Rzehak, Anton;Rzehak, Anton;vedouci
 Rádl, Josef;Rádl, Josef;vedouci
 Růžička, K.;Růžička, K.;vedouci
 Růžička, Václav;Růžička, Václav;vedouci
@@ -16209,6 +16223,7 @@ Schönigerová, Veronika;Schönigerová, Veronika;vedouci
 Seifertová, L.;Seifertová, L.;vedouci
 Sekyra, K.;Sekyra, K.;vedouci
 Severa, J.;Severa, J.;vedouci
+Simon, Julius;Simon, Julius;vedouci
 Sirotek, Jaromír;Sirotek, Jaromír;vedouci
 Sixta, V.;Sixta, V.;vedouci
 Skalský, Gustav;Skalský, Gustav;vedouci
@@ -16220,10 +16235,12 @@ Skulinek, Jan;Skulinek, Jan;vedouci
 Slabý, Lukáš;Slabý, Lukáš;vedouci
 Slavík, A.;Slavík, A.;vedouci
 Slavík, P.;Slavík, P.;vedouci
+Slovák, Jindřich;Slovák, Jindřich;vedouci
 Slunečko, Vladimír;Slunečko, Vladimír;vedouci
 Sládek, S.;Sládek, S.;vedouci
 Slánský, V.;Slánský, V.;vedouci
 Smetana, F.;Smetana, F.;vedouci
+Smíšek, Michal;Smíšek, Michal;vedouci
 Sobota, J.;Sobota, J.;vedouci
 Sobotka, O.;Sobotka, O.;vedouci
 Sofaer-Derevenski, J.;Sofaer-Derevenski, J.;vedouci
@@ -16316,6 +16333,7 @@ Vrbický, J.;Vrbický, J.;vedouci
 Vrána, Petr;Vrána, Petr;vedouci
 Vránek, K.;Vránek, K.;vedouci
 Vurm, K.;Vurm, K.;vedouci
+Vyskočil, Bedřich;Vyskočil, Bedřich;vedouci
 Váňa, J.;Váňa, J.;vedouci
 Vítův, V.;Vítův, V.;vedouci
 Věšínová, Kamila;Věšínová, Kamila;vedouci
@@ -16345,6 +16363,7 @@ Zippe, Franz Xaver Maxmilian;Zippe, Franz Xaver Maxmilian;vedouci
 Zourek, K.;Zourek, K.;vedouci
 Zozulák, R.;Zozulák, R.;vedouci
 Zuman, F.;Zuman, F.;vedouci
+Zykán, Jan Nepomuk;Zykán, Jan Nepomuk;vedouci
 Zárybnický, Miloš;Zárybnický, Miloš;vedouci
 Zíma, Karel;Zíma, Karel;vedouci
 Čaloun, P.;Čaloun, P.;vedouci
@@ -16361,11 +16380,11 @@ Zíma, Karel;Zíma, Karel;vedouci
 Čihák, J.;Čihák, J.;vedouci
 Čistecký, Josef;Čistecký, Josef;vedouci
 Čtvrtníčková, Lenka;Čtvrtníčková, Lenka;vedouci
-Čubuk, Jiří;Čubuk, Jiří;vedouci
 Čujan, J.;Čujan, J.;vedouci
 Čumlivsky, D.;Čumlivsky, D.;vedouci
 Čáp, Pavel;Čáp, Pavel;vedouci
 Řidel, L.;Řidel, L.;vedouci
+Říhovská, Jaroslava;Říhovská, Jaroslava;vedouci
 Říčka, Alois;Říčka, Alois;vedouci
 Šafář, František;Šafář, František;vedouci
 Šaurová, Dagmar;Šaurová, Dagmar;vedouci
@@ -16432,8 +16451,8 @@ Kučera, Pavel;Kučera, Pavel;nalezce
 Jeřábek, Jan;Jeřábek, Jan;nalezce
 Děkanovský, Petr;Děkanovský, Petr;nalezce
 Vejmělka, David;Vejmělka, David;nalezce
-Zedníček, Milan;Zedníček, Milan;nalezce
 Průcha, Jaroslav;Průcha, Jaroslav;nalezce
+Zedníček, Milan;Zedníček, Milan;nalezce
 Merta, Tomáš;Merta, Tomáš;nalezce
 Rogoňová, Kateřina;Rogoňová, Kateřina;nalezce
 Spálovský, Petr;Spálovský, Petr;nalezce
@@ -16444,11 +16463,11 @@ Freiwald, Vítězslav;Freiwald, Vítězslav;nalezce
 Dostál, Tomáš;Dostál, Tomáš;nalezce
 Dočkal, Jiří;Dočkal, Jiří;nalezce
 Kosour, Frantisek;Kosour, Frantisek;nalezce
+Uhlíř, Petr;Uhlíř, Petr;nalezce
 Fišer, Jan;Fišer, Jan;nalezce
+Ležák, Jaroslav;Ležák, Jaroslav;nalezce
 Přech, Milan;Přech, Milan;nalezce
 Michálek, František;Michálek, František;nalezce
-Ležák, Jaroslav;Ležák, Jaroslav;nalezce
-Uhlíř, Petr;Uhlíř, Petr;nalezce
 Wasserbauer, Václav;Wasserbauer, Václav;nalezce
 Bilíček, Tomáš;Bilíček, Tomáš;nalezce
 Ryšavá, Veronika;Ryšavá, Veronika;nalezce
@@ -16458,24 +16477,25 @@ Priehoda, Pavel;Priehoda, Pavel;nalezce
 Štoudek, Libor;Štoudek, Libor;nalezce
 Kotásek, Lukas;Kotásek, Lukas;nalezce
 Badinka, Aleš;Badinka, Aleš;nalezce
+Mikšovská, Dagmar;Mikšovská, Dagmar;nalezce
+Šteffel, Roman;Šteffel, Roman;nalezce
 Jakubčík, Jan;Jakubčík, Jan;nalezce
 Ďuriš, Miroslav;Ďuriš, Miroslav;nalezce
-Šteffel, Roman;Šteffel, Roman;nalezce
 Jagos, Jiří;Jagos, Jiří;nalezce
-Mikšovská, Dagmar;Mikšovská, Dagmar;nalezce
 Sukup, Jakub;Sukup, Jakub;nalezce
 Herman, Tomáš;Herman, Tomáš;nalezce
 CHMELAŘ, KAREL;CHMELAŘ, KAREL;nalezce
 Zeleňák, Lukáš;Zeleňák, Lukáš;nalezce
 Trýnoha, Vlastimil;Trýnoha, Vlastimil;nalezce
+Malářová, Michaela;Malářová, Michaela;nalezce
 Mahdal, Jakub;Mahdal, Jakub;nalezce
 Oulehla, Vladimír;Oulehla, Vladimír;nalezce
 Žabka, Ján;Žabka, Ján;nalezce
 Priehodová, Zita;Priehodová, Zita;nalezce
 Bulva, Jiří;Bulva, Jiří;nalezce
+Hnátek, Michal;Hnátek, Michal;nalezce
 Vysloužil, Michal;Vysloužil, Michal;nalezce
 Kostelník, Roman;Kostelník, Roman;nalezce
-Malářová, Michaela;Malářová, Michaela;nalezce
 Wollmuth, Martin;Wollmuth, Martin;nalezce
 Holouš, Václav;Holouš, Václav;nalezce
 Rous, Tomáš;Rous, Tomáš;nalezce
@@ -16485,17 +16505,18 @@ Neubert, Zbyněk;Neubert, Zbyněk;nalezce
 Studničný, Petr;Studničný, Petr;nalezce
 Dočekal, Filip;Dočekal, Filip;nalezce
 Lužný, Martin;Lužný, Martin;nalezce
+Baka, Stanislav;Baka, Stanislav;nalezce
 Novotný, Karel;Novotný, Karel;nalezce
 Bílek, Roman;Bílek, Roman;nalezce
 Hrazdil, Filip;Hrazdil, Filip;nalezce
 Macek, Miroslav;Macek, Miroslav;nalezce
+Malý, Martin;Malý, Martin;nalezce
 Míča, Rudolf;Míča, Rudolf;nalezce
-Baka, Stanislav;Baka, Stanislav;nalezce
+Bláha, Ladislav;Bláha, Ladislav;nalezce
 Burgr, Martin;Burgr, Martin;nalezce
 Dvořák, Jiří;Dvořák, Jiří;nalezce
 Mikešová, Iveta;Mikešová, Iveta;nalezce
 Borek, František;Borek, František;nalezce
-Bláha, Ladislav;Bláha, Ladislav;nalezce
 Dočekal, Jan;Dočekal, Jan;nalezce
 Jagoš ml., Jiří;Jagoš ml., Jiří;nalezce
 Pejšek, Robert;Pejšek, Robert;nalezce
@@ -16511,11 +16532,11 @@ Diatka, Martin;Diatka, Martin;nalezce
 Dóczy, Peter;Dóczy, Peter;nalezce
 Sobala, Tadeáš;Sobala, Tadeáš;nalezce
 Himer, Martin;Himer, Martin;nalezce
+Pinker, Robin;Pinker, Robin;nalezce
 Turková, Ludmila;Turková, Ludmila;nalezce
 Bechný, Věroslav;Bechný, Věroslav;nalezce
 Bábík, Jaroslav;Bábík, Jaroslav;nalezce
 Moštěk, Marek;Moštěk, Marek;nalezce
-Pinker, Robin;Pinker, Robin;nalezce
 Kriak, Robert;Kriak, Robert;nalezce
 Ráčilová, Martina;Ráčilová, Martina;nalezce
 Blaha, Marek;Blaha, Marek;nalezce
@@ -16525,24 +16546,23 @@ Moučka, Michal;Moučka, Michal;nalezce
 Drahoš, Radoslav;Drahoš, Radoslav;nalezce
 Veselý, Michal;Veselý, Michal;nalezce
 Čadílek, Miroslav;Čadílek, Miroslav;nalezce
+Bedan, René;Bedan, René;nalezce
 Kubiš, Radomil;Kubiš, Radomil;nalezce
 Malý, Lukáš;Malý, Lukáš;nalezce
-Malý, Martin;Malý, Martin;nalezce
 Moulis, Václav;Moulis, Václav;nalezce
+Hanzalík, Martin;Hanzalík, Martin;nalezce
 Jenček, Jan;Jenček, Jan;nalezce
 Kotásek, Jan;Kotásek, Jan;nalezce
 Kuchyňka, Pavel;Kuchyňka, Pavel;nalezce
 Kurial, Štepan;Kurial, Štepan;nalezce
 Pecina, Lukáš;Pecina, Lukáš;nalezce
 Baránková, JItka;Baránková, JItka;nalezce
-Bedan, René;Bedan, René;nalezce
-Hanzalík, Martin;Hanzalík, Martin;nalezce
+Novotný, Zdeněk;Novotný, Zdeněk;nalezce
 Pernica, Jiří;Pernica, Jiří;nalezce
 Šunka, Pavel;Šunka, Pavel;nalezce
 Dvořák, Petr;Dvořák, Petr;nalezce
 Gasnarek, Jiři;Gasnarek, Jiři;nalezce
 Gois, Tomáš;Gois, Tomáš;nalezce
-Novotný, Zdeněk;Novotný, Zdeněk;nalezce
 Plešingr, Dominik;Plešingr, Dominik;nalezce
 Hybeš, Tomáš;Hybeš, Tomáš;nalezce
 Kovařík, Zdeněk;Kovařík, Zdeněk;nalezce
@@ -16563,6 +16583,7 @@ Tesař, Petr;Tesař, Petr;nalezce
 Veselý, Jaroslav;Veselý, Jaroslav;nalezce
 Walter, Stanislav;Walter, Stanislav;nalezce
 Machan, Jan;Machan, Jan;nalezce
+Nygrýn, Milan;Nygrýn, Milan;nalezce
 Popelka, Miroslav;Popelka, Miroslav;nalezce
 Řehořek, Lukáš;Řehořek, Lukáš;nalezce
 Ševčík, Filip;Ševčík, Filip;nalezce
@@ -16573,6 +16594,7 @@ Jagoš, Jiří;Jagoš, Jiří;nalezce
 Jandora, Pavel;Jandora, Pavel;nalezce
 Jáně, Karel;Jáně, Karel;nalezce
 Lusk, Tomáš;Lusk, Tomáš;nalezce
+Průcha, Lubomír;Průcha, Lubomír;nalezce
 Svoboda, Lubomír;Svoboda, Lubomír;nalezce
 Valouch, Petr;Valouch, Petr;nalezce
 Völkl, Antonín;Völkl, Antonín;nalezce
@@ -16581,20 +16603,21 @@ Hajný, Martin;Hajný, Martin;nalezce
 Hromádka, Vlastimil;Hromádka, Vlastimil;nalezce
 Hudec, Zdeněk;Hudec, Zdeněk;nalezce
 Lengál, Martin;Lengál, Martin;nalezce
-Průcha, Lubomír;Průcha, Lubomír;nalezce
 Španěl, Radim;Španěl, Radim;nalezce
+Baumgartner, Miloš;Baumgartner, Miloš;nalezce
+Kalenda, Václav;Kalenda, Václav;nalezce
 Lipensky, Martin;Lipensky, Martin;nalezce
 Martinek, Michal;Martinek, Michal;nalezce
 Mařík, Jan;Mařík, Jan;nalezce
 Mikulica, Lukáš;Mikulica, Lukáš;nalezce
-Nygrýn, Milan;Nygrýn, Milan;nalezce
 Přibyl, Michal;Přibyl, Michal;nalezce
 Skopár, Lukáš;Skopár, Lukáš;nalezce
 Slavík, Petr;Slavík, Petr;nalezce
 Vinklárková, Andrea;Vinklárková, Andrea;nalezce
+Augusta, Pavel;Augusta, Pavel;nalezce
+Bejček, Zdeněk;Bejček, Zdeněk;nalezce
 Burgr, Vojtěch;Burgr, Vojtěch;nalezce
 Daněček, David;Daněček, David;nalezce
-Kalenda, Václav;Kalenda, Václav;nalezce
 Moučka, Martin;Moučka, Martin;nalezce
 Nacházel, Václav;Nacházel, Václav;nalezce
 Petz, Zdenek;Petz, Zdenek;nalezce
@@ -16603,9 +16626,7 @@ Veselý, Martin;Veselý, Martin;nalezce
 Zavřel, Igor;Zavřel, Igor;nalezce
 Šmerda, Vlastimil;Šmerda, Vlastimil;nalezce
 Špaček, Vratislav;Špaček, Vratislav;nalezce
-Augusta, Pavel;Augusta, Pavel;nalezce
 Baránek, David;Baránek, David;nalezce
-Bejček, Zdeněk;Bejček, Zdeněk;nalezce
 Doležel, Milan;Doležel, Milan;nalezce
 Doležálek, Pavel;Doležálek, Pavel;nalezce
 Drahotuská, Zdeňka;Drahotuská, Zdeňka;nalezce
@@ -16623,6 +16644,7 @@ Fabri, Erik;Fabri, Erik;nalezce
 Hebron, Josef;Hebron, Josef;nalezce
 Kobylka, Martin;Kobylka, Martin;nalezce
 Kratochvíl, Libor;Kratochvíl, Libor;nalezce
+Peška, Jaroslav;Peška, Jaroslav;nalezce
 Polívka, Pavel;Polívka, Pavel;nalezce
 Staňo, Miroslav;Staňo, Miroslav;nalezce
 Vích, David;Vích, David;nalezce
@@ -16661,6 +16683,7 @@ Gruna, Bronislav;Gruna, Bronislav;nalezce
 Helísek, Kamil;Helísek, Kamil;nalezce
 Hrouz, Lukáš;Hrouz, Lukáš;nalezce
 Hubková, Dagmar;Hubková, Dagmar;nalezce
+Hula, Stanislav;Hula, Stanislav;nalezce
 Jánský, Jan;Jánský, Jan;nalezce
 Koláček, Jaromír;Koláček, Jaromír;nalezce
 Krajíček, Josef;Krajíček, Josef;nalezce
@@ -16699,6 +16722,7 @@ Jirickova, Alena;Jirickova, Alena;nalezce
 Karmasin, Martin;Karmasin, Martin;nalezce
 Klíma, Pavel;Klíma, Pavel;nalezce
 Kmošek, Matěj;Kmošek, Matěj;nalezce
+Kolmačka, Martin;Kolmačka, Martin;nalezce
 Komínek, Miroslav;Komínek, Miroslav;nalezce
 Konečný, Eduard;Konečný, Eduard;nalezce
 Kopecký, Štěpán;Kopecký, Štěpán;nalezce
@@ -16717,6 +16741,7 @@ Novotný, David;Novotný, David;nalezce
 Němec, Leopold;Němec, Leopold;nalezce
 Pjaták, David;Pjaták, David;nalezce
 Poul, Emil;Poul, Emil;nalezce
+Renda, Jiří;Renda, Jiří;nalezce
 Saidok, Aleš;Saidok, Aleš;nalezce
 Schejbal, Jiří;Schejbal, Jiří;nalezce
 Schenk, Zdeněk;Schenk, Zdeněk;nalezce
@@ -16740,6 +16765,7 @@ Brázda, Zbyněk;Brázda, Zbyněk;nalezce
 Burgr, Jiří;Burgr, Jiří;nalezce
 Burgr, Radomír;Burgr, Radomír;nalezce
 Buričan st., Miroslav;Buričan st., Miroslav;nalezce
+Cacek, Patrik;Cacek, Patrik;nalezce
 Chovancová, Alena;Chovancová, Alena;nalezce
 Culek, Martin;Culek, Martin;nalezce
 Dokoupil, Josef;Dokoupil, Josef;nalezce
@@ -16760,6 +16786,7 @@ Jordánek, Tomáš;Jordánek, Tomáš;nalezce
 Just, Lumír;Just, Lumír;nalezce
 Kleveta, Pavel;Kleveta, Pavel;nalezce
 Knotek, Petr;Knotek, Petr;nalezce
+Konopáč, Michal;Konopáč, Michal;nalezce
 Kostík, Jan;Kostík, Jan;nalezce
 Kotouček, Filip;Kotouček, Filip;nalezce
 Kožíšek, Karel;Kožíšek, Karel;nalezce
@@ -16775,6 +16802,8 @@ Lingerová, Tereza;Lingerová, Tereza;nalezce
 Makovská, Zdenka;Makovská, Zdenka;nalezce
 Malcovic, Simon;Malcovic, Simon;nalezce
 Martinčík, Petr;Martinčík, Petr;nalezce
+Martínek, Aleš;Martínek, Aleš;nalezce
+Martínek, Jan;Martínek, Jan;nalezce
 Martínek, Michal;Martínek, Michal;nalezce
 Matal, Pavel;Matal, Pavel;nalezce
 Mihalovič, Albert;Mihalovič, Albert;nalezce
@@ -16794,7 +16823,6 @@ Polášek, Josef;Polášek, Josef;nalezce
 Povolný, Petr;Povolný, Petr;nalezce
 Počta, Petr;Počta, Petr;nalezce
 Prázová, Iveta;Prázová, Iveta;nalezce
-Renda, Jiří;Renda, Jiří;nalezce
 Roman, Baláž;Roman, Baláž;nalezce
 Schwarz, David;Schwarz, David;nalezce
 Sladký, Petr;Sladký, Petr;nalezce
