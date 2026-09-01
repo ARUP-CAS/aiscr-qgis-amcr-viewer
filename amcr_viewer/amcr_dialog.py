@@ -538,6 +538,19 @@ class AmcrFilterDialog(QDialog):
         if self.selection_cache['lokalita_zachovalost']:
             filters['f_lokalita_zachovalost'] = self.selection_cache['lokalita_zachovalost']
 
+        # Samostatné nálezy
+        if self.selection_cache['nalez_kategorie']:
+            filters['f_kategorie'] = self.selection_cache['nalez_kategorie']
+        if self.selection_cache['druh_nalezu']:
+            filters['f_druh_nalezu'] = self.selection_cache['druh_nalezu']
+        if self.selection_cache['specifikace']:
+            filters['f_specifikace'] = self.selection_cache['specifikace']
+        if self.selection_cache['nalezove_okolnosti']:
+            filters['f_nalezove_okolnosti'] = self.selection_cache['nalezove_okolnosti']
+        if self.selection_cache['nalezce']:
+            filters['f_nalezce'] = self.selection_cache['nalezce']
+
+
         return filters
 
 
