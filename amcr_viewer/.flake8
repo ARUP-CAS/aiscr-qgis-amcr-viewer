@@ -1,0 +1,12 @@
+# Konfigurace flake8 pro plugin AMČR Viewer.
+#
+# Soubor leží vedle metadata.txt schválně: scanner na plugins.qgis.org
+# hledá .flake8 pouze v kořeni balíčku uvnitř ZIPu, takže stejná pravidla
+# platí v CI, lokálně i při uploadu.
+# https://plugins.qgis.org/docs/security-scanning/config-files
+[flake8]
+# resources.py je vygenerovaný výstup pyrcc ("All changes made in this
+# file will be lost"), není nikde importovaný a zdrojový .qrc v repu není.
+# Ručně se neformátuje.
+per-file-ignores =
+    *resources.py: E302,E305,E501

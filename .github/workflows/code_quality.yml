@@ -1,0 +1,171 @@
+name: Code Quality
+
+# Pouští při každém PR tytéž kontroly, které se dosud dělaly ručně:
+#
+#  * co spouští plugins.qgis.org při uploadu (bandit, detect-secrets,
+#    flake8, analýza souborů) – https://plugins.qgis.org/docs/security-scanning
+#  * oficiální kontrolu kompatibility s Qt6 (pyqgis4-checker)
+#  * skutečné načtení pluginu v QGIS 3.44 (Qt5) i v QGIS 4 (Qt6)
+#  * sestavení ZIPu, který si recenzent stáhne a nainstaluje přímo z PR
+#
+# CodeQL a GitGuardian běží zvlášť, nastavené na úrovni organizace –
+# tady se schválně neduplikují.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Verze se drží napevno, aby se výsledek nezměnil sám od sebe. Výchozí
+  # sada pravidel ruffu se mezi verzemi mění; povýšení je vědomý krok.
+  BANDIT: bandit==1.9.4
+  DETECT_SECRETS: detect-secrets==1.5.0
+  FLAKE8: flake8==7.3.0
+  RUFF: ruff==0.16.5
+
+jobs:
+  # --------------------------------------------------------------------
+  # 1. Statické kontroly – běží první, protože trvají desítky sekund
+  # --------------------------------------------------------------------
+  lint:
+    name: Lint a bezpečnost
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install tools
+        run: pip install "$BANDIT" "$DETECT_SECRETS" "$FLAKE8" "$RUFF"
+
+      # Hygiena repozitáře: BOM, přímé importy z PyQt5/PyQt6, spustitelná
+      # práva a podezřelé typy souborů. Padá jako první, protože BOM
+      # zneviditelní soubor pro kontrolu níž.
+      - name: Source hygiene
+        run: python3 tests/check_sources.py
+
+      # Blokující kontrola na plugins.qgis.org
+      - name: Bandit
+        run: bandit -r amcr_viewer/
+
+      # Blokující kontrola na plugins.qgis.org.
+      # --all-files je podstatné: bez něj detect-secrets prohledá jen
+      # soubory sledované gitem a nesledovaný soubor tiše přeskočí.
+      - name: detect-secrets
+        run: |
+          detect-secrets scan --all-files amcr_viewer/ > vysledek.json
+          python3 -c "
+          import json, sys
+          nalezy = json.load(open('vysledek.json'))['results']
+          if nalezy:
+              print(json.dumps(nalezy, indent=2))
+              sys.exit(1)
+          print('detect-secrets: bez nálezů')
+          "
+
+      # Na plugins.qgis.org je informativní, tady blokuje – konfigurace
+      # v amcr_viewer/.flake8 je stejná pro obě místa.
+      - name: Flake8
+        run: flake8 --config amcr_viewer/.flake8 amcr_viewer/
+
+      # Nad rámec plugins.qgis.org; konfigurace v pyproject.toml
+      - name: Ruff
+        run: ruff check .
+
+  # --------------------------------------------------------------------
+  # 2. Kompatibilita s Qt6 – oficiální skript z QGISu
+  # --------------------------------------------------------------------
+  qt6:
+    name: Kompatibilita s Qt6
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # Pozor: skript končí kódem 0 i když něco najde, výsledek je jen
+      # v logu. Prázdný log (samotná hlavička) znamená čisto.
+      - name: pyqgis4-checker
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            --workdir /workspace/ -v "$PWD:/workspace/" \
+            ghcr.io/qgis/pyqgis4-checker:main-ubuntu \
+            pyqt5_to_pyqt6.py --dry_run --logfile /workspace/pyqt6_checker.log .
+          echo "--- pyqt6_checker.log ---"
+          cat pyqt6_checker.log
+          nalezu=$(grep -v '=== dry_run mode | Start Logs ===' pyqt6_checker.log | wc -l)
+          if [ "$nalezu" -ne 0 ]; then
+            echo "::error::pyqgis4-checker nahlásil nálezy, viz log výše"
+            exit 1
+          fi
+
+  # --------------------------------------------------------------------
+  # 3. Načtení pluginu ve skutečném QGIS, v obou podporovaných verzích
+  # --------------------------------------------------------------------
+  qgis:
+    name: Smoke test (QGIS ${{ matrix.qgis }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # ltr = 3.44 na Qt5, stable = 4.x na Qt6. Tagy se posouvají
+        # schválně: chceme vědět, že plugin drží krok s aktuálním QGISem.
+        qgis: [ltr, stable]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Smoke test
+        run: |
+          docker run --rm -v "$PWD:/work:ro" -w /work \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            "qgis/qgis:${{ matrix.qgis }}" python3 tests/smoke_test.py
+
+  # --------------------------------------------------------------------
+  # 4. ZIP k instalaci – stejný postup jako v release_plugin.yml
+  # --------------------------------------------------------------------
+  package:
+    name: Balíček pluginu
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Zip plugin
+        run: zip -r amcr_viewer.zip amcr_viewer -x "*.git*"
+
+      # Kontrola obsahu ZIPu. Config soubory pro scanner musí být uvnitř
+      # vedle metadata.txt, jinak je plugins.qgis.org nenajde – a některé
+      # nástroje skryté soubory tiše vynechávají.
+      - name: Verify archive contents
+        run: |
+          unzip -l amcr_viewer.zip
+          for soubor in amcr_viewer/metadata.txt amcr_viewer/__init__.py \
+                        amcr_viewer/.flake8; do
+            unzip -l amcr_viewer.zip | grep -qF " $soubor" \
+              || { echo "::error::v ZIPu chybí $soubor"; exit 1; }
+          done
+          if unzip -l amcr_viewer.zip | grep -qE '\.git'; then
+            echo "::error::v ZIPu jsou git soubory"
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: amcr_viewer-plugin
+          path: amcr_viewer.zip
+          if-no-files-found: error

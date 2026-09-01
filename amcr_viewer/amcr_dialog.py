@@ -659,8 +659,7 @@ class AmcrFilterDialog(QDialog):
     def get_komponenty(self):
         if self.typ_dat in ["akce", "lokalita"]:
             return "true" if self.chk_komponenty.isChecked() else "false"
-        else:
-            return "false"
+        return "false"
 
     def get_filters(self):
         """Compiles the user selections from the cache into

@@ -176,5 +176,57 @@ flatpak run --command=sh org.qgis.qgis -c \
 
 Plugin se testuje načtením do QGIS (Plugins → Manage and Install Plugins →
 Install from ZIP, nebo nasazením složky `amcr_viewer/` do adresáře pluginů
-QGIS). Automatizované testy zatím repozitář neobsahuje – změny ověřuj ručně
-v QGIS na podporované verzi.
+QGIS). **Ruční test v QGIS nic nenahrazuje** – automatické kontroly ověřují,
+že se plugin načte a že projde kontrolami kvality, ne že dělá správnou věc.
+
+### Automatické kontroly
+
+Workflow `.github/workflows/code_quality.yml` pouští při každém PR do `main`
+tohle:
+
+| job | co dělá |
+|---|---|
+| **Lint a bezpečnost** | `check_sources.py`, bandit, detect-secrets, flake8, ruff |
+| **Kompatibilita s Qt6** | `pyqgis4-checker` v dockeru |
+| **Smoke test** | `smoke_test.py` v `qgis/qgis:ltr` i `qgis/qgis:stable` |
+| **Balíček pluginu** | sestaví ZIP, ověří obsah, přiloží jako artefakt |
+
+Smoke test běží v obou podporovaných řadách: `ltr` je QGIS 3.44 na Qt5,
+`stable` je QGIS 4.x na Qt6.
+
+Artefakt z posledního jobu se dá stáhnout ze stránky běhu a rovnou
+nainstalovat přes *Install from ZIP* – recenzent nemusí nic balit ručně.
+
+Totéž lokálně:
+
+```sh
+pip install bandit detect-secrets flake8 ruff
+
+python3 tests/check_sources.py
+bandit -r amcr_viewer/
+detect-secrets scan --all-files amcr_viewer/
+flake8 --config amcr_viewer/.flake8 amcr_viewer/
+ruff check .
+
+# smoke test v obou verzích QGIS (docker, bez instalace čehokoli)
+for tag in ltr stable; do
+  docker run --rm -v "$PWD:/work:ro" -w /work \
+    --user "$(id -u):$(id -g)" -e HOME=/tmp \
+    "qgis/qgis:$tag" python3 tests/smoke_test.py
+done
+```
+
+Na co si dát pozor:
+
+- **`pyqgis4-checker` končí kódem 0, i když něco najde** – výsledek je jen
+  v logu. Workflow proto kontroluje, že log obsahuje jen hlavičku.
+- **`detect-secrets` bez `--all-files` prohledá jen soubory sledované
+  gitem** a o nesledovaném souboru mlčí. Vypadá to jako čistý výsledek.
+- **Konfigurace lintů je rozdělená schválně.** `amcr_viewer/.flake8` leží
+  vedle `metadata.txt`, protože scanner na plugins.qgis.org hledá config
+  soubory jen v kořeni balíčku uvnitř ZIPu; díky tomu platí stejná pravidla
+  v CI, lokálně i při uploadu. Konfigurace ruffu je naopak v kořenovém
+  `pyproject.toml` – ruff se do balíčku pluginu nedistribuuje.
+  Viz https://plugins.qgis.org/docs/security-scanning/config-files
+- **Verze nástrojů jsou v workflow napevno.** Výchozí sada pravidel ruffu se
+  mezi verzemi mění, takže bez pinu by CI začalo padat samo od sebe.
