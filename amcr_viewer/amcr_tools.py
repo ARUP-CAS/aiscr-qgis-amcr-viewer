@@ -718,6 +718,8 @@ def load_amcr_data(canvas, bb, filters=None,
                     )
 
         elif typ_dat == "samostatny_nalez":
+            nalezy = {}
+
             for doc in docs:
                 sn_loc = g_list(doc, "loc")
                 if not sn_loc:
@@ -827,7 +829,19 @@ def load_amcr_data(canvas, bb, filters=None,
                     "pred_org": sn_predano_org,
                     "evidencni": sn_evidencni,
                     "pristupnost": sn_pristupnost,
+                    "wkt": wkt,
+                    "wkt_is_wgs": wkt_is_wgs,
                 }
+
+                nalezy[sn_id] = meta
+
+            if not entries_with_geom:
+                iface.messageBar().pushMessage(
+                    "AMCR",
+                    f"Nalezeno {len(docs)} záznamů, ale žádný nemá geometrii.",
+                    level=Qgis.MessageLevel.Warning
+                )
+                return
 
 
                 
