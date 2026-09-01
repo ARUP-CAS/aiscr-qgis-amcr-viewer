@@ -90,7 +90,7 @@ class AmcrViewer:
         """
         # Define paths for action-specific icons
         icon_akce_path = os.path.join(self.plugin_dir, 'akce.png')
-        icon_pas_path = os.path.join(self.plugin_dir, 'akce.png')
+        icon_pas_path = os.path.join(self.plugin_dir, 'sn.png')
         icon_lokality_path = os.path.join(self.plugin_dir, 'lokality.png')
         icon_amcr_help_path = os.path.join(self.plugin_dir, 'amcr-help.png')
 
@@ -131,7 +131,7 @@ class AmcrViewer:
         self.plugin_menu.addAction(self.action_download_lokality)
 
         self.action_login_dialog = self.add_action(
-            icon_path=icon_akce_path,
+            icon_path=icon_pas_path,
             text=self.tr(u'Přihlásit se | AMČR Viewer'),
             callback=lambda checked=False: self.login(),
             parent=self.iface.mainWindow(),
