@@ -3,10 +3,12 @@ from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout,
                                  QLineEdit, QDialogButtonBox,
                                  QCheckBox, QGroupBox, QPushButton,
                                  QListWidget, QListWidgetItem, QHBoxLayout,
-                                 QMessageBox, QLabel, QFormLayout)
+                                 QMessageBox, QLabel, QFormLayout,
+                                 QGridLayout, QScrollArea, QFrame, QWidget)
 from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.core import (QgsTask, QgsApplication,
                        QgsMessageLog, Qgis, QgsAuthMethodConfig)
+from qgis.gui import QgsDateEdit
 from qgis.utils import iface
 from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
                              OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST,
@@ -15,6 +17,17 @@ from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
                              NALEZ_KATEGORIE, DRUH_NALEZU, SPECIFIKACE,
                              NALEZOVE_OKOLNOSTI, NALEZCE,
                              download_heslare, refresh_globals)
+
+
+# The date filter of the API requires both bounds; a one-sided range makes
+# the server fail with an ArrayIndexOutOfBoundsException and '*' is not
+# accepted either. An empty picker is therefore replaced by these sentinels,
+# which are also the default limits of QgsDateEdit.
+DATE_OPEN_FROM = "0001-01-01"
+DATE_OPEN_TO = "9999-12-31"
+
+# Shown by a date picker that is left empty
+DATE_NULL_TEXT = "neomezeno"
 
 
 # Keep Python references to running tasks. QgsTaskManager only holds the
@@ -177,6 +190,10 @@ class AmcrFilterDialog(QDialog):
             'nalezce': [],
         }
 
+        # Date range pickers, filled by setup_date_range():
+        # (API field, label for messages, 'from' widget, 'to' widget)
+        self.date_ranges = []
+
         layout = QVBoxLayout()
 
         # Filter by current map canvas extent
@@ -251,6 +268,12 @@ class AmcrFilterDialog(QDialog):
             )
             layout.addWidget(self.picker_typ)
 
+            self.box_datum = self.setup_date_range("Datum", [
+                ("akce_datum_zahajeni", "Zahájení", "Datum zahájení"),
+                ("akce_datum_ukonceni", "Ukončení", "Datum ukončení"),
+            ])
+            layout.addWidget(self.box_datum)
+
         # Filters valid for Lokality
 
         if self.typ_dat == "lokalita":
@@ -323,6 +346,13 @@ class AmcrFilterDialog(QDialog):
             )
             layout.addWidget(self.picker_nalezce)
 
+            # Lokalita has no date field in the index at all, so the block
+            # is built only for the two entities that do
+            self.box_datum = self.setup_date_range("Datum nálezu", [
+                ("samostatny_nalez_datum_nalezu", "", "Datum nálezu"),
+            ])
+            layout.addWidget(self.box_datum)
+
         if self.typ_dat != "samostatny_nalez":
             self.picker_areal = self.setup_picker("Areál", 'areal', AREAL)
             layout.addWidget(self.picker_areal)
@@ -353,6 +383,21 @@ class AmcrFilterDialog(QDialog):
         # Pushes everything above to the top
         layout.addStretch(1)
 
+        # The filter stack is taller than the window on every entity
+        # (over 1000 px for 'akce'), so it scrolls. The buttons stay
+        # outside the scroll area, otherwise the user would have to
+        # scroll to the bottom just to confirm the dialog.
+        content = QWidget()
+        content.setLayout(layout)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidget(content)
+
+        outer = QVBoxLayout()
+        outer.addWidget(scroll)
+
         # Main dialog OK/Cancel/Update buttons
 
         buttons = QDialogButtonBox()
@@ -373,9 +418,9 @@ class AmcrFilterDialog(QDialog):
 
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        outer.addWidget(buttons)
 
-        self.setLayout(layout)
+        self.setLayout(outer)
 
     def setup_picker(self, label_text, cache_key, data_source, extra_btn=None):
         """
@@ -437,6 +482,94 @@ class AmcrFilterDialog(QDialog):
 
         row_widget.setLayout(row_layout)
         return row_widget
+
+    def setup_date_range(self, title, rows):
+        """
+        Creates a compact date range block: one row per API date field,
+        each with a 'from' and a 'to' picker.
+
+        rows is a list of (api_field, row_label, name_for_messages).
+        An empty row_label is used when the group box title already names
+        the field, which keeps the single-row variant from repeating itself.
+
+        A picker left empty means an open bound; the sentinel is
+        substituted in get_filters(), not here, so that an untouched
+        block adds no filter at all.
+        """
+        row_widget = QGroupBox(title)
+        grid = QGridLayout()
+        grid.setContentsMargins(5, 5, 5, 5)
+        grid.setVerticalSpacing(3)
+        grid.setHorizontalSpacing(6)
+
+        for row, (api_field, row_label, name) in enumerate(rows):
+            if row_label:
+                grid.addWidget(QLabel(row_label), row, 0)
+
+            date_from = self._date_edit(
+                f"{name} – od (prázdné = bez dolní meze)"
+            )
+            date_to = self._date_edit(
+                f"{name} – do (prázdné = bez horní meze)"
+            )
+
+            separator = QLabel("–")
+            separator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            grid.addWidget(date_from, row, 1)
+            grid.addWidget(separator, row, 2)
+            grid.addWidget(date_to, row, 3)
+
+            self.date_ranges.append((api_field, name, date_from, date_to))
+
+        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(3, 1)
+
+        row_widget.setLayout(grid)
+        return row_widget
+
+    @staticmethod
+    def _date_edit(tooltip):
+        """
+        A date picker that may stay empty.
+
+        clear() is essential here – setEmpty() looks empty but leaves
+        isNull() False with today's date, which would silently apply
+        a filter the user never set.
+        """
+        widget = QgsDateEdit()
+        widget.setAllowNull(True)
+        widget.setNullRepresentation(DATE_NULL_TEXT)
+        widget.setDisplayFormat("d. M. yyyy")
+        widget.setCalendarPopup(True)
+        widget.clear()
+        widget.setToolTip(tooltip)
+        return widget
+
+    def accept(self):
+        """
+        Blocks the dialog on a reversed date range. The API answers such
+        a query with zero records and no error, which is indistinguishable
+        from a genuinely empty result.
+        """
+        reversed_ranges = [
+            name for _, name, date_from, date_to in self.date_ranges
+            if not date_from.isNull() and not date_to.isNull()
+            and date_from.date() > date_to.date()
+        ]
+
+        if reversed_ranges:
+            QMessageBox.warning(
+                self,
+                "Neplatné rozmezí",
+                "U těchto filtrů je počáteční datum novější než koncové:\n"
+                + "\n".join(f"• {name}" for name in reversed_ranges)
+                + "\n\nDotaz by nevrátil žádný záznam. Opravte rozmezí, "
+                "nebo jedno z polí vyprázdněte."
+            )
+            return
+
+        super().accept()
 
     def action_update_heslare(self):
         # Create the task instance and keep a reference so the Python
@@ -550,6 +683,20 @@ class AmcrFilterDialog(QDialog):
         if self.selection_cache['nalezce']:
             filters['f_nalezce'] = self.selection_cache['nalezce']
 
+        # Date ranges – the API needs both bounds, so an empty picker is
+        # replaced by a sentinel. A block with both pickers empty adds no
+        # filter at all; sending the full 0001–9999 range would only
+        # clutter the log without narrowing anything.
+        for api_field, _, date_from, date_to in self.date_ranges:
+            if date_from.isNull() and date_to.isNull():
+                continue
+
+            od = (DATE_OPEN_FROM if date_from.isNull()
+                  else date_from.date().toString("yyyy-MM-dd"))
+            do = (DATE_OPEN_TO if date_to.isNull()
+                  else date_to.date().toString("yyyy-MM-dd"))
+
+            filters[api_field] = f"{od},{do}"
 
         return filters
 
