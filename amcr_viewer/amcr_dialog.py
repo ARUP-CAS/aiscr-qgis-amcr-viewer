@@ -209,13 +209,6 @@ class AmcrFilterDialog(QDialog):
         )
         layout.addWidget(self.picker_katastr)
 
-        self.picker_presnost = self.setup_picker(
-            "PIAN – přesnost",
-            'pian_presnost',
-            PIAN_PRESNOST
-        )
-        layout.addWidget(self.picker_presnost)
-
         self.picker_pristupnost = self.setup_picker(
             "Přístupnost",
             'pristupnost',
@@ -224,6 +217,14 @@ class AmcrFilterDialog(QDialog):
         layout.addWidget(self.picker_pristupnost)
 
         # Filters valid for Akce
+
+        if self.typ_dat in ["lokalita", "akce"]:
+            self.picker_presnost = self.setup_picker(
+                "PIAN – přesnost",
+                'pian_presnost',
+                PIAN_PRESNOST
+            )
+            layout.addWidget(self.picker_presnost)
 
         if self.typ_dat in ["samostatny_nalez", "akce"]:
             self.picker_org = self.setup_picker(
@@ -489,7 +490,10 @@ class AmcrFilterDialog(QDialog):
         return "true" if self.chk_bbox.isChecked() else "false"
 
     def get_komponenty(self):
-        return "true" if self.chk_komponenty.isChecked() else "false"
+        if self.typ_dat in ["akce", "lokalita"]:
+            return "true" if self.chk_komponenty.isChecked() else "false"
+        else:
+            return "false"
 
     def get_filters(self):
         """Compiles the user selections from the cache into
