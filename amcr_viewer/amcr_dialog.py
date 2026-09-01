@@ -1,23 +1,51 @@
-# -*- coding: utf-8 -*-
-from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout,
-                                 QLineEdit, QDialogButtonBox,
-                                 QCheckBox, QGroupBox, QPushButton,
-                                 QListWidget, QListWidgetItem, QHBoxLayout,
-                                 QMessageBox, QLabel, QFormLayout,
-                                 QGridLayout, QScrollArea, QFrame, QWidget)
-from qgis.PyQt.QtCore import Qt, QSettings
-from qgis.core import (QgsTask, QgsApplication,
-                       QgsMessageLog, Qgis, QgsAuthMethodConfig)
+﻿# -*- coding: utf-8 -*-
+from qgis.core import Qgis, QgsApplication, QgsAuthMethodConfig, QgsMessageLog, QgsTask
 from qgis.gui import QgsDateEdit
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QFrame,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 from qgis.utils import iface
-from .amcr_codelists import (OBDOBI, TYP_AKCE, KRAJE, AREAL, ORGANIZACE,
-                             OKRESY, KATASTRY, VEDOUCI, PIAN_PRESNOST,
-                             TYP_LOKALITY, DRUH_LOKALITY, JISTOTA,
-                             LOKALITA_ZACHOVALOST, PRISTUPNOST,
-                             NALEZ_KATEGORIE, DRUH_NALEZU, SPECIFIKACE,
-                             NALEZOVE_OKOLNOSTI, NALEZCE,
-                             download_heslare, refresh_globals)
 
+from .amcr_codelists import (
+    AREAL,
+    DRUH_LOKALITY,
+    DRUH_NALEZU,
+    JISTOTA,
+    KATASTRY,
+    KRAJE,
+    LOKALITA_ZACHOVALOST,
+    NALEZ_KATEGORIE,
+    NALEZCE,
+    NALEZOVE_OKOLNOSTI,
+    OBDOBI,
+    OKRESY,
+    ORGANIZACE,
+    PIAN_PRESNOST,
+    PRISTUPNOST,
+    SPECIFIKACE,
+    TYP_AKCE,
+    TYP_LOKALITY,
+    VEDOUCI,
+    download_heslare,
+    refresh_globals,
+)
 
 # The date filter of the API requires both bounds; a one-sided range makes
 # the server fail with an ArrayIndexOutOfBoundsException and '*' is not

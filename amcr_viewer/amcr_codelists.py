@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import os
 import csv
-import requests
-import xml.etree.ElementTree as ET  # nosec
+import os
 import time
-from qgis.core import QgsMessageLog, Qgis
+import xml.etree.ElementTree as ET  # nosec
+
+import requests
+from qgis.core import Qgis, QgsMessageLog
 
 # Define paths for the plugin and its codelists directory
 PLUGIN_DIR = os.path.dirname(__file__)

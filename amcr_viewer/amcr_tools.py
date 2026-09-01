@@ -1,14 +1,23 @@
-# -*- coding: utf-8 -*-
-from qgis.core import (QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry,
-                       QgsField, QgsCoordinateReferenceSystem,
-                       QgsCoordinateTransform, QgsWkbTypes, Qgis,
-                       QgsMessageLog)
-from qgis.utils import iface
-from qgis.PyQt.QtCore import Qt, QMetaType
-from qgis.PyQt.QtWidgets import QApplication
-from qgis.PyQt.QtGui import QCursor
-import requests
+﻿# -*- coding: utf-8 -*-
 import json
+
+import requests
+from qgis.core import (
+    Qgis,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsFeature,
+    QgsField,
+    QgsGeometry,
+    QgsMessageLog,
+    QgsProject,
+    QgsVectorLayer,
+    QgsWkbTypes,
+)
+from qgis.PyQt.QtCore import QMetaType, Qt
+from qgis.PyQt.QtGui import QCursor
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.utils import iface
 
 # Global cache to store translated terms from the Digital Archive
 TRANSLATIONS = {}

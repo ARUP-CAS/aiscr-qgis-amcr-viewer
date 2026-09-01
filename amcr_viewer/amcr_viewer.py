@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QUrl
-from qgis.PyQt.QtGui import QIcon, QDesktopServices
-from qgis.PyQt.QtWidgets import QMenu, QAction, QToolButton, QDialog
-from qgis.core import Qgis
-
-from .amcr_tools import load_amcr_data, login_to_api
-from .amcr_dialog import AmcrFilterDialog, LoginDialog
 import os.path
+
+from qgis.core import Qgis
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QTranslator, QUrl
+from qgis.PyQt.QtGui import QDesktopServices, QIcon
+from qgis.PyQt.QtWidgets import QAction, QDialog, QMenu, QToolButton
+
+from .amcr_dialog import AmcrFilterDialog, LoginDialog
+from .amcr_tools import load_amcr_data, login_to_api
 
 
 class AmcrViewer:
