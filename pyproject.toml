@@ -1,0 +1,44 @@
+# Konfigurace lintů pro tento repozitář.
+#
+# Plugin se nedistribuuje jako Python balíček (do QGISu jde ZIP složky
+# amcr_viewer/), takže tenhle soubor nic nebalí ani neinstaluje – slouží
+# jen k tomu, aby ruff choval stejně v CI, lokálně i za rok. Bez explicitní
+# konfigurace se výchozí sada pravidel mezi verzemi ruffu mění.
+#
+# Konfigurace flake8 je záměrně jinde: v amcr_viewer/.flake8, protože ji
+# musí najít i scanner na plugins.qgis.org.
+
+[tool.ruff]
+line-length = 79
+# QGIS 3.44 běží na Pythonu 3.9 a novějším
+target-version = "py39"
+# Generovaný výstup pyrcc, "All changes made in this file will be lost"
+extend-exclude = ["amcr_viewer/resources.py"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle – chyby
+    "W",    # pycodestyle – varování
+    "F",    # pyflakes
+    "I",    # pořadí importů
+    "UP",   # zastaralé konstrukce
+    "B",    # bugbear
+    "C4",   # comprehensions
+    "SIM",  # zjednodušení
+    "RET",  # návratové hodnoty
+    "BLE",  # holé except
+]
+ignore = [
+    # Hlavička "# -*- coding: utf-8 -*-" je konvence šablony Plugin
+    # Builderu a drží se v celém projektu jednotně.
+    "UP009",
+    # "except Exception" je v pluginu záměr: výjimka nesmí propadnout do
+    # QGISu, chyba se uživateli ukáže v liště zpráv.
+    "BLE001",
+    # Obě dotčená místa mají ke každé větvi vysvětlující komentář,
+    # sloučením do jednoho výrazu by se čitelnost zhoršila.
+    "SIM103",
+    # contextlib.suppress() by kvůli jednomu místu přidal import a odsunul
+    # komentář, který vysvětluje, proč tam ta výjimka je.
+    "SIM105",
+]

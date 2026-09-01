@@ -65,7 +65,7 @@ def parse_codelist_file(filename, target_dict=None):
 
     try:
         # Open the file using standard UTF-8 encoding
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=';')
 
             # Skip the CSV header row
