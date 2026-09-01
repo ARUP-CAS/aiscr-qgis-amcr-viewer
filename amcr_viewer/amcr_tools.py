@@ -34,7 +34,7 @@ archeologicky_zaznam_l = [
 typ_dat_vocab = {
     "akce": "Akce",
     "lokalita": "Lokalita",
-    "samostatny_nalez": "PAS",
+    "samostatny_nalez": "Samostatný nález",
 }
 
 
@@ -432,7 +432,7 @@ def load_amcr_data(canvas, bb, filters=None,
         # to a list of its associated metadata
         pian_lookup = {}
         target_pian_ids = set()
-        actions_with_geom = 0
+        entries_with_geom = 0
 
         # Helper: safely extract a single value
         def g(doc, key, default=""):
@@ -460,7 +460,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 if only_projektove_akce and not doc.get("akce_projekt", False):
                     continue
 
-                actions_with_geom += 1
+                entries_with_geom += 1
 
                 # Extract protected fields ('or {}' – key may hold None)
                 az_chranene = doc.get('az_chranene_udaje') or {}
@@ -673,7 +673,7 @@ def load_amcr_data(canvas, bb, filters=None,
 
             iface.messageBar().pushMessage(
                 "AMCR",
-                f"Záznamů: {len(docs)} (z toho {actions_with_geom} s mapou). "
+                f"Záznamů: {len(docs)} (z toho {entries_with_geom} s mapou). "
                 f"Stahuji {total_pians} unikátních geometrií, "
                 f"vykresluji {target_pian_ids_count} geometrií...",
                 level=Qgis.MessageLevel.Info
@@ -723,7 +723,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 if not sn_loc:
                     continue
 
-                actions_with_geom += 1
+                entries_with_geom += 1
 
                 sn_id = g(
                     doc,
@@ -839,19 +839,20 @@ def load_amcr_data(canvas, bb, filters=None,
         archeologicky_zaznam = typ_dat_vocab[typ_dat]
 
         # Initialize three layers for different geometry types (S-JTSK CRS)
+        archeologicky_zaznam_esc = archeologicky_zaznam.replace(" ", "_")
         vl_poly = QgsVectorLayer(
             "Polygon?crs=epsg:5514",
-            f"AMCR_{archeologicky_zaznam}_Polygony",
+            f"AMCR_{archeologicky_zaznam_esc}_Polygony",
             "memory"
         )
         vl_line = QgsVectorLayer(
             "LineString?crs=epsg:5514",
-            f"AMCR_{archeologicky_zaznam}_Linie",
+            f"AMCR_{archeologicky_zaznam_esc}_Linie",
             "memory"
         )
         vl_point = QgsVectorLayer(
             "Point?crs=epsg:5514",
-            f"AMCR_{archeologicky_zaznam}_Body",
+            f"AMCR_{archeologicky_zaznam_esc}_Body",
             "memory"
         )
         layers = [vl_poly, vl_line, vl_point]
@@ -1106,7 +1107,7 @@ def load_amcr_data(canvas, bb, filters=None,
             if f:
                 L.dataProvider().addFeatures(f)
                 L.updateExtents()
-                L.setName(f"AMCR_{archeologicky_zaznam}_{n}")
+                L.setName(f"AMCR_{archeologicky_zaznam_esc}_{n}")
                 proj.addMapLayer(L)
                 added += len(f)
 
@@ -1125,7 +1126,7 @@ def load_amcr_data(canvas, bb, filters=None,
         elif added > 0:
             iface.messageBar().pushMessage(
                 "AMCR",
-                f"Hotovo. Záznamů: {len(docs)} (s geom: {actions_with_geom}). "
+                f"Hotovo. Záznamů: {len(docs)} (s geom: {entries_with_geom}). "
                 f"Vykresleno: {added} prvků.",
                 level=Qgis.MessageLevel.Success
             )
