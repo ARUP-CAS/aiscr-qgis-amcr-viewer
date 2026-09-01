@@ -8,7 +8,7 @@ name=AMČR Viewer
 qgisMinimumVersion=3.44.0
 qgisMaximumVersion=4.99.0
 description=Viewing and downloading the AMČR data.
-version=2.1.0
+version=2.1.1
 author=David Spáčil
 email=spacil@arub.cz
 
@@ -23,8 +23,8 @@ repository=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
-  Plný seznam změn v češtině je dostupný zde: https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases/tag/v2.1.0
-  v2.1.0 (2026-09-01)
+  Plný seznam změn v češtině je dostupný zde: https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases/tag/v2.1.1
+  v2.1.1 (2026-09-01)
    * Added download of Individual finds (PAS), including a dedicated menu entry
    * Added filtering by date
    * Added filtering of project fieldwork events and a Project column in the attribute table
