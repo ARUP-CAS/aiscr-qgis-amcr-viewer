@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from qgis.core import (QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry,
                        QgsField, QgsCoordinateReferenceSystem,
                        QgsCoordinateTransform, QgsWkbTypes, Qgis,
@@ -1138,11 +1138,11 @@ def load_amcr_data(canvas, bb, filters=None,
                         if geom.isGeosValid():
                             t = geom.type()
                             target_list = None
-                            if t == QgsWkbTypes.PolygonGeometry:
+                            if t == QgsWkbTypes.GeometryType.PolygonGeometry:
                                 target_list = feats_p
-                            elif t == QgsWkbTypes.LineGeometry:
+                            elif t == QgsWkbTypes.GeometryType.LineGeometry:
                                 target_list = feats_l
-                            elif t == QgsWkbTypes.PointGeometry:
+                            elif t == QgsWkbTypes.GeometryType.PointGeometry:
                                 target_list = feats_pt
 
                             if target_list is None:
@@ -1227,11 +1227,11 @@ def load_amcr_data(canvas, bb, filters=None,
                         if geom.isGeosValid():
                             t = geom.type()
                             target_list = None
-                            if t == QgsWkbTypes.PolygonGeometry:
+                            if t == QgsWkbTypes.GeometryType.PolygonGeometry:
                                 target_list = feats_p
-                            elif t == QgsWkbTypes.LineGeometry:
+                            elif t == QgsWkbTypes.GeometryType.LineGeometry:
                                 target_list = feats_l
-                            elif t == QgsWkbTypes.PointGeometry:
+                            elif t == QgsWkbTypes.GeometryType.PointGeometry:
                                 target_list = feats_pt
 
                             if target_list is None:

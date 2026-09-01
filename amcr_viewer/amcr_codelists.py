@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import os
 import csv
 import requests
@@ -90,7 +90,7 @@ def parse_codelist_file(filename, target_dict=None):
     except Exception as e:
         QgsMessageLog.logMessage(
             f"AMČR Codelist Read Error for {filename}: {e}",
-            "AMČR", Qgis.Critical)
+            "AMČR", Qgis.MessageLevel.Critical)
 
     return target_dict
 
@@ -216,7 +216,7 @@ def fetch_set(base_url, internal_name, api_set, task=None):
         except Exception as e:
             QgsMessageLog.logMessage(
                 f"Chyba u setu {api_set}: {e}",
-                "AMČR", Qgis.Warning)
+                "AMČR", Qgis.MessageLevel.Warning)
             break
 
     return dataset
@@ -240,7 +240,7 @@ def download_heslare(task=None):
 
         QgsMessageLog.logMessage(
             f"Zpracovávám kategorii: {interni}...",
-            "AMČR", Qgis.Info)
+            "AMČR", Qgis.MessageLevel.Info)
 
         # Pass the task correctly to the updated fetch function
         data = fetch_set(base_url, interni, api_nazev, task=task)

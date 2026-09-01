@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout,
                                  QLineEdit, QDialogButtonBox,
                                  QCheckBox, QGroupBox, QPushButton,
@@ -38,7 +38,7 @@ _ACTIVE_TASKS = []
 
 class UpdateCodelistsTask(QgsTask):
     def __init__(self, description):
-        super().__init__(description, QgsTask.CanCancel)
+        super().__init__(description, QgsTask.Flag.CanCancel)
         self.success = False
         self.exception = None
 
@@ -59,18 +59,18 @@ class UpdateCodelistsTask(QgsTask):
             refresh_globals()
             QgsMessageLog.logMessage(
                 "Hesláře AMČR byly úspěšně aktualizovány.",
-                "AMČR", Qgis.Info
+                "AMČR", Qgis.MessageLevel.Info
             )
         else:
             if self.isCanceled():
                 QgsMessageLog.logMessage(
                     "Aktualizace heslářů byla zrušena.",
-                    "AMČR", Qgis.Warning
+                    "AMČR", Qgis.MessageLevel.Warning
                 )
             else:
                 QgsMessageLog.logMessage(
                     f"Chyba aktualizace: {self.exception}",
-                    "AMČR", Qgis.Critical
+                    "AMČR", Qgis.MessageLevel.Critical
                 )
 
 
