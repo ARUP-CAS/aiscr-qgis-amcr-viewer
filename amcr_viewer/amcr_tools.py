@@ -895,7 +895,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 QgsField("zachovalost", QMetaType.Type.QString),
             ]
 
-        cols.append(QgsField("Přístupnost", QMetaType.Type.QString))
+        cols.append(QgsField("pristupnost", QMetaType.Type.QString))
 
         # Use aliases for technical field names
         alias_map = {
@@ -929,6 +929,7 @@ def load_amcr_data(canvas, bb, filters=None,
             "komponenta_areal": "Areál",
             "komponenta_obdobi": "Období",
             "projekt": "Projekt",
+            "pristupnost": "Přístupnost"
         }
 
         if komponenty == "true":
