@@ -1,5 +1,11 @@
-﻿# -*- coding: utf-8 -*-
-from qgis.core import Qgis, QgsApplication, QgsAuthMethodConfig, QgsMessageLog, QgsTask
+# -*- coding: utf-8 -*-
+from qgis.core import (
+    Qgis,
+    QgsApplication,
+    QgsAuthMethodConfig,
+    QgsMessageLog,
+    QgsTask,
+)
 from qgis.gui import QgsDateEdit
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import (
