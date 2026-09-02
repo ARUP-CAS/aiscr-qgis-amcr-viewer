@@ -1,0 +1,41 @@
+name: Release PR Checks
+
+# Hlídá bump verze a changelog v okamžiku, kdy se release větev
+# version/vX.Y.Z slévá do main – tady poprvé jde skutečně o to, co se
+# vydá, a zapomenutý bump by se jinak dostal rovnou k tagu a releasu.
+#
+# Kontroly viz tests/check_version_bump.py: verze v metadata.txt musí jít
+# nahoru, první položka changelogu musí patřit nové verzi, CITATION.cff
+# musí mít stejnou verzi (a posunuté date-released) a název větve musí
+# odpovídat verzi, kterou nese.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  version-bump:
+    name: Kontrola verze a changelogu
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'version/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Verze a changelog
+        run: |
+          python3 tests/check_version_bump.py \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.head_ref }}"
