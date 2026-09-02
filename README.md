@@ -1,182 +1,433 @@
-# AMCR Viewer: QGIS Plugin Documentation
+# AMČR Viewer — QGIS plugin
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![QGIS 3.44 – 4.x](https://img.shields.io/badge/QGIS-3.44%20%E2%80%93%204.x-589632.svg)](https://qgis.org/)
+[![Code quality](https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/actions/workflows/code_quality.yml/badge.svg)](https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/actions/workflows/code_quality.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18609813.svg)](https://doi.org/10.5281/zenodo.18609813)
 
-**Platform:** QGIS 3.44.0–4.99.0
+**AMČR Viewer** queries the Digital Archive of the Archaeological Map of the
+Czech Republic (AMČR) and turns the result into ordinary QGIS vector layers.
+It removes the manual export/import round trip: you filter the archive from
+inside QGIS and the matching records arrive as point, line and polygon layers
+with a full attribute table.
 
-**Module Type:** Data Acquisition & Visualization
-
-**Source Data:** Archaeological Map of the Czech Republic (AIS CR)
+| | |
+| --- | --- |
+| **Source data** | [Digital Archive AMČR](https://digiarchiv.aiscr.cz/) (AIS CR) |
+| **Supported QGIS** | 3.44.0 – 4.99.0 (Qt 5 and Qt 6) |
+| **Output** | temporary `memory` layers, S-JTSK / **EPSG:5514** |
+| **Access** | anonymous by default; optional login for non-public records |
+| **UI language** | Czech |
+| **Licence** | GPL-3.0 |
 
 ---
 
-## 1. Overview
+## 1. What it can download
 
-**AMCR Viewer** is a QGIS plugin designed to facilitate direct access to the Digital Archive of the Archaeological Map of the Czech Republic (AMČR). It allows researchers to **query, retrieve, and visualize *Fieldwork events* and *Sites* data (metadata and geometry) directly within the GIS environment**, eliminating the need to manually export data from the web interface. Both *Fieldwork events* and *Sites* layers may optionally include component-level data (period and activity area) embedded directly in the attribute table. The plugin supports both **anonymous (public) access** and **authenticated access** for users with an AMČR account.
+The plugin covers three AMČR record types. Each has its own menu entry, its
+own set of filters and its own attribute table.
 
-### Key Features
+| Entity | Menu entry | What it is |
+| --- | --- | --- |
+| **Fieldwork events** (`akce`) | *Stáhnout data akcí* | Records of archaeological finds and observations tied to a place, a responsible body and a time of execution. |
+| **Sites** (`lokalita`) | *Stáhnout data lokalit* | Records tied to a site, its characteristic archaeological manifestation and presumed function. |
+| **Individual finds** (`samostatny_nalez`) | *Stáhnout data samostatných nálezů* | Records of individual movable finds reported through **AMČR-PAS**, the portal for amateur collaborators. |
 
-* **Spatial Querying:** Option to filter records based on the current map canvas extent (Bounding Box).
-* **Advanced Attribute Filtering:** Supports multi-criteria filtering using controlled vocabularies.
-* **Dynamic Geometry Retrieval:** Automatically downloads and categorizes spatial data into Point, Line, and Polygon layers.
-* **Semantic Interoperability:** Automatically translates internal system codes into human-readable labels using the AIS CR API.
-* **Authenticated Access:** Users with an AMČR account can log in to access non-public records.
+Fieldwork events and Sites can additionally carry **component** data (period
+and activity area) directly in the attribute table. Individual finds have no
+components — period and dating are attributes of the find itself.
 
-## 2. Installation Guide
+### Key features
 
-**Install the latest version of the plugin from the QGIS plugin repository.**
+* **Spatial querying** — restrict the query to the current map canvas extent.
+* **Multi-criteria attribute filtering** driven by AMČR controlled
+  vocabularies (*hesláře*), with a searchable multi-select picker per filter.
+* **Date range filtering** for fieldwork start/end and for the date of finding.
+* **Automatic geometry retrieval**, split into Point, Line and Polygon layers
+  and reprojected to S-JTSK.
+* **Human-readable labels** — internal codes (`HES-xxxxxx`) are translated via
+  the AIS CR translation dictionary.
+* **Authenticated access** — an AMČR account unlocks non-public records;
+  credentials are stored encrypted in the QGIS Authentication Manager.
 
-**OR** (*in case you need older version*)
+---
 
-1. *Obtain the [plugin distribution package](https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases) (ZIP archive containing the `amcr_viewer` directory).*
-2. *Launch QGIS.*
-3. *Navigate to Plugins → Manage and Install Plugins...*
-4. *Select the Install from ZIP tab.*
-5. *Locate the source ZIP file and click Install Plugin.*
-6. *Upon successful installation, the AMCR Viewer button will appear in the toolbar.*
+## 2. Installation
 
-## 3. User Manual
+### From the QGIS plugin repository (recommended)
 
-### 3.1 Authentication (Optional)
+*Plugins → Manage and Install Plugins… → search for* **AMČR Viewer** *→
+Install*.
 
-By default, the plugin accesses only publicly available records (accessibility = anonymous). To access non-public data, log in using your AMČR account:
+### From a ZIP archive (older versions, or a build from source)
 
-* Click the dropdown arrow on the AMCR Viewer toolbar button and select **Přihlásit se**.
-* Enter your e-mail and password. Credentials are encrypted and stored securely in the **QGIS Authentication Manager** (DPAPI on Windows, Keychain on macOS, encrypted SQLite on Linux).
-* Stored credentials are reused automatically across sessions. To update or remove them, open the login dialog again.
+1. Download a [release package](https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases)
+   (a ZIP containing the `amcr_viewer` directory).
+2. In QGIS go to *Plugins → Manage and Install Plugins… → Install from ZIP*.
+3. Select the archive and click *Install Plugin*.
 
-### 3.2 Data Retrieval
+Every successful CI run also publishes a ready-to-install `amcr_viewer.zip`
+as a build artifact, which is handy for testing a branch before release.
 
-To initiate a search query, click either the **Stáhnout data akcí** or the **Stáhnout data lokalit** option from the dropdown menu. The filter dialog provides the following options. Shown options vary based on the chosen tool.
+After installation the **AMČR Viewer** button appears in the toolbar as a
+dropdown.
 
-* **Spatial Filter:** *Checkbox "Omezit vyhledávání rozsahem okna":* If checked, the query is restricted to the geographical area currently visible in the QGIS canvas. If unchecked, the query searches the entire database (use with caution regarding data volume).
-* **Positive findings only:** If checked, only *PIANs* belonging to Documentation units marked as "Type of evidence" = "positive" are included. *(Fieldwork events only.)*
+### Requirements
 
-* **Attribute Filters:**
-  * The dialog uses "Picker" widgets for controlled vocabularies (common: Region, District, Cadastral area, Period, Activity Area, *PIAN* accuracy, Accessibility; *events* related: Organisation, Researcher, Event type; *sites* related: Site type and class, Level of confidence, State of preservation).
-  * Click **Vybrat...** to open a searchable selection window. Multiple values can be selected simultaneously (Logic: OR).
+The plugin needs the **`requests`** library. It ships with the QGIS installers
+for Windows and macOS. On Linux distribution packages it may have to be
+installed separately (e.g. `python3-requests`).
 
-* **Codelists (Hesláře):**
-  * Controlled vocabularies are downloaded from the AMČR OAI-PMH API and cached locally in `codelists/heslar.csv`.
-  * To refresh all codelists, click the **Aktualizovat hesláře 🔄** button in the filter dialog. This runs as a background task and may take a few minutes.
+---
 
-* **Components:** Check **Načíst komponenty** to include period and activity area data directly in the output layers.
-  > ⚠ When components are loaded, spatial features are duplicated — each feature corresponds to one component. Spatial analyses (areas, counts) may be inaccurate.
+## 3. User manual
 
-* If no filter is used, all accessible Fieldwork events/PIANs are returned (the number of records is capped at 20 000; it is advisable to set at least one filter).
+### 3.1 Toolbar and menu
 
-For a more in-depth tutorial refer to the [AMČR Documentation](https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html) (only in Czech).
+The toolbar button is a dropdown; the default action is *Stáhnout data akcí*.
 
-### 3.3 Layer Structure & Attributes
-
-Upon successful retrieval, the plugin generates up to three temporary memory layers:
-
-1. **AMCR\_[Akce|Lokalita]\_Polygony**
-2. **AMCR\_[Akce|Lokalita]\_Linie**
-3. **AMCR\_[Akce|Lokalita]\_Body**
-
-Layers are only created if the query returns features of the corresponding geometry type. All layers share the same attribute schema.
-
-#### 3.3.1 Common fields
-
-| Field | Description |
+| Menu entry | Action |
 | --- | --- |
-| pian | PIAN (spatial identifier) ID |
-| presnost | Spatial deviation \[units/tens/hundreds of meters/defined by cadastre\] |
-| pian\_typ | \[point/line/polygon\] |
-| dj | Documentation unit ID |
-| typ\_dj | \[trench/event part/whole event/cadastral territory\] |
-| definicni\_body | Feature centroid in WGS-84 coordinate system |
-| akce / lokalita | Fieldwork event / Site ID |
-| odkaz\_do\_digiarchivu | Link to the record in the Digital Archive |
-| okres | District |
-| katastr | Main cadastral area |
-| dalsi\_katastry | Other cadastral areas, if the event extends beyond the main cadastre |
-| Přístupnost | Record accessibility \[A/B/C/D\] |
+| *Stáhnout data akcí* | Opens the filter dialog for Fieldwork events. |
+| *Stáhnout data samostatných nálezů* | Opens the filter dialog for Individual finds. |
+| *Stáhnout data lokalit* | Opens the filter dialog for Sites. |
+| *Přihlásit se* | Opens the login dialog (see 3.2). |
+| *Nápověda AMČR Help* | Opens the online documentation in a browser. |
 
-#### 3.3.2 Fields related to *Fieldwork events*
+### 3.2 Authentication (optional)
 
-| Field | Description |
+By default the plugin sees only publicly accessible records. Logging in with
+an AMČR account extends the result set to everything the account is allowed
+to see.
+
+* The credentials are **verified against the API before they are stored** —
+  a wrong password never reaches the Authentication Manager. If the server is
+  unreachable, the plugin offers to store them unverified.
+* They are then saved encrypted in the **QGIS Authentication Manager** (DPAPI
+  on Windows, Keychain on macOS, encrypted SQLite on Linux). QGIS will ask for
+  its master password.
+* Stored credentials are reused across QGIS sessions. If the session cookie
+  expires mid-download, the plugin re-authenticates automatically and repeats
+  the request.
+* Reopening the login dialog lets you change the e-mail (leave the password
+  blank to keep the stored one) or remove the credentials entirely
+  (*Odebrat uložené přihlašovací údaje*).
+
+### 3.3 The filter dialog
+
+Filters of different categories are combined with **AND**; multiple values
+inside one filter are combined with **OR**. A filter left empty means "no
+restriction". Click *Vybrat…* to open a searchable, checkable list.
+
+#### Availability per entity
+
+| Filter (Czech UI label) | Events | Sites | Ind. finds | API parameter |
+| --- | :---: | :---: | :---: | --- |
+| Omezit vyhledávání rozsahem okna | ✓ | ✓ | ✓ | `loc_rpt` |
+| Pouze pozitivní zjištění | ✓ | — | — | `posevidence` |
+| Pouze projektové akce | ✓ | — | — | `proj_akce` |
+| Kraj | ✓ | ✓ | ✓ | `f_kraj` |
+| Okres | ✓ | ✓ | ✓ | `f_okres` |
+| Katastr | ✓ | ✓ | ✓ | `f_katastr` |
+| Přístupnost | ✓ | ✓ | ✓ | `pristupnost` |
+| PIAN – přesnost | ✓ | ✓ | — | `f_pian_presnost` |
+| Organizace | ✓ | — | ✓ | `f_organizace` |
+| Vedoucí výzkumu | ✓ | — | — | `f_vedouci` |
+| Typ výzkumu | ✓ | — | — | `f_typ_vyzkumu` |
+| Datum — *Zahájení* / *Ukončení* | ✓ | — | — | `akce_datum_zahajeni`, `akce_datum_ukonceni` |
+| Lokalita – typ | — | ✓ | — | `f_typ_lokality` |
+| Lokalita – druh | — | ✓ | — | `f_druh_lokality` |
+| Lokalita – jistota určení | — | ✓ | — | `f_jistota` |
+| Lokalita - stav dochování | — | ✓ | — | `f_lokalita_zachovalost` |
+| Období | ✓ | ✓ | ✓ | `f_obdobi` |
+| Kategorie nálezu | — | — | ✓ | `f_kategorie` |
+| Druh nálezu | — | — | ✓ | `f_druh_nalezu` |
+| Specifikace nálezu | — | — | ✓ | `f_specifikace` |
+| Okolnosti nálezu | — | — | ✓ | `f_nalezove_okolnosti` |
+| Nálezce | — | — | ✓ | `f_nalezce` |
+| Datum nálezu | — | — | ✓ | `samostatny_nalez_datum_nalezu` |
+| Areál | ✓ | ✓ | — | `f_areal` |
+| Načíst komponenty | ✓ | ✓ | — | — |
+
+#### Spatial restriction
+
+*Omezit vyhledávání rozsahem okna* is **checked by default**. The canvas
+extent is transformed from the project CRS to WGS-84 and sent as a bounding
+box. Unchecking it queries the whole database — do so with an attribute
+filter in place, otherwise you will hit the record cap (see 4.5).
+
+#### PIAN accuracy has a non-empty default
+
+> ⚠ *PIAN – přesnost* is the one filter that is **pre-selected**. For
+> Fieldwork events and Sites the dialog starts with *odchylka jednotky metrů*,
+> *odchylka desítky metrů* and *odchylka stovky metrů* checked, so an
+> otherwise untouched dialog already sends `f_pian_presnost`. Records
+> localised only to a cadastral territory are excluded until you open the
+> picker and add that level yourself.
+
+#### Date ranges
+
+Each date block has a *from* and a *to* picker; an empty picker shows
+*neomezeno* and means an open bound. The API rejects a one-sided range, so the
+plugin substitutes a sentinel (`0001-01-01` / `9999-12-31`) for the empty
+side. A block with **both** pickers empty adds no filter at all.
+
+A reversed range (start later than end) is refused when you confirm the
+dialog — such a query would come back empty and would be indistinguishable
+from a genuinely empty result.
+
+#### Codelists (hesláře)
+
+The controlled vocabularies behind the pickers are cached in
+`amcr_viewer/codelists/heslar.csv` and ship with the plugin. Click
+**Aktualizovat hesláře 🔄** to rebuild the file from the live APIs; it runs as
+a background QGIS task with a progress bar and takes a few minutes.
+
+Most codelists come from the AMČR **OAI-PMH** endpoint. Two are built from
+Digiarchiv **search facets** instead, because they are lists of people rather
+than a published vocabulary: *Vedoucí výzkumu* (`f_vedouci`, faceted over
+fieldwork events) and *Nálezce* (`f_nalezce`, faceted over individual finds).
+
+#### Components
+
+Check **Načíst komponenty** (Events and Sites only) to bring the period and
+activity area of each component into the output layer.
+
+> ⚠ With components loaded, spatial features are **duplicated** — one feature
+> per component. Areas and feature counts computed on such a layer are
+> misleading.
+
+Note that *Období* and *Areál* also act as component filters even when the
+box is unchecked: a documentation unit whose components match nothing is
+dropped from the result.
+
+### 3.4 Output layers
+
+Up to three temporary `memory` layers are created per download, in **S-JTSK
+(EPSG:5514)**:
+
+* `AMCR_Akce_Body` / `_Linie` / `_Polygony`
+* `AMCR_Lokalita_Body` / `_Linie` / `_Polygony`
+* `AMCR_Samostatný_nález_Body` / `_Linie` / `_Polygony`
+
+A layer is only created if the query actually returned that geometry type.
+All layers of one download share the same attribute schema. Field names are
+ASCII; the human-readable names visible in the attribute table are QGIS field
+aliases.
+
+> Memory layers are **not persistent** — export them (GeoPackage, Shapefile,
+> …) before closing the project.
+
+Geometry is taken from the record's S-JTSK WKT when present; otherwise the
+WGS-84 fallback is reprojected. Invalid geometries are repaired rather than
+dropped.
+
+The tables below group the fields by meaning. In the layer they appear in the
+order *common → entity-specific → `pristupnost` → component fields*.
+
+#### Common fields
+
+| Field | Alias | Description |
+| --- | --- | --- |
+| `pian` | PIAN | Spatial unit (PIAN) identifier. *Events and Sites only.* |
+| `presnost` | Přesnost | Spatial accuracy \[units / tens / hundreds of metres / defined by cadastre\]. *Events and Sites only.* |
+| `pian_typ` | PIAN – typ | \[point / line / polygon\]. *Events and Sites only.* |
+| `dj` | Dokumentační jednotka | Documentation unit identifier. *Events and Sites only.* |
+| `typ_dj` | Typ dokumentační jednotky | \[trench / event part / whole event / cadastral territory\]. *Events and Sites only.* |
+| `akce` / `lokalita` / `samostatny_nalez` | Akce / Lokalita / Samostatný nález | Record identifier. |
+| `definicni_body` | Definiční bod(y) (WGS-84) | Feature centroid(s) in WGS-84. |
+| `odkaz_do_digiarchivu` | Odkaz do Digitálního archivu AMČR | Permalink to the record. |
+| `okres` | Okres | District. |
+| `katastr` | Katastr | Main cadastral area. |
+| `dalsi_katastry` | Další katastry | Other cadastral areas. *Always empty for individual finds.* |
+| `pristupnost` | Přístupnost | Record accessibility \[A/B/C/D\]. |
+
+#### Fieldwork event fields
+
+| Field | Alias | Description |
+| --- | --- | --- |
+| `akce_lokalizace` | Akce – lokalizace | Verbal description of the location. |
+| `vedouci` | Vedoucí akce | Main fieldwork manager. |
+| `organizace` | Organizace | Organisation conducting the research. |
+| `specifikace_data` | Specifikace data | \[exact date / exact years / sometime in years\]. |
+| `zahajeni` | Datum zahájeni | Start date. |
+| `ukonceni` | Datum ukončení | End date. |
+| `hlavni_typ` | Hlavní typ | Primary research method. |
+| `vedlejsi_typ` | Vedlejší typ | Secondary research methods. |
+| `zjisteni` | Zjištění | Whether the **documentation unit** is positive or negative evidence \[Pozitivní / Negativní\]. |
+| `nahrazuje_NZ` | Akce – nahrazuje NZ | Replaces a fieldwork report \[Ano / Ne\]. |
+| `projekt` | Projekt | Identifier of the related project, if any. |
+
+#### Site fields
+
+| Field | Alias | Description |
+| --- | --- | --- |
+| `nazev_lokality` | Název lokality | Site name. |
+| `popis_lokality` | Popis lokality | Site description. |
+| `typ_lokality` | Typ lokality | Site classification by definition method. |
+| `druh_lokality` | Druh lokality | Site classification by the nature of the field relics. |
+| `zachovalost` | Zachovalost | State of preservation. |
+
+#### Individual find fields
+
+| Field | Alias | Description |
+| --- | --- | --- |
+| `projekt` | Projekt | Identifier of the related project. |
+| `nalezce` | Nálezce | Finder. |
+| `datum` | Datum nálezu | Date of finding. |
+| `okolnosti` | Nálezové okolnosti | Finding context. |
+| `hloubka_cm` | Hloubka (cm) | Depth below surface. |
+| `lokalizace` | Lokalizace | Verbal description of the find spot. |
+| `obdobi` | Období | Period. |
+| `presna_datace` | Přesná datace | Precise dating, if known. |
+| `nalez` | Nález | Find class. |
+| `material` | Materiál | Find specification / material. |
+| `pocet` | Počet předmětů | Number of objects. |
+| `poznamka` | Poznámka/bližší popis | Note or closer description. |
+| `pred_org` | Předáno organizaci | Organisation the find was handed over to. |
+| `evidencni` | Evidenční číslo | Reference number. |
+
+#### Component fields (only with *Načíst komponenty*)
+
+| Field | Alias | Description |
+| --- | --- | --- |
+| `komponenta` | Komponenta | Component identifier. |
+| `komponenta_areal` | Areál | Activity area \[settlement / burial area / field / …\]. |
+| `komponenta_obdobi` | Období | Period \[Neolithic / High Middle Ages–Modern Period / …\]. |
+
+### 3.5 When a query returns nothing
+
+Progress and errors are written to the QGIS *Messages* panel, tab **AMČR**
+(login goes to **AMČR login**). The log contains the **exact request URL**,
+so a suspicious query can be replayed in a browser instead of being
+reconstructed from the code. Distinct messages tell apart an empty result, an
+API error, a network failure and a result without any geometry.
+
+Only one download can run at a time; starting a second one while the first is
+still running is refused with a message.
+
+For a step-by-step tutorial see the
+[AMČR documentation](https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html)
+(Czech only).
+
+---
+
+## 4. Technical notes
+
+The plugin is plain **Python 3** with **`requests`** for HTTP. The GUI is
+built through the **`qgis.PyQt`** compatibility layer rather than importing
+`PyQt5`/`PyQt6` directly, which is what lets a single source tree run on both
+QGIS 3.44 (Qt 5) and QGIS 4 (Qt 6). Every enum is referenced in its scoped
+form (`Qt.CheckState.Checked`, …), as required by Qt 6.
+
+### 4.1 Repository layout
+
+```
+amcr_viewer/            the plugin package (this is what gets zipped)
+  __init__.py           classFactory() entry point for QGIS
+  amcr_viewer.py        toolbar/menu integration, login flow, dispatch
+  amcr_dialog.py        AmcrFilterDialog, FilterableSelectionDialog,
+                        LoginDialog, UpdateCodelistsTask
+  amcr_tools.py         API access, pagination, parsing, layer building
+  amcr_codelists.py     codelist download and CSV cache
+  codelists/heslar.csv  cached controlled vocabularies
+  i18n/                 Qt translation files
+  *.png                 toolbar and menu icons
+  resources.py          generated by pyrcc, currently unused
+  metadata.txt          plugin metadata and changelog
+  .flake8               lint config, read by the plugins.qgis.org scanner
+tests/
+  check_sources.py      source hygiene checks (no QGIS needed)
+  smoke_test.py         loads the plugin in a real, headless QGIS
+.github/workflows/      CI (code quality, release packaging)
+pyproject.toml          ruff configuration
+AGENTS.md               contributor and AI-agent guidelines
+```
+
+### 4.2 API endpoints
+
+| Purpose | Endpoint | Notes |
+| --- | --- | --- |
+| Login | `POST https://digiarchiv.aiscr.cz/api/user/login` | Returns a session cookie. Errors arrive with HTTP 200 and an `error` key. |
+| Search | `GET https://digiarchiv.aiscr.cz/api/search/query` | `entity=akce\|lokalita\|samostatny_nalez\|pian`, `mapa=true`, paginated. |
+| Translations | `GET https://digiarchiv.aiscr.cz/api/assets/i18n/cs.json` | Code → Czech label; cached in memory for the session. |
+| Codelists | `GET https://api.aiscr.cz/2.2/oai` | OAI-PMH `ListRecords`, with resumption tokens. |
+
+### 4.3 Processing pipeline
+
+1. **Metadata** are paged in batches of **500** records, deduplicated by
+   `ident_cely`, until the reported `numFound` is reached or the cap is hit.
+2. Records **without geometry are skipped**; the rest are expanded into
+   documentation units and — if requested — into components.
+3. **Geometries** (PIAN) are fetched separately in batches of **200**
+   identifiers, to stay under URL length limits.
+4. Features are built, reprojected to EPSG:5514, sorted by geometry type and
+   added to the project in a single batch per layer.
+
+### 4.4 Data persistence
+
+* **Codelists** — `amcr_viewer/codelists/heslar.csv`, rewritten only when the
+  user asks for an update.
+* **Credentials** — QGIS Authentication Manager; the config ID is kept in
+  `QSettings` under `amcr_viewer/auth_config_id`.
+* **Layers** — `memory` only, lost when QGIS closes.
+
+### 4.5 Limits
+
+* **20 000 records** per query (safety cap; QGIS would otherwise freeze).
+* **500** records per metadata request, **200** identifiers per geometry
+  request.
+* With components loaded, one output feature equals one component, so a
+  single PIAN can appear several times in the layer.
+
+---
+
+## 5. Development
+
+Contributor rules, branch naming and the manual QGIS test checklist live in
+[`AGENTS.md`](./AGENTS.md).
+
+Every pull request runs
+[`.github/workflows/code_quality.yml`](.github/workflows/code_quality.yml),
+which mirrors what plugins.qgis.org checks on upload and adds what it does
+not:
+
+| Job | What it does |
 | --- | --- |
-| akce\_lokalizace | Verbal description of the event location |
-| vedouci | Main fieldwork manager |
-| organizace | Organisation conducting the research |
-| specifikace\_data | \[exact date/exact years/sometime in years\] |
-| zahajeni | Event start date |
-| ukonceni | Event end date |
-| hlavni\_typ | Primary research method |
-| vedlejsi\_typ | Secondary research method |
-| zjisteni | Did the research reveal archaeological contexts? \[positive/negative\] |
-| nahrazuje\_NZ | Replaces a fieldwork report? \[yes/no\] |
+| **Lint a bezpečnost** | `tests/check_sources.py`, bandit, detect-secrets, flake8, ruff |
+| **Kompatibilita s Qt6** | `pyqgis4-checker` in dry-run mode |
+| **Smoke test** | loads the plugin in headless QGIS — both `ltr` (Qt 5) and `stable` (Qt 6) |
+| **Balíček pluginu** | builds `amcr_viewer.zip`, asserts its contents, uploads it as an artifact |
 
-#### 3.3.3 Fields related to *Sites*
+Reproducing them locally:
 
-| Field | Description |
-| --- | --- |
-| nazev\_lokality | Site name |
-| popis\_lokality | Site description |
-| typ\_lokality | Site classification by definition method |
-| druh\_lokality | Site classification by the nature of identified field relics |
-| zachovalost | Site preservation state |
+```bash
+python3 tests/check_sources.py
+ruff check .
+flake8 --config amcr_viewer/.flake8 amcr_viewer/
+bandit -r amcr_viewer/
+docker run --rm -v "$PWD:/work:ro" -w /work --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp qgis/qgis:stable python3 tests/smoke_test.py
+```
 
-#### 3.3.4 Component fields (only when *Načíst komponenty* is checked)
+---
 
-| Field | Description |
-| --- | --- |
-| komponenta | Component ID |
-| komponenta\_areal | Activity area \[settlement/burial area/field/…\] |
-| komponenta\_obdobi | Period \[Neolithic/High Middle Ages–Modern Period/…\] |
+## 6. Links and resources
 
-## 4. Technical Architecture
+* [AMČR / Digiarchiv documentation](https://amcr-help.aiscr.cz/) (Czech only)
+* [AMČR Viewer tutorial](https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html)
+  (Czech only)
+* [AMČR-PAS](https://amcr-info.aiscr.cz/amcr-pas/) — the amateur collaborator
+  portal behind the Individual finds records
+* [Import/Export. Pluginy propojující QGIS s AMČR \[poster\]](https://zenodo.org/records/20504909)
+  (Czech only; describes v1.3.2)
 
-The plugin is developed in **Python 3** using the **PyQt6** framework for the GUI and the **Requests** library for HTTP communication.
+## Citing
 
-> **Note:** The `requests` library is bundled with the QGIS installers for Windows and macOS. On Linux (distribution packages), it may need to be installed separately (e.g. `python3-requests`).
+Cite the plugin using [`CITATION.cff`](./CITATION.cff) or the concept DOI
+[10.5281/zenodo.18609813](https://doi.org/10.5281/zenodo.18609813), which
+always resolves to the latest release.
 
-### 4.1 File Structure
+## Licence
 
-* `amcr_viewer.py`: Entry point; handles GUI integration, toolbar/menu setup, and login flow.
-* `amcr_dialog.py`: Manages the UI logic, including `AmcrFilterDialog`, `FilterableSelectionDialog`, and `LoginDialog`.
-* `amcr_tools.py`: Core logic module. Handles authentication, API requests, pagination, data parsing, and vector layer generation.
-* `amcr_codelists.py`: Manages local caching of controlled vocabularies (`codelists/heslar.csv`) downloaded via OAI-PMH.
-
-### 4.2 Data Flow & API Integration
-
-The plugin interacts with the following endpoints:
-
-1. **Login API:**
-   * Endpoint: `https://digiarchiv.aiscr.cz/api/user/login`
-   * Method: `POST`
-   * Returns a session cookie used for subsequent authenticated requests.
-   * Credentials are stored in the QGIS Authentication Manager; the session is restored automatically if it expires mid-download.
-
-2. **Search API (Solr):**
-   * Endpoint: `https://digiarchiv.aiscr.cz/api/search/query`
-   * Method: `GET`
-   * Parameters: `entity=akce|lokalita|pian`, `rows/page` (pagination), `mapa=true`.
-   * Logic: Paginated in batches of 500 records (metadata) and 200 records (geometries). A safety cap of 20 000 records is enforced.
-
-3. **Translation API:**
-   * Endpoint: `https://digiarchiv.aiscr.cz/api/assets/i18n/cs.json`
-   * Function: Retrieves the mapping between system codes (e.g. `HES-xxxx`) and Czech labels. Cached in memory for the session.
-
-4. **Codelists API (OAI-PMH):**
-   * Endpoint: `https://api.aiscr.cz/2.2/oai`
-   * Used for downloading controlled vocabularies (periods, regions, organisations, etc.) on demand.
-
-### 4.3 Data Persistence
-
-* **Vocabularies:** Stored in `codelists/heslar.csv`; updated on user request via the background task.
-* **Layers:** Output layers are created as `memory` layers. They are non-persistent and will be lost if QGIS is closed without saving.
-
-### 4.4 Constraints
-
-* **Record Limit:** A safety cap of 20 000 records is enforced.
-* **Batch Processing:** Geometry fetching is batched (200 IDs per request) to comply with URL length limitations and server load balancing.
-* **Component duplication:** When components are loaded, each output feature corresponds to one component rather than one documentation unit. A single PIAN may therefore appear multiple times in the layer.
-
-## 5. Links and resources
-
-* [AMCR/Digiarchive Documentation](https://amcr-help.aiscr.cz/) (only in Czech).
-* [AMCR Viewer tutorial](https://amcr-help.aiscr.cz/digiarchiv/qgis-viewer.html) (only in Czech).
-* [Import/Export. Pluginy propojující QGIS s AMČR \[poster\]](https://zenodo.org/records/20504909) (only in Czech; valid for v1.3.2).
+GPL-3.0 — see [`LICENSE`](./LICENSE).

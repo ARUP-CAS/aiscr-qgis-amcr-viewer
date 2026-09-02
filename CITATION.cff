@@ -25,5 +25,5 @@ abstract: >-
   the Digital archive of the Archaeological Map of the
   Czech Republic (https://digiarchiv.aiscr.cz/).
 license: GPL-3.0
-version: '2.0.0'
-date-released: '2026-06-05'
+version: '2.1.2'
+date-released: '2026-09-01'
