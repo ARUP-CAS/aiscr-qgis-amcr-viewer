@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import json
 
 import requests
@@ -680,6 +680,8 @@ def load_amcr_data(canvas, bb, filters=None,
                                 # One feature per component –
                                 # all data on a single row, no relations needed
                                 if komps:
+                                    komps_count = len(komps)
+
                                     for komp in komps:
                                         if not komp_projde_filtrem(
                                             komp, filter_areal,
@@ -701,6 +703,7 @@ def load_amcr_data(canvas, bb, filters=None,
                                                 komp.get('komponenta_obdobi')
                                                 or {}
                                             ).get('value', ""),
+                                            'vaha': 1/komps_count,
                                         }
                                         pian_lookup[dj_pian_value].append(
                                             komp_meta)
@@ -1056,6 +1059,7 @@ def load_amcr_data(canvas, bb, filters=None,
             "poznamka": "Poznámka/bližší popis",
             "pred_org": "Předáno organizaci",
             "evidencni": "Evidenční číslo",
+            "prvek_vaha": "Váha prvku",
         }
 
         if komponenty == "true":
@@ -1063,6 +1067,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 QgsField("komponenta", QMetaType.Type.QString),
                 QgsField("komponenta_areal", QMetaType.Type.QString),
                 QgsField("komponenta_obdobi", QMetaType.Type.QString),
+                QgsField("prvek_vaha", QMetaType.Type.Double),
             ]
 
         for vl in layers:
@@ -1209,6 +1214,7 @@ def load_amcr_data(canvas, bb, filters=None,
                                         meta.get('komponenta_id', ""),
                                         meta.get('komponenta_areal', ""),
                                         meta.get('komponenta_obdobi', ""),
+                                        meta.get('vaha', 1),
                                     ])
 
                                 feat.setAttributes(atributy)
