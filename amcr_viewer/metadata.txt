@@ -23,10 +23,11 @@ repository=https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
-  Plný seznam změn v češtině je dostupný zde: https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases
+  Plný seznam změn v češtině je dostupný zde: https://github.com/ARUP-CAS/aiscr-qgis-amcr-viewer/releases/tag/v2.2.0
   v2.2.0 (2026-09-02)
    * Filter labels unified: "Specifikace nálezu" renamed to "Materiál" to match the attribute alias
    * README rewritten to match the current state of the code
+   * Tables for Akce and Lokality contain a field with feature weight, when Komponenty rendering is enabled
   v2.1.2 (2026-09-01)
    * Qt6 compatibility
    * Code clean-up
