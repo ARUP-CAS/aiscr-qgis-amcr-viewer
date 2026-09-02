@@ -333,7 +333,7 @@ class AmcrFilterDialog(QDialog):
             layout.addWidget(self.picker_jistota)
 
             self.picker_lokalita_zachovalost = self.setup_picker(
-                "Lokalita - stav dochování",
+                "Lokalita – stav dochování",
                 'lokalita_zachovalost',
                 LOKALITA_ZACHOVALOST
             )
@@ -360,7 +360,7 @@ class AmcrFilterDialog(QDialog):
             layout.addWidget(self.picker_druh_nalezu)
 
             self.picker_specifikace = self.setup_picker(
-                "Specifikace nálezu",
+                "Materiál",
                 'specifikace',
                 SPECIFIKACE
             )

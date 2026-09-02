@@ -138,11 +138,11 @@ restriction". Click *Vybrat…* to open a searchable, checkable list.
 | Lokalita – typ | — | ✓ | — | `f_typ_lokality` |
 | Lokalita – druh | — | ✓ | — | `f_druh_lokality` |
 | Lokalita – jistota určení | — | ✓ | — | `f_jistota` |
-| Lokalita - stav dochování | — | ✓ | — | `f_lokalita_zachovalost` |
+| Lokalita – stav dochování | — | ✓ | — | `f_lokalita_zachovalost` |
 | Období | ✓ | ✓ | ✓ | `f_obdobi` |
 | Kategorie nálezu | — | — | ✓ | `f_kategorie` |
 | Druh nálezu | — | — | ✓ | `f_druh_nalezu` |
-| Specifikace nálezu | — | — | ✓ | `f_specifikace` |
+| Materiál | — | — | ✓ | `f_specifikace` |
 | Okolnosti nálezu | — | — | ✓ | `f_nalezove_okolnosti` |
 | Nálezce | — | — | ✓ | `f_nalezce` |
 | Datum nálezu | — | — | ✓ | `samostatny_nalez_datum_nalezu` |
