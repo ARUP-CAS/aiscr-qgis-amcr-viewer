@@ -104,6 +104,21 @@ def load_all_data():
     return categorized_data
 
 
+def _facet_name(item):
+    """
+    Returns the value of one facet item from the Digiarchive API.
+
+    Digiarchive v4.1.0 (Solr 10, json.nl=arrarr) returns facet items as
+    ["value", count] pairs; older versions returned {"name": "value", ...}
+    objects. Both shapes are accepted so the plugin works against either.
+    """
+    if isinstance(item, dict):
+        return item.get("name")
+    if isinstance(item, (list, tuple)) and item:
+        return item[0]
+    return None
+
+
 def fetch_set(base_url, internal_name, api_set, task=None):
     dataset = []
     params_amcr = {
@@ -206,7 +221,9 @@ def fetch_set(base_url, internal_name, api_set, task=None):
 
                 for r in records:
 
-                    nazev = r["name"]
+                    nazev = _facet_name(r)
+                    if not nazev:
+                        continue
 
                     dataset.append({
                             'Název': nazev,
@@ -217,17 +234,48 @@ def fetch_set(base_url, internal_name, api_set, task=None):
                 break
 
         except Exception as e:
+            # A partial set (e.g. pagination interrupted halfway) would
+            # silently drop codes – report the whole set as failed instead
+            # and let the caller keep the previous values
             QgsMessageLog.logMessage(
                 f"Chyba u setu {api_set}: {e}",
                 "AMČR", Qgis.MessageLevel.Warning)
-            break
+            return []
 
     return dataset
 
 
-def download_heslare(task=None):
-    """Fetches the codelists from the AMČR API and saves it to a CSV file."""
+def _read_existing_rows():
+    """
+    Returns the rows of the current heslar.csv grouped by category, so a set
+    that fails to download can keep its previous values.
+    """
+    rows = {}
+    if not os.path.exists(OUTPUT_FILE):
+        return rows
+    try:
+        with open(OUTPUT_FILE, encoding='utf-8-sig', newline='') as f:
+            for row in csv.DictReader(f, delimiter=';'):
+                cat = (row.get('Kategorie') or '').strip()
+                if cat:
+                    rows.setdefault(cat, []).append(row)
+    except Exception as e:
+        QgsMessageLog.logMessage(
+            f"Nelze načíst stávající hesláře: {e}",
+            "AMČR", Qgis.MessageLevel.Warning)
+    return rows
+
+
+def download_heslare(task=None, failed=None):
+    """
+    Fetches the codelists from the AMČR API and saves it to a CSV file.
+
+    A set that fails or comes back empty keeps its rows from the current
+    heslar.csv instead of being wiped; its name is appended to ``failed``
+    (if given) so the caller can warn the user.
+    """
     ensure_codelists_dir()
+    existing = _read_existing_rows()
     all_data = []
     total_sets = len(slovnicek)
 # index, (interni, api_nazev)
@@ -251,6 +299,18 @@ def download_heslare(task=None):
         if data is None:
             return False  # Cancelled mid-download
 
+        if not data:
+            # Never replace a working codelist with nothing – an API change
+            # would otherwise silently empty the filter in the dialog
+            old = existing.get(interni, [])
+            QgsMessageLog.logMessage(
+                f"Heslář '{interni}' se nepodařilo stáhnout, "
+                f"ponechávám předchozí hodnoty ({len(old)} položek).",
+                "AMČR", Qgis.MessageLevel.Warning)
+            if failed is not None:
+                failed.append(interni)
+            data = old
+
         all_data.extend(data)
 
         # Report progress (0-100)
@@ -261,7 +321,8 @@ def download_heslare(task=None):
     # Save to CSV
     with open(OUTPUT_FILE, 'w', newline='', encoding='utf-8-sig') as f:
         fieldnames = ['Název', 'Kód', 'Kategorie']
-        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';')
+        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';',
+                                extrasaction='ignore')
         writer.writeheader()
         writer.writerows(all_data)
 
