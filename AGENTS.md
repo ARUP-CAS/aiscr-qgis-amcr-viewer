@@ -140,6 +140,9 @@ flatpak run --command=sh org.qgis.qgis -c \
 - Verze pluginu žije v **`amcr_viewer/metadata.txt`** (`version=`).
 - **Při každé změně chování / nové funkci** povyš verzi a doplň položku do
   `changelog=` v `metadata.txt` (formát `vX.Y.Z (RRRR-MM-DD)` + odrážky).
+- Současně povyš i **`CITATION.cff`** v kořeni repozitáře: `version:` na
+  stejnou verzi jako v `metadata.txt` a `date-released:` na datum releasu.
+  Oba soubory musí mít stejnou verzi, než se založí tag.
 - Datum v changelogu ber z **deterministického zdroje**, ne z paměti, např.
   `python -c "import datetime; print(datetime.date.today().isoformat())"`.
 - Release se spouští **pushnutím tagu `vX.Y.Z`**, ne publikací releasu
@@ -189,7 +192,7 @@ tohle:
 | **Lint a bezpečnost** | `check_sources.py`, bandit, detect-secrets, flake8, ruff |
 | **Kompatibilita s Qt6** | `pyqgis4-checker` v dockeru |
 | **Smoke test** | `smoke_test.py` v `qgis/qgis:ltr` i `qgis/qgis:stable` |
-| **Balíček pluginu** | sestaví ZIP, ověří obsah, přiloží jako artefakt |
+| **Balíček pluginu** | ověří shodu verze v `CITATION.cff` a `metadata.txt`, sestaví ZIP, ověří obsah, přiloží jako artefakt |
 
 Smoke test běží v obou podporovaných řadách: `ltr` je QGIS 3.44 na Qt5,
 `stable` je QGIS 4.x na Qt6.
