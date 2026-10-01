@@ -147,6 +147,21 @@ jobs:
       - name: Zip plugin
         run: zip -r amcr_viewer.zip amcr_viewer -x "*.git*"
 
+      # Verze v CITATION.cff se povyšuje ručně spolu s metadata.txt a snadno
+      # se zapomene – tag by pak nesl v citaci jinou verzi než plugin
+      - name: Verify CITATION.cff version
+        run: |
+          plugin=$(sed -n 's/^version=//p' amcr_viewer/metadata.txt \
+                   | tr -d "\r\"' ")
+          citace=$(sed -n 's/^version://p' CITATION.cff \
+                   | tr -d "\r\"' ")
+          echo "metadata.txt: '$plugin', CITATION.cff: '$citace'"
+          if [ -z "$plugin" ] || [ "$plugin" != "$citace" ]; then
+            echo "::error file=CITATION.cff::verze '$citace' neodpovídá" \
+                 "metadata.txt ('$plugin')"
+            exit 1
+          fi
+
       # Kontrola obsahu ZIPu. Config soubory pro scanner musí být uvnitř
       # vedle metadata.txt, jinak je plugins.qgis.org nenajde – a některé
       # nástroje skryté soubory tiše vynechávají.
