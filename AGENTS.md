@@ -208,7 +208,7 @@ pip install bandit detect-secrets flake8 ruff
 python3 tests/check_sources.py
 bandit -r amcr_viewer/
 detect-secrets scan --all-files amcr_viewer/
-flake8 --config amcr_viewer/.flake8 amcr_viewer/
+flake8 --isolated amcr_viewer/
 ruff check .
 
 # smoke test v obou verzích QGIS (docker, bez instalace čehokoli)
@@ -225,11 +225,12 @@ Na co si dát pozor:
   v logu. Workflow proto kontroluje, že log obsahuje jen hlavičku.
 - **`detect-secrets` bez `--all-files` prohledá jen soubory sledované
   gitem** a o nesledovaném souboru mlčí. Vypadá to jako čistý výsledek.
-- **Konfigurace lintů je rozdělená schválně.** `amcr_viewer/.flake8` leží
-  vedle `metadata.txt`, protože scanner na plugins.qgis.org hledá config
-  soubory jen v kořeni balíčku uvnitř ZIPu; díky tomu platí stejná pravidla
-  v CI, lokálně i při uploadu. Konfigurace ruffu je naopak v kořenovém
-  `pyproject.toml` – ruff se do balíčku pluginu nedistribuuje.
+- **Flake8 běží bez konfigurace** (`--isolated`), tedy se stejnými
+  výchozími pravidly jako scanner na plugins.qgis.org. Do balíčku nepatří
+  `.flake8`, `.bandit` ani `.secrets.baseline`: scanner by plugin označil
+  jako „Validated (configured)“ a nález je lepší opravit v kódu.
+  Konfigurace ruffu je v kořenovém `pyproject.toml` – ruff se do balíčku
+  pluginu nedistribuuje.
   Viz https://plugins.qgis.org/docs/security-scanning/config-files
 - **Verze nástrojů jsou v workflow napevno.** Výchozí sada pravidel ruffu se
   mezi verzemi mění, takže bez pinu by CI začalo padat samo od sebe.

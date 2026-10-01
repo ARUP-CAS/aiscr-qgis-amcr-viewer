@@ -74,10 +74,10 @@ jobs:
           print('detect-secrets: bez nálezů')
           "
 
-      # Na plugins.qgis.org je informativní, tady blokuje – konfigurace
-      # v amcr_viewer/.flake8 je stejná pro obě místa.
+      # Na plugins.qgis.org je informativní, tady blokuje. Bez konfigurace,
+      # tj. se stejnými výchozími pravidly jako scanner.
       - name: Flake8
-        run: flake8 --config amcr_viewer/.flake8 amcr_viewer/
+        run: flake8 --isolated amcr_viewer/
 
       # Nad rámec plugins.qgis.org; konfigurace v pyproject.toml
       - name: Ruff
@@ -162,14 +162,12 @@ jobs:
             exit 1
           fi
 
-      # Kontrola obsahu ZIPu. Config soubory pro scanner musí být uvnitř
-      # vedle metadata.txt, jinak je plugins.qgis.org nenajde – a některé
-      # nástroje skryté soubory tiše vynechávají.
+      # Kontrola obsahu ZIPu: povinné soubory jsou uvnitř, git soubory ne.
       - name: Verify archive contents
         run: |
           unzip -l amcr_viewer.zip
           for soubor in amcr_viewer/metadata.txt amcr_viewer/__init__.py \
-                        amcr_viewer/.flake8; do
+                        amcr_viewer/LICENSE; do
             unzip -l amcr_viewer.zip | grep -qF " $soubor" \
               || { echo "::error::v ZIPu chybí $soubor"; exit 1; }
           done
