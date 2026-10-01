@@ -5,15 +5,14 @@
 # jen k tomu, aby ruff choval stejně v CI, lokálně i za rok. Bez explicitní
 # konfigurace se výchozí sada pravidel mezi verzemi ruffu mění.
 #
-# Konfigurace flake8 je záměrně jinde: v amcr_viewer/.flake8, protože ji
-# musí najít i scanner na plugins.qgis.org.
+# Flake8 záměrně žádnou konfiguraci nemá a běží s výchozími pravidly – stejně
+# jako scanner na plugins.qgis.org. Config soubor v balíčku by plugin
+# označil jako „Validated (configured)“.
 
 [tool.ruff]
 line-length = 79
 # QGIS 3.44 běží na Pythonu 3.9 a novějším
 target-version = "py39"
-# Generovaný výstup pyrcc, "All changes made in this file will be lost"
-extend-exclude = ["amcr_viewer/resources.py"]
 
 [tool.ruff.lint]
 select = [
