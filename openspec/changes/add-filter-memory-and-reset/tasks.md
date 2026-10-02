@@ -32,10 +32,13 @@
   (`QDialogButtonBox.StandardButton.RestoreDefaults`, Czech text) that
   applies `_default_state()` to the form only. Verify (smoke test): reset
   + OK equals a fresh dialog; reset + Cancel keeps the remembered state
-- [x] 2.3 `✕` clear button (`QToolButton`, tooltip *Vymazat výběr*) per
-  picker, disabled while empty. Verify (smoke test): clearing one picker
-  removes only its key from `get_filters()`; clearing PIAN removes
-  `f_pian_presnost`
+- [x] 2.3 `✕` button (`QToolButton`, tooltip *Vymazat výběr*, or
+  *Vrátit výchozí výběr* for a picker with a non-empty default) per
+  picker that returns that filter to its default, enabled only while it
+  differs from the default. Verify (smoke test): clearing one picker
+  removes only its key from `get_filters()`; the PIAN `✕` is disabled
+  on a fresh dialog, enabled after a change and restores the three
+  default levels
 - [x] 2.4 Notice label at the top, shown only when a restored state
   differs from defaults, with the count of differing items; hidden on
   reset. Verify (smoke test): hidden for a fresh dialog and for a

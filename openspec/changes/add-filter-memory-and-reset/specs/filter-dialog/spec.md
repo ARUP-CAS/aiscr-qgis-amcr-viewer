@@ -62,15 +62,27 @@ confirmed with OK.
 - **WHEN** the user resets the form and closes the dialog with Cancel
 - **THEN** reopening the dialog shows the remembered state
 
-### Requirement: A single filter can be cleared
-Each codelist filter SHALL offer a clear action that empties only that
-filter, available only while the filter has a selection. Clearing *PIAN –
-přesnost* SHALL mean no restriction on accuracy.
+### Requirement: A single filter can be returned to its default
+Each codelist filter SHALL offer a per-picker action that returns only
+that filter to its default value (empty, or the three pre-selected
+accuracy levels for *PIAN – přesnost*). The action SHALL be available
+only while the filter differs from its default. Returning *PIAN –
+přesnost* to its default SHALL restore the three pre-selected accuracy
+levels; a completely empty *PIAN – přesnost* (no restriction) SHALL
+remain reachable by unchecking all levels in the picker's selection
+dialog.
 
 #### Scenario: Clearing one picker
 - **GIVEN** a region and a period are selected
 - **WHEN** the user clears the region filter
 - **THEN** the region filter shows nothing selected, the period stays selected and the region parameter is not sent
+
+#### Scenario: Returning PIAN to its default
+- **GIVEN** a Fieldwork events dialog is open with *PIAN – přesnost* at its default three accuracy levels
+- **WHEN** the user changes the PIAN selection (for example clears it)
+- **THEN** the picker's clear action becomes available and, when used, restores exactly the three pre-selected accuracy levels
+- **WHEN** the user unchecks all levels in the *PIAN – přesnost* selection dialog instead
+- **THEN** no accuracy restriction is sent
 
 ### Requirement: Restored filters are announced
 When the dialog opens with a restored state that differs from the

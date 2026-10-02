@@ -512,7 +512,7 @@ class AmcrFilterDialog(QDialog):
             diff = self._diff_from_default(restored)
             if diff:
                 self.lbl_notice.setText(
-                    "ℹ Načteny filtry z minulého hledání "
+                    "Načteny filtry z minulého hledání "
                     f"(aktivní filtry: {diff})."
                 )
                 self.lbl_notice.setVisible(True)
@@ -642,14 +642,18 @@ class AmcrFilterDialog(QDialog):
         btn = QPushButton("Vybrat...")
         btn.setFixedWidth(80)
 
-        # Empties this one filter; enabled only while something is
-        # selected (open_dialog re-evaluates it through _set_picker)
+        # Returns this one filter to its default; enabled only while
+        # the selection differs from it (open_dialog re-evaluates it
+        # through _set_picker)
         clear_btn = QToolButton()
         clear_btn.setText("✕")
-        clear_btn.setToolTip("Vymazat výběr")
+        default_codes = DEFAULT_CODES.get(cache_key, [])
+        clear_btn.setToolTip(
+            "Vrátit výchozí výběr" if default_codes else "Vymazat výběr"
+        )
         clear_btn.setEnabled(False)
         clear_btn.clicked.connect(
-            lambda: self._set_picker(cache_key, [])
+            lambda: self._set_picker(cache_key, list(default_codes))
         )
 
         # Nested handler: opens the selection dialog and saves the result
@@ -686,8 +690,9 @@ class AmcrFilterDialog(QDialog):
         """
         Sets one picker: stores the codes, rebuilds the display text from
         the current codelist (a label renamed by Aktualizovat hesláře
-        shows its new name, an unknown code is dropped) and re-enables
-        the clear button only for a non-empty selection.
+        shows its new name, an unknown code is dropped) and enables the
+        clear button only while the selection differs from the picker's
+        default.
         """
         data_source, display_field, clear_btn = self.pickers[cache_key]
 
@@ -705,7 +710,11 @@ class AmcrFilterDialog(QDialog):
             display_field.setText(", ".join(labels))
         else:
             display_field.clear()
-        clear_btn.setEnabled(bool(valid_codes))
+        # Order-insensitive: a reordered default is still the default
+        default = DEFAULT_CODES.get(cache_key, [])
+        clear_btn.setEnabled(
+            sorted(valid_codes) != sorted(default)
+        )
 
     def setup_date_range(self, title, rows):
         """

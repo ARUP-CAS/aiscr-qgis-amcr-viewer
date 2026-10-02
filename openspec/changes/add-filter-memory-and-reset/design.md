@@ -109,10 +109,22 @@ reset button sits next to it on the left, OK/Cancel stay on the right.
 
 ### Per-picker clear button
 
-A narrow `QToolButton` with text `✕` and tooltip *Vymazat výběr* next to
-*Vybrat…*. It calls `_set_picker(cache_key, [])`. For
-`pian_presnost`, empty means the filter is not sent (current
-`get_filters()` behaviour for an empty list) – this matches the spec.
+A narrow `QToolButton` with text `✕` next to *Vybrat…*. It calls
+`_set_picker(cache_key, DEFAULT_CODES.get(cache_key, []))` – it returns
+the filter to its default, which is empty for every picker except
+*pian_presnost* (its three pre-selected levels). The tooltip is
+*Vymazat výběr* for an empty default and *Vrátit výchozí výběr* for
+*pian_presnost*. `_set_picker()` enables the button only while the
+current codes differ from the default (compared order-insensitively, so
+a reordered default still counts as the default); on a fresh dialog the
+PIAN button is therefore disabled. For `pian_presnost`, empty means the
+filter is not sent (current `get_filters()` behaviour for an empty
+list) – this matches the spec.
+
+Changed after the user's manual test in QGIS: the ✕ on *PIAN – přesnost*
+emptied the picker, but the user expected it to restore the default
+three levels, so the button now returns each filter to its default
+instead of always emptying it.
 
 Checkboxes and date pickers do not get their own clear button: a
 checkbox is one click, and `QgsDateEdit` with `setAllowNull(True)`
@@ -124,10 +136,11 @@ A `QLabel` above the bbox checkbox, styled like the existing component
 warning (neutral info colours), hidden by default. Shown in the
 constructor only when a remembered state exists **and** differs from
 `_default_state()`. Text: *Načteny filtry z minulého hledání (aktivní
-filtry: N).* N counts form items that differ from the default – one per
-picker, checkbox and date row (a date row counts once even with both
-bounds set). Hidden again on reset; not updated live on every edit (it
-describes what was loaded, not the current form).
+filtry: N).* (changed after the user's manual test in QGIS: the leading
+"ℹ " was removed). N counts form items that differ from the default –
+one per picker, checkbox and date row (a date row counts once even
+with both bounds set). Hidden again on reset; not updated live on
+every edit (it describes what was loaded, not the current form).
 
 ### Qt5/Qt6
 

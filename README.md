@@ -140,9 +140,12 @@ restriction". Click *Vybrat…* to open a searchable, checkable list.
   its three pre-selected levels (where the data type has it), everything
   else empty. The reset applies to the form only — the remembered state
   changes when you confirm with OK.
-* Each picker has a small **✕** (*Vymazat výběr*) that empties just that
-  filter; it is disabled while the filter is empty. For *PIAN – přesnost*
-  clearing means "no restriction on accuracy".
+* Each picker has a small **✕** (*Vymazat výběr*; *Vrátit výchozí výběr*
+  for *PIAN – přesnost*) that returns just that
+  filter to its default — empty for almost all filters, the three
+  pre-selected levels for *PIAN – přesnost*; it is disabled while the
+  filter already is at its default. To drop the *PIAN – přesnost*
+  restriction entirely, uncheck all levels in its *Vybrat…* dialog.
 
 #### Availability per entity
 
@@ -189,7 +192,9 @@ filter in place, otherwise you will hit the record cap (see 4.5).
 > otherwise untouched dialog already sends `f_pian_presnost`. Records
 > localised only to a cadastral territory are excluded until you open the
 > picker and add that level yourself. *Obnovit výchozí* brings the three
-> levels back; the picker's ✕ clears them (no accuracy restriction).
+> levels back; the picker's ✕ returns them too (it restores the filter's
+> default). To have no accuracy restriction at all, uncheck all levels
+> in the picker's *Vybrat…* dialog.
 
 #### Date ranges
 

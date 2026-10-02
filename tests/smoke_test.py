@@ -558,8 +558,9 @@ def obnoveni_vychozich():
 
 def vymazani_vyberu():
     """
-    The ✕ button empties only its own filter and is disabled while
-    empty; clearing PIAN – přesnost removes f_pian_presnost.
+    The ✕ button returns only its own filter to its default (empty,
+    or the three pre-selected levels for PIAN – přesnost) and is
+    disabled while the filter already is at that default.
     """
     _stubuj_varovani()
     try:
@@ -579,11 +580,29 @@ def vymazani_vyberu():
 
         okno = dialog.AmcrFilterDialog("akce")
         assert "f_pian_presnost" in okno.get_filters()
-        okno.pickers["pian_presnost"][2].click()
-        assert okno.selection_cache["pian_presnost"] == []
+        # A fresh dialog is at the default, so ✕ is disabled
+        assert not okno.pickers["pian_presnost"][2].isEnabled()
+
+        # A reordered default list still counts as the default
+        vychozi = dialog.DEFAULT_CODES["pian_presnost"]
+        okno._set_picker("pian_presnost", list(reversed(vychozi)))
+        assert not okno.pickers["pian_presnost"][2].isEnabled()
+        assert "f_pian_presnost" in okno.get_filters()
+
+        # Emptied PIAN means no restriction and enables ✕
+        okno._set_picker("pian_presnost", [])
         assert "f_pian_presnost" not in okno.get_filters()
+        assert okno.pickers["pian_presnost"][2].isEnabled()
+
+        # ✕ restores the three default levels and disables itself
+        okno.pickers["pian_presnost"][2].click()
+        assert sorted(okno.get_filters()["f_pian_presnost"]) == sorted(
+            vychozi
+        )
+        assert not okno.pickers["pian_presnost"][2].isEnabled()
         okno.close()
-        return "✕ maže jen svůj filtr, PIAN → bez omezení"
+        return ("✕ vrací filtr na výchozí hodnotu, PIAN na tři "
+                "úrovně, jinak prázdné")
     finally:
         dialog._REMEMBERED_STATE.clear()
 
@@ -616,6 +635,7 @@ def upozorneni_obnovy():
         okno.close()
         okno = dialog.AmcrFilterDialog("akce")
         assert not okno.lbl_notice.isHidden()
+        assert okno.lbl_notice.text().startswith("Načteny filtry")
         assert "aktivní filtry: 2" in okno.lbl_notice.text()
         okno.action_reset()
         assert okno.lbl_notice.isHidden()

@@ -26,9 +26,12 @@ many filters are set (issue #84).
 - When the dialog opens with restored filters that differ from the
   defaults, a notice at the top says so and how many filters are active,
   so a forgotten filter further down the scrollable form is not missed.
-- Each picker gets a small clear button (✕) that empties that single
-  filter; it is disabled while the picker is empty. For *PIAN – přesnost*
-  clearing means "no restriction", the same as unchecking all levels.
+- Each picker gets a small clear button (✕) that returns that single
+  filter to its **default** (empty for almost all pickers, the three
+  pre-selected accuracy levels for *PIAN – přesnost*); it is available
+  only while the filter differs from that default. "No PIAN
+  restriction" is still reachable by unchecking all levels in the
+  selection dialog.
 - Restored codes that are no longer in the current codelists (after
   *Aktualizovat hesláře*) are dropped, and picker texts are rebuilt from
   the current codelist labels.
