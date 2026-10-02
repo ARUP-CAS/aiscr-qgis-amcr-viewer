@@ -1,0 +1,160 @@
+name: API Monitor
+
+# Denní kontrola kontraktu s API digiarchivu a AMČR OAI (change
+# add-daily-api-monitor). Na rozdíl od code_quality.yml neslouží jako
+# branka pro PR – běží z plánu (schedule) a ručního spuštění:
+#
+#  * kontrakt (tests/api_contract.py) – posílá stejné dotazy jako plugin
+#    a kontroluje tvar odpovědí, které plugin čte; obyčejný requests,
+#    bez QGIS
+#  * plugin proti živému API (tests/api_plugin_live.py) – volá přímo
+#    funkce pluginu (fetch_set, load_amcr_data) v qgis/qgis:ltr
+#  * report (tests/api_monitor_report.py) – z výsledků obou jobů
+#    vytvoří/aktualizuje/zavře sledovací issue s popiskem api-monitor;
+#    běží jen na výchozí větvi
+#
+# Výsledky: OK / DRIFT (změna, kterou plugin snáší) / FAIL (plugin se
+# rozbije) / UNAVAILABLE (API nedosažitelné – není to chyba kontraktu,
+# issue se neotvírá). Stav najdete v přehledu běhu (results-*.json
+# artefakty + tabulka v summary).
+#
+# Schválně není pull_request: PR nesmí červenat kvůli výpadku
+# digiarchivu. Na jiné větvi než main jde workflow spustit ručně
+# (workflow_dispatch), report se ale otvírá jen na výchozí větvi.
+
+on:
+  schedule:
+    # 17 5 * * * = 07:17 SELČ, mimo celou hodinu, před začátkem pracovního
+    # dne. GitHub ale spouští schedule jen na výchozí větvi.
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+# Souběžné běhy téhož refu se nepřebíjejí – denní běh a ruční dispatch
+# se nemají vzájemně rušit (cancel-in-progress: false).
+concurrency:
+  group: api-monitor-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Verze se drží napevno, aby se výsledek nezměnil sám od sebe.
+  REQUESTS: requests==2.34.2
+
+jobs:
+  # --------------------------------------------------------------------
+  # 1. Kontrakt – stejné dotazy jako plugin, kontrola tvaru odpovědí
+  # --------------------------------------------------------------------
+  api_contract:
+    name: API kontrakt
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install requests
+        run: pip install "$REQUESTS"
+
+      # Výstup je i tak hlavně v results-api_contract.json artefaktu,
+      # ne v logu.
+      - name: API contract test
+        run: python3 tests/api_contract.py
+
+      # Výsledky se nahrávají i po selhání testu – report je potřebuje
+      # v každém případě (i mrtvý job je informace).
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: results-api_contract
+          path: results-api_contract.json
+          if-no-files-found: warn
+
+  # --------------------------------------------------------------------
+  # 2. Plugin proti živému API – vlastní funkce pluginu v QGISu
+  # --------------------------------------------------------------------
+  plugin_live:
+    name: Plugin proti živému API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Repozitář přimontovaný jen pro čtení, výsledky jdou do zapisova-
+      # telného adresáře mimo něj. Stejný styl jako smoke test v
+      # code_quality.yml, jen s přidaným AMCR_RESULTS_DIR.
+      - name: Live plugin test
+        run: |
+          mkdir -p results && chmod 777 results
+          docker run --rm -v "$PWD:/work:ro" -v "$PWD/results:/tmp/results" \
+            -w /work --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -e AMCR_RESULTS_DIR=/tmp/results \
+            "qgis/qgis:ltr" python3 tests/api_plugin_live.py
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: results-plugin_live
+          path: results/results-plugin_live.json
+          if-no-files-found: warn
+
+  # --------------------------------------------------------------------
+  # 3. Report – sledovací issue s popiskem api-monitor
+  # --------------------------------------------------------------------
+  report:
+    name: Report issue
+    needs: [api_contract, plugin_live]
+    # Běží vždy, i když některý test job padl – report potřebuje výsledky
+    # obou (chybějící soubor se počítá jako FAIL). Chybí-li výsledky,
+    # zůstává workflow celé červené.
+    if: always() && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+
+    # issues: write jen tady; zbytek workflow má nahoře contents: read
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # merge-multiple: oba artefakty (results-api_contract,
+      # results-plugin_live) se složí do jednoho adresáře results/,
+      # kam je čeká api_monitor_report.py.
+      - name: Download results
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: results
+          pattern: results-*
+          merge-multiple: true
+
+      # Nasazenou verzi digiarchivu (kontrola deployed-version) si skript
+      # přečte sám z results-api_contract.json. Report vždy vrací 0,
+      # chyby v něm nemají přebít výsledek testů.
+      - name: Report to issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 tests/api_monitor_report.py results \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      # Sledovací issue musí být vidět i v přehledu běhu; FAIL/DRIFT
+      # testů ale workflow přežije (exit code 0 reportu). Skutečné
+      # selhání testů se ale do závěru běhu musí vrátit – jinak by běh
+      # s FAIL/DRIFT vypadal zeleně.
+      - name: Propagate test results
+        if: needs.api_contract.result == 'failure' || needs.plugin_live.result == 'failure'
+        run: |
+          echo "::error::testy API monitoru selhaly (FAIL/DRIFT), viz issue a artefakty"
+          exit 1
