@@ -71,12 +71,12 @@
   picker and on PIAN, notice text, separate state per data type,
   *Aktualizovat hesláře* between two openings, defaults after a QGIS
   restart
-  - User (Fieldwork events): everything worked except two points – the
-    notice started with an odd "ℹ" and `✕` on PIAN emptied it instead
-    of restoring the default. Both fixed (commit d5e520d) and re-tested
-    by the user on Fieldwork events. Sites and Individual finds share the
-    same dialog code; they are covered by the smoke test only, not
-    visually.
+  - User: look and function verified on Fieldwork events, Sites and
+    Individual finds; everything worked except two points – the notice
+    started with an odd "ℹ" and `✕` on PIAN emptied it instead of
+    restoring the default. Both fixed (commit d5e520d); the fix was
+    re-tested by the user on Fieldwork events, for Sites and Individual
+    finds it is covered by the smoke test.
 - [x] 4.4 Archive before merge:
   `openspec archive add-filter-memory-and-reset --skip-specs` in the same
   PR
