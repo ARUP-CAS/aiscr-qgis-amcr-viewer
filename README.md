@@ -106,18 +106,46 @@ to see.
 * They are then saved encrypted in the **QGIS Authentication Manager** (DPAPI
   on Windows, Keychain on macOS, encrypted SQLite on Linux). QGIS will ask for
   its master password.
-* Stored credentials are reused across QGIS sessions. If the session cookie
-  expires mid-download, the plugin re-authenticates automatically and repeats
-  the request.
+* Stored credentials are reused across QGIS sessions. The plugin checks
+  the login state before every download (via the `islogged` endpoint)
+  and, when the session cookie has expired, re-authenticates
+  automatically. If re-authentication is not possible, a warning in the
+  message bar says the download runs anonymously (access level A only);
+  a failed check never blocks the download.
 * Reopening the login dialog lets you change the e-mail (leave the password
   blank to keep the stored one) or remove the credentials entirely
-  (*Odebrat uložené přihlašovací údaje*).
+  (*Odebrat uložené přihlašovací údaje*). Removing them also logs you out
+  of the Digital Archive, so the next download runs anonymously.
 
 ### 3.3 The filter dialog
 
 Filters of different categories are combined with **AND**; multiple values
 inside one filter are combined with **OR**. A filter left empty means "no
 restriction". Click *Vybrat…* to open a searchable, checkable list.
+
+#### Remembered filters, reset, clearing one filter
+
+* The dialog **remembers the filters you confirmed with OK** — separately
+  for Fieldwork events, Sites and Individual finds — for the rest of the
+  QGIS session. Reopening the dialog restores all selections, checkboxes
+  and date ranges, so refining a query ("same area, one more period") does
+  not mean re-entering everything. Nothing is written to disk: after a QGIS
+  restart (or a plugin reload) every dialog starts from its defaults again.
+  *Cancel* leaves the remembered state untouched.
+* When the reopened dialog contains filters that differ from the defaults,
+  a green notice at the top says so and counts them, so a forgotten filter
+  further down the scrollable form is not missed.
+* **Obnovit výchozí** (left of OK/Cancel) resets the whole form to its
+  defaults: the map-extent restriction checked, *PIAN – přesnost* back to
+  its three pre-selected levels (where the data type has it), everything
+  else empty. The reset applies to the form only — the remembered state
+  changes when you confirm with OK.
+* Each picker has a small **✕** (*Vymazat výběr*; *Vrátit výchozí výběr*
+  for *PIAN – přesnost*) that returns just that
+  filter to its default — empty for almost all filters, the three
+  pre-selected levels for *PIAN – přesnost*; it is disabled while the
+  filter already is at its default. To drop the *PIAN – přesnost*
+  restriction entirely, uncheck all levels in its *Vybrat…* dialog.
 
 #### Availability per entity
 
@@ -138,11 +166,11 @@ restriction". Click *Vybrat…* to open a searchable, checkable list.
 | Lokalita – typ | — | ✓ | — | `f_typ_lokality` |
 | Lokalita – druh | — | ✓ | — | `f_druh_lokality` |
 | Lokalita – jistota určení | — | ✓ | — | `f_jistota` |
-| Lokalita - stav dochování | — | ✓ | — | `f_lokalita_zachovalost` |
+| Lokalita – stav dochování | — | ✓ | — | `f_lokalita_zachovalost` |
 | Období | ✓ | ✓ | ✓ | `f_obdobi` |
 | Kategorie nálezu | — | — | ✓ | `f_kategorie` |
 | Druh nálezu | — | — | ✓ | `f_druh_nalezu` |
-| Specifikace nálezu | — | — | ✓ | `f_specifikace` |
+| Materiál | — | — | ✓ | `f_specifikace` |
 | Okolnosti nálezu | — | — | ✓ | `f_nalezove_okolnosti` |
 | Nálezce | — | — | ✓ | `f_nalezce` |
 | Datum nálezu | — | — | ✓ | `samostatny_nalez_datum_nalezu` |
@@ -163,7 +191,10 @@ filter in place, otherwise you will hit the record cap (see 4.5).
 > *odchylka desítky metrů* and *odchylka stovky metrů* checked, so an
 > otherwise untouched dialog already sends `f_pian_presnost`. Records
 > localised only to a cadastral territory are excluded until you open the
-> picker and add that level yourself.
+> picker and add that level yourself. *Obnovit výchozí* brings the three
+> levels back; the picker's ✕ returns them too (it restores the filter's
+> default). To have no accuracy restriction at all, uncheck all levels
+> in the picker's *Vybrat…* dialog.
 
 #### Date ranges
 
@@ -181,7 +212,10 @@ from a genuinely empty result.
 The controlled vocabularies behind the pickers are cached in
 `amcr_viewer/codelists/heslar.csv` and ship with the plugin. Click
 **Aktualizovat hesláře 🔄** to rebuild the file from the live APIs; it runs as
-a background QGIS task with a progress bar and takes a few minutes.
+a background QGIS task with a progress bar and takes a few minutes. A
+codelist that fails to download or comes back empty keeps its previous values
+instead of being wiped; when the update finishes, a warning lists the affected
+codelists.
 
 Most codelists come from the AMČR **OAI-PMH** endpoint. Two are built from
 Digiarchiv **search facets** instead, because they are lists of people rather
@@ -195,7 +229,8 @@ activity area of each component into the output layer.
 
 > ⚠ With components loaded, spatial features are **duplicated** — one feature
 > per component. Areas and feature counts computed on such a layer are
-> misleading.
+> misleading. Weight such computations (e.g. a heatmap) by the `prvek_vaha`
+> field (see 3.4): the weights of one documentation unit sum to 1.
 
 Note that *Období* and *Areál* also act as component filters even when the
 box is unchecked: a documentation unit whose components match nothing is
@@ -294,6 +329,7 @@ order *common → entity-specific → `pristupnost` → component fields*.
 | `komponenta` | Komponenta | Component identifier. |
 | `komponenta_areal` | Areál | Activity area \[settlement / burial area / field / …\]. |
 | `komponenta_obdobi` | Období | Period \[Neolithic / High Middle Ages–Modern Period / …\]. |
+| `prvek_vaha` | Váha prvku | Feature weight: 1/*n*, where *n* is the number of features created from the same documentation unit after the period/area filters, so the weights of one documentation unit sum to 1. |
 
 ### 3.5 When a query returns nothing
 
@@ -337,6 +373,9 @@ amcr_viewer/            the plugin package (this is what gets zipped)
 tests/
   check_sources.py      source hygiene checks (no QGIS needed)
   smoke_test.py         loads the plugin in a real, headless QGIS
+  check_version_bump.py release-PR guard: version bump, changelog entry and
+                        matching versions in metadata.txt, CITATION.cff
+                        and the branch name
 .github/workflows/      CI (code quality, release packaging)
 pyproject.toml          ruff configuration
 AGENTS.md               contributor and AI-agent guidelines
@@ -347,6 +386,8 @@ AGENTS.md               contributor and AI-agent guidelines
 | Purpose | Endpoint | Notes |
 | --- | --- | --- |
 | Login | `POST https://digiarchiv.aiscr.cz/api/user/login` | Returns a session cookie. Errors arrive with HTTP 200 and an `error` key. |
+| Logout | `GET https://digiarchiv.aiscr.cz/api/user/logout` | Called when the stored credentials are removed. |
+| Login state | `GET https://digiarchiv.aiscr.cz/api/user/islogged` | `{"remaining": <s>}` when logged in, `{"error":"nologged"}` otherwise; checked before each download. |
 | Search | `GET https://digiarchiv.aiscr.cz/api/search/query` | `entity=akce\|lokalita\|samostatny_nalez\|pian`, `mapa=true`, paginated. |
 | Translations | `GET https://digiarchiv.aiscr.cz/api/assets/i18n/cs.json` | Code → Czech label; cached in memory for the session. |
 | Codelists | `GET https://api.aiscr.cz/2.2/oai` | OAI-PMH `ListRecords`, with resumption tokens. |
@@ -394,6 +435,7 @@ not:
 | --- | --- |
 | **Lint a bezpečnost** | `tests/check_sources.py`, bandit, detect-secrets, flake8, ruff |
 | **Kompatibilita s Qt6** | `pyqgis4-checker` in dry-run mode |
+| **OpenSpec** | validates change artefacts in `openspec/changes/` |
 | **Smoke test** | loads the plugin in headless QGIS — both `ltr` (Qt 5) and `stable` (Qt 6) |
 | **Balíček pluginu** | builds `amcr_viewer.zip`, asserts its contents, uploads it as an artifact |
 

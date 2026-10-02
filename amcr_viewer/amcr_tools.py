@@ -157,6 +157,125 @@ def _get_session() -> requests.Session | None:
     return AMCR_SESSION
 
 
+def logout_from_api() -> bool:
+    """
+    Logs the current session out on the server (GET /api/user/logout)
+    and drops it from memory, so the next download runs anonymously
+    (or logs in again only if credentials are stored).
+    The local session is dropped even when the server cannot be
+    reached. Returns True when the server confirmed the logout or there
+    was no session at all.
+    """
+    global AMCR_SESSION
+    session = AMCR_SESSION
+    AMCR_SESSION = None
+    if session is None:
+        return True
+
+    url = "https://digiarchiv.aiscr.cz/api/user/logout"
+    try:
+        response = session.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        _log(f"Odhlášení na serveru se nezdařilo: {e} – session "
+             "zahozena jen lokálně.", Qgis.MessageLevel.Warning)
+        return False
+    _log("Uživatel odhlášen.")
+    return True
+
+
+def _check_islogged(session) -> bool | None:
+    """
+    Asks the server whether the session is logged in
+    (GET /api/user/islogged; the check does not extend the session).
+    Returns True when logged in, False when the server reports
+    'nologged', or None when the check itself failed (network error,
+    invalid JSON) or the response has an unknown shape.
+    """
+    url = "https://digiarchiv.aiscr.cz/api/user/islogged"
+    try:
+        body = session.get(url, timeout=10).json()
+    except (requests.exceptions.RequestException, ValueError) as e:
+        _log(f"Stav přihlášení se nepodařilo ověřit: {e}",
+             Qgis.MessageLevel.Warning)
+        return None
+
+    if not isinstance(body, dict):
+        _log("Neznámý formát odpovědi islogged – pokračuji dál.",
+             Qgis.MessageLevel.Warning)
+        return None
+    if "remaining" in body:
+        # Only the remaining seconds are logged, never a user profile
+        _log(f"Session je přihlášená (zbývá {body['remaining']} s).")
+        return True
+    if body.get("error"):
+        _log(f"Server session neuznává ({body['error']}).",
+             Qgis.MessageLevel.Warning)
+        return False
+    _log("Neznámý formát odpovědi islogged – pokračuji dál.",
+         Qgis.MessageLevel.Warning)
+    return None
+
+
+def _ensure_logged_in() -> str:
+    """
+    Verifies before a download that the user is logged in, whenever
+    a session exists or credentials are stored; renews the session
+    once when it has expired. Returns one of:
+
+    * "anonymous" – no session and no stored credentials (nothing
+      to check, no request is sent)
+    * "logged_in" – the current session is valid
+    * "relogged" – the session had expired and was renewed
+    * "fallback" – a login was expected but could not be established;
+      the download will run anonymously
+    * "unknown" – the check itself failed; the download proceeds
+      with the current session
+    """
+    global AMCR_SESSION
+
+    session = _get_session()
+    if session is None:
+        # _get_session() has already tried the stored credentials;
+        # their presence therefore means the login failed
+        from .amcr_dialog import LoginDialog
+        username, password = LoginDialog.get_credentials()
+        if username and password:
+            _log("Přihlášení se nezdařilo – stahuji anonymně.",
+                 Qgis.MessageLevel.Warning)
+            return "fallback"
+        return "anonymous"
+
+    stav = _check_islogged(session)
+    if stav is None:
+        return "unknown"
+    if stav:
+        return "logged_in"
+
+    # The server no longer accepts the session – drop it and try
+    # one re-login with the stored credentials
+    AMCR_SESSION = None
+    from .amcr_dialog import LoginDialog
+    username, password = LoginDialog.get_credentials()
+    if not (username and password):
+        _log("Session vypršela a přihlašovací údaje nejsou uloženy "
+             "– stahuji anonymně.", Qgis.MessageLevel.Warning)
+        return "fallback"
+
+    session = login_to_api(username, password)
+    if session is None:
+        return "fallback"
+
+    stav = _check_islogged(session)
+    if stav is None:
+        return "unknown"
+    if stav:
+        return "relogged"
+    _log("Nová session nebyla serverem uznána – stahuji anonymně.",
+         Qgis.MessageLevel.Warning)
+    return "fallback"
+
+
 def _api_get_json(url, params, timeout=30) -> dict:
     """
     Performs a GET request and returns the parsed JSON body.
@@ -168,7 +287,13 @@ def _api_get_json(url, params, timeout=30) -> dict:
 
     def _is_auth_error(resp: requests.Response, body) -> bool:
         """The API returns auth errors with status 200 –
-        the body must be checked."""
+        the body must be checked.
+
+        Fallback only: the current server signals an expired session
+        by silently answering as anonymous (HTTP 200, no 'error'), so
+        this check never triggers on expiry today – the login state is
+        verified upfront by _ensure_logged_in() instead. Kept for the
+        day the API starts returning 401 or an explicit error text."""
         if resp.status_code == 401:
             return True
         if not isinstance(body, dict):
@@ -261,6 +386,49 @@ def tr_code(code):
     return TRANSLATIONS.get(code, code)
 
 
+def _component_entries(dj_meta, komps, passes):
+    """
+    Builds the feature metadata entries of the "Načíst komponenty"
+    mode: one entry per component that passes the given predicate,
+    with the weight 1/n where n is the number of passing components,
+    so the weights of one documentation unit sum to 1 even when a
+    period/area filter removes some of them. A documentation unit
+    without components gets a single entry with empty component
+    fields and weight 1.
+
+    dj_meta: metadata shared by the documentation unit (spread into
+    every entry); komps: its component documents; passes: predicate
+    komp -> bool deciding whether a component becomes a feature.
+    """
+    if not komps:
+        # DJ without components – still one feature, weight 1
+        return [{
+            **dj_meta,
+            'komponenta_id': "",
+            'komponenta_areal': "",
+            'komponenta_obdobi': "",
+            'vaha': 1,
+        }]
+
+    prochazejici = [komp for komp in komps if passes(komp)]
+    vaha = 1 / len(prochazejici) if prochazejici else 1
+
+    return [
+        {
+            **dj_meta,
+            'komponenta_id': komp.get('ident_cely', ""),
+            'komponenta_areal': (
+                komp.get('komponenta_areal') or {}
+            ).get('value', ""),
+            'komponenta_obdobi': (
+                komp.get('komponenta_obdobi') or {}
+            ).get('value', ""),
+            'vaha': vaha,
+        }
+        for komp in prochazejici
+    ]
+
+
 def komp_projde_filtrem(komp, filter_areal, filter_datace, filters):
     # 'or {}' – the key may be present with a None value
     areal_id = (komp.get('komponenta_areal') or {}).get('id', "")
@@ -291,6 +459,27 @@ def load_amcr_data(canvas, bb, filters=None,
         )
         return
     _LOADING = True
+
+    # Login state is verified before the first query: an expired
+    # session would otherwise silently degrade the result to
+    # access level A without any error
+    try:
+        login_stav = _ensure_logged_in()
+    except Exception as e:
+        # The check must never block the download nor leave _LOADING
+        # stuck – an unexpected error means "proceed as today"
+        QgsMessageLog.logMessage(
+            f"Ověření stavu přihlášení selhalo: {e}",
+            "AMČR", Qgis.MessageLevel.Warning
+        )
+        login_stav = "unknown"
+    if login_stav == "fallback":
+        iface.messageBar().pushMessage(
+            "AMCR",
+            "Přihlášení se nepodařilo obnovit – stahování proběhne "
+            "anonymně a bude obsahovat jen záznamy s přístupností A.",
+            level=Qgis.MessageLevel.Warning
+        )
 
     load_translations()
 
@@ -680,28 +869,16 @@ def load_amcr_data(canvas, bb, filters=None,
                                 # One feature per component –
                                 # all data on a single row, no relations needed
                                 if komps:
-                                    for komp in komps:
-                                        if not komp_projde_filtrem(
-                                            komp, filter_areal,
+                                    # The weight is 1/n of the components
+                                    # that pass the period/area filter,
+                                    # so one DJ sums to 1
+                                    for komp_meta in _component_entries(
+                                        dj_meta, komps,
+                                        lambda k: komp_projde_filtrem(
+                                            k, filter_areal,
                                             filter_datace, filters
-                                        ):
-                                            continue
-
-                                        komp_meta = {
-                                            **dj_meta,
-                                            'komponenta_id': komp.get(
-                                                'ident_cely',
-                                                ""
-                                                ),
-                                            'komponenta_areal': (
-                                                komp.get('komponenta_areal')
-                                                or {}
-                                            ).get('value', ""),
-                                            'komponenta_obdobi': (
-                                                komp.get('komponenta_obdobi')
-                                                or {}
-                                            ).get('value', ""),
-                                        }
+                                        )
+                                    ):
                                         pian_lookup[dj_pian_value].append(
                                             komp_meta)
                                         target_pian_ids_count += 1
@@ -711,15 +888,12 @@ def load_amcr_data(canvas, bb, filters=None,
                                     if filter_areal or filter_datace:
                                         continue
 
-                                    empty_meta = {
-                                        **dj_meta,
-                                        'komponenta_id': "",
-                                        'komponenta_areal': "",
-                                        'komponenta_obdobi': "",
-                                    }
-                                    pian_lookup[dj_pian_value].append(
-                                        empty_meta)
-                                    target_pian_ids_count += 1
+                                    for komp_meta in _component_entries(
+                                        dj_meta, [], lambda k: True
+                                    ):
+                                        pian_lookup[dj_pian_value].append(
+                                            komp_meta)
+                                        target_pian_ids_count += 1
                             else:
                                 target_pian_ids_count += 1
                                 pian_lookup[dj_pian_value].append(dj_meta)
@@ -1056,6 +1230,7 @@ def load_amcr_data(canvas, bb, filters=None,
             "poznamka": "Poznámka/bližší popis",
             "pred_org": "Předáno organizaci",
             "evidencni": "Evidenční číslo",
+            "prvek_vaha": "Váha prvku",
         }
 
         if komponenty == "true":
@@ -1063,6 +1238,7 @@ def load_amcr_data(canvas, bb, filters=None,
                 QgsField("komponenta", QMetaType.Type.QString),
                 QgsField("komponenta_areal", QMetaType.Type.QString),
                 QgsField("komponenta_obdobi", QMetaType.Type.QString),
+                QgsField("prvek_vaha", QMetaType.Type.Double),
             ]
 
         for vl in layers:
@@ -1209,6 +1385,7 @@ def load_amcr_data(canvas, bb, filters=None,
                                         meta.get('komponenta_id', ""),
                                         meta.get('komponenta_areal', ""),
                                         meta.get('komponenta_obdobi', ""),
+                                        meta.get('vaha', 1),
                                     ])
 
                                 feat.setAttributes(atributy)
