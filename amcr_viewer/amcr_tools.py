@@ -386,6 +386,49 @@ def tr_code(code):
     return TRANSLATIONS.get(code, code)
 
 
+def _component_entries(dj_meta, komps, passes):
+    """
+    Builds the feature metadata entries of the "Načíst komponenty"
+    mode: one entry per component that passes the given predicate,
+    with the weight 1/n where n is the number of passing components,
+    so the weights of one documentation unit sum to 1 even when a
+    period/area filter removes some of them. A documentation unit
+    without components gets a single entry with empty component
+    fields and weight 1.
+
+    dj_meta: metadata shared by the documentation unit (spread into
+    every entry); komps: its component documents; passes: predicate
+    komp -> bool deciding whether a component becomes a feature.
+    """
+    if not komps:
+        # DJ without components – still one feature, weight 1
+        return [{
+            **dj_meta,
+            'komponenta_id': "",
+            'komponenta_areal': "",
+            'komponenta_obdobi': "",
+            'vaha': 1,
+        }]
+
+    prochazejici = [komp for komp in komps if passes(komp)]
+    vaha = 1 / len(prochazejici) if prochazejici else 1
+
+    return [
+        {
+            **dj_meta,
+            'komponenta_id': komp.get('ident_cely', ""),
+            'komponenta_areal': (
+                komp.get('komponenta_areal') or {}
+            ).get('value', ""),
+            'komponenta_obdobi': (
+                komp.get('komponenta_obdobi') or {}
+            ).get('value', ""),
+            'vaha': vaha,
+        }
+        for komp in prochazejici
+    ]
+
+
 def komp_projde_filtrem(komp, filter_areal, filter_datace, filters):
     # 'or {}' – the key may be present with a None value
     areal_id = (komp.get('komponenta_areal') or {}).get('id', "")
@@ -826,31 +869,16 @@ def load_amcr_data(canvas, bb, filters=None,
                                 # One feature per component –
                                 # all data on a single row, no relations needed
                                 if komps:
-                                    komps_count = len(komps)
-
-                                    for komp in komps:
-                                        if not komp_projde_filtrem(
-                                            komp, filter_areal,
+                                    # The weight is 1/n of the components
+                                    # that pass the period/area filter,
+                                    # so one DJ sums to 1
+                                    for komp_meta in _component_entries(
+                                        dj_meta, komps,
+                                        lambda k: komp_projde_filtrem(
+                                            k, filter_areal,
                                             filter_datace, filters
-                                        ):
-                                            continue
-
-                                        komp_meta = {
-                                            **dj_meta,
-                                            'komponenta_id': komp.get(
-                                                'ident_cely',
-                                                ""
-                                                ),
-                                            'komponenta_areal': (
-                                                komp.get('komponenta_areal')
-                                                or {}
-                                            ).get('value', ""),
-                                            'komponenta_obdobi': (
-                                                komp.get('komponenta_obdobi')
-                                                or {}
-                                            ).get('value', ""),
-                                            'vaha': 1/komps_count,
-                                        }
+                                        )
+                                    ):
                                         pian_lookup[dj_pian_value].append(
                                             komp_meta)
                                         target_pian_ids_count += 1
@@ -860,15 +888,12 @@ def load_amcr_data(canvas, bb, filters=None,
                                     if filter_areal or filter_datace:
                                         continue
 
-                                    empty_meta = {
-                                        **dj_meta,
-                                        'komponenta_id': "",
-                                        'komponenta_areal': "",
-                                        'komponenta_obdobi': "",
-                                    }
-                                    pian_lookup[dj_pian_value].append(
-                                        empty_meta)
-                                    target_pian_ids_count += 1
+                                    for komp_meta in _component_entries(
+                                        dj_meta, [], lambda k: True
+                                    ):
+                                        pian_lookup[dj_pian_value].append(
+                                            komp_meta)
+                                        target_pian_ids_count += 1
                             else:
                                 target_pian_ids_count += 1
                                 pian_lookup[dj_pian_value].append(dj_meta)

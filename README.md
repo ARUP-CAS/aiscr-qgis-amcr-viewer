@@ -298,6 +298,7 @@ order *common → entity-specific → `pristupnost` → component fields*.
 | `komponenta` | Komponenta | Component identifier. |
 | `komponenta_areal` | Areál | Activity area \[settlement / burial area / field / …\]. |
 | `komponenta_obdobi` | Období | Period \[Neolithic / High Middle Ages–Modern Period / …\]. |
+| `prvek_vaha` | Váha prvku | Feature weight: 1/*n*, where *n* is the number of features created from the same documentation unit after the period/area filters, so the weights of one documentation unit sum to 1. |
 
 ### 3.5 When a query returns nothing
 
