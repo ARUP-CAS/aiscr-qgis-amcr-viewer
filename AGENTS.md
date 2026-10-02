@@ -17,9 +17,36 @@ Zdroj dat: https://digiarchiv.aiscr.cz/ · Nápověda: https://amcr-help.aiscr.c
 Tento repozitář je jedním ze **sourozeneckých repozitářů** ekosystému AIS CR.
 Centrální governance a AI konfigurace spravuje hub **`aiscr-management`**; konvence
 v tomto souboru jsou s tímto vzorem sladěné a zjednodušené pro potřeby jednoho
-QGIS pluginu. Těžkou mašinerii hubu (složka `.agents/`, OpenSpec, sync skripty,
-multi-assistant generování) tento repozitář **záměrně nepřebírá**. Při širších
-otázkách governance má přednost vzor z `aiscr-management`.
+QGIS pluginu. Z hubu přebírá **OpenSpec** ve stupni `change-tracked` (viz
+níže). Ostatní mašinerii hubu (složka `.agents/`, sync skripty, vlastní
+schémata OpenSpec, multi-assistant generování) tento repozitář **záměrně
+nepřebírá**. Při širších otázkách governance má přednost vzor
+z `aiscr-management`.
+
+## OpenSpec
+
+Repozitář používá OpenSpec ve stupni **`change-tracked`**: plánovací
+artefakty změn (`proposal.md`, delta spec, `design.md`, `tasks.md`) žijí
+v `openspec/changes/<slug>/`, trvalé specifikace v `openspec/specs/` se
+**neudržují**. Stupeň a kontext pro agenty jsou v `openspec/config.yaml`;
+změna stupně se dělá vědomě společně s hubem, ne v rámci rozpracované práce.
+
+- **Kdy založit změnu:** práce, která mění chování (co uživatel vidí,
+  atributy vrstev, kontrakt s API digiarchivu, uložená nastavení), zasahuje
+  víc repozitářů nebo mění pravidla / AI konfiguraci / CI.
+- **Kdy ne:** překlepy a formátování, bump závislostí či pinů nástrojů bez
+  změny chování, přegenerování odvozených souborů.
+- **Postup:** `openspec new change <slug>` → artefakty → `openspec validate
+  <slug> --strict` → implementace (až na výslovný pokyn) → po merge
+  `openspec archive <slug> --skip-specs` (archiv
+  `openspec/changes/archive/RRRR-MM-DD-<slug>/`).
+- Artefakty změny jdou **ve stejném PR** jako implementace; v popisu PR
+  odkaž na adresář změny.
+- Používá se vestavěné schéma `spec-driven`; vlastní schémata hubu se sem
+  nepřenášejí. CLI: `npx @fission-ai/openspec@1.14.0` (nebo lokálně
+  nainstalované `openspec`); bez CLI lze artefakty psát i ručně.
+- Asistentské povrchy (`.claude/`, `.github/prompts/` …) doručuje sync
+  z hubu; v tomto repozitáři se ručně nezakládají ani necommitují.
 
 ## Struktura repozitáře
 
@@ -33,7 +60,8 @@ amcr_viewer/            # vlastní kód pluginu (toto se balí do releasu)
   metadata.txt          # metadata pluginu + verze + changelog
   i18n/                 # překlady (.ts)
   *.png                 # ikony
-.github/workflows/      # CI – release pluginu
+.github/workflows/      # CI – kontroly kvality a release pluginu
+openspec/               # OpenSpec – konfigurace a plánovací artefakty změn
 README.md               # uživatelská dokumentace (anglicky)
 ```
 
@@ -163,6 +191,7 @@ flatpak run --command=sh org.qgis.qgis -c \
 - PR musí mířit do správné `version/v2.x.y` větve.
 - Před požádáním o review projdi kontrolní seznam v šabloně (zejména bump verze
   v `metadata.txt`, pokud měníš chování).
+- Mění-li PR chování, obsahuje i odpovídající změnu v `openspec/changes/`.
 - V popisu PR uveď **podíl AI** (např. „text navržen AI, ručně zkontrolováno")
   a odkaz na související issue, pokud existuje.
 
