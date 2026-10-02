@@ -157,6 +157,98 @@ def _get_session() -> requests.Session | None:
     return AMCR_SESSION
 
 
+def _check_islogged(session) -> bool | None:
+    """
+    Asks the server whether the session is logged in
+    (GET /api/user/islogged; the check does not extend the session).
+    Returns True when logged in, False when the server reports
+    'nologged', or None when the check itself failed (network error,
+    invalid JSON) or the response has an unknown shape.
+    """
+    url = "https://digiarchiv.aiscr.cz/api/user/islogged"
+    try:
+        body = session.get(url, timeout=10).json()
+    except (requests.exceptions.RequestException, ValueError) as e:
+        _log(f"Stav přihlášení se nepodařilo ověřit: {e}",
+             Qgis.MessageLevel.Warning)
+        return None
+
+    if not isinstance(body, dict):
+        _log("Neznámý formát odpovědi islogged – pokračuji dál.",
+             Qgis.MessageLevel.Warning)
+        return None
+    if "remaining" in body:
+        # Only the remaining seconds are logged, never a user profile
+        _log(f"Session je přihlášená (zbývá {body['remaining']} s).")
+        return True
+    if body.get("error"):
+        _log(f"Server session neuznává ({body['error']}).",
+             Qgis.MessageLevel.Warning)
+        return False
+    _log("Neznámý formát odpovědi islogged – pokračuji dál.",
+         Qgis.MessageLevel.Warning)
+    return None
+
+
+def _ensure_logged_in() -> str:
+    """
+    Verifies before a download that the user is logged in, whenever
+    a session exists or credentials are stored; renews the session
+    once when it has expired. Returns one of:
+
+    * "anonymous" – no session and no stored credentials (nothing
+      to check, no request is sent)
+    * "logged_in" – the current session is valid
+    * "relogged" – the session had expired and was renewed
+    * "fallback" – a login was expected but could not be established;
+      the download will run anonymously
+    * "unknown" – the check itself failed; the download proceeds
+      with the current session
+    """
+    global AMCR_SESSION
+
+    session = _get_session()
+    if session is None:
+        # _get_session() has already tried the stored credentials;
+        # their presence therefore means the login failed
+        from .amcr_dialog import LoginDialog
+        username, password = LoginDialog.get_credentials()
+        if username and password:
+            _log("Přihlášení se nezdařilo – stahuji anonymně.",
+                 Qgis.MessageLevel.Warning)
+            return "fallback"
+        return "anonymous"
+
+    stav = _check_islogged(session)
+    if stav is None:
+        return "unknown"
+    if stav:
+        return "logged_in"
+
+    # The server no longer accepts the session – drop it and try
+    # one re-login with the stored credentials
+    AMCR_SESSION = None
+    from .amcr_dialog import LoginDialog
+    username, password = LoginDialog.get_credentials()
+    if not (username and password):
+        _log("Session vypršela a přihlašovací údaje nejsou uloženy "
+             "– stahuji anonymně.", Qgis.MessageLevel.Warning)
+        return "fallback"
+
+    session = login_to_api(username, password)
+    if session is None:
+        return "fallback"
+
+    stav = _check_islogged(session)
+    if stav is None:
+        return "unknown"
+    if stav:
+        return "relogged"
+    _log("Nová session nebyla serverem uznána – stahuji anonymně.",
+         Qgis.MessageLevel.Warning)
+    return "fallback"
+
+
 def _api_get_json(url, params, timeout=30) -> dict:
     """
     Performs a GET request and returns the parsed JSON body.
@@ -168,7 +260,13 @@ def _api_get_json(url, params, timeout=30) -> dict:
 
     def _is_auth_error(resp: requests.Response, body) -> bool:
         """The API returns auth errors with status 200 –
-        the body must be checked."""
+        the body must be checked.
+
+        Fallback only: the current server signals an expired session
+        by silently answering as anonymous (HTTP 200, no 'error'), so
+        this check never triggers on expiry today – the login state is
+        verified upfront by _ensure_logged_in() instead. Kept for the
+        day the API starts returning 401 or an explicit error text."""
         if resp.status_code == 401:
             return True
         if not isinstance(body, dict):
@@ -291,6 +389,27 @@ def load_amcr_data(canvas, bb, filters=None,
         )
         return
     _LOADING = True
+
+    # Login state is verified before the first query: an expired
+    # session would otherwise silently degrade the result to
+    # access level A without any error
+    try:
+        login_stav = _ensure_logged_in()
+    except Exception as e:
+        # The check must never block the download nor leave _LOADING
+        # stuck – an unexpected error means "proceed as today"
+        QgsMessageLog.logMessage(
+            f"Ověření stavu přihlášení selhalo: {e}",
+            "AMČR", Qgis.MessageLevel.Warning
+        )
+        login_stav = "unknown"
+    if login_stav == "fallback":
+        iface.messageBar().pushMessage(
+            "AMCR",
+            "Přihlášení se nepodařilo obnovit – stahování proběhne "
+            "anonymně a bude obsahovat jen záznamy s přístupností A.",
+            level=Qgis.MessageLevel.Warning
+        )
 
     load_translations()
 
