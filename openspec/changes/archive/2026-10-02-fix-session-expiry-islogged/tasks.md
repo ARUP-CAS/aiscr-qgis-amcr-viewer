@@ -34,7 +34,7 @@
   `LoginDialog._forget_credentials`; extend the smoke test (session
   logged out + dropped, network error still drops it, no session = no
   request); update README and changelog; verify smoke test ltr + stable
-- [ ] 2b.2 Manual test in QGIS: log in, download, remove the stored
+- [x] 2b.2 Manual test in QGIS: log in, download, remove the stored
   credentials, download again; verify the log shows "Uživatel odhlášen"
   and the count drops to the anonymous one
 
