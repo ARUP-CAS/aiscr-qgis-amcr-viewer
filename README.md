@@ -123,6 +123,30 @@ Filters of different categories are combined with **AND**; multiple values
 inside one filter are combined with **OR**. A filter left empty means "no
 restriction". Click *Vybrat…* to open a searchable, checkable list.
 
+#### Remembered filters, reset, clearing one filter
+
+* The dialog **remembers the filters you confirmed with OK** — separately
+  for Fieldwork events, Sites and Individual finds — for the rest of the
+  QGIS session. Reopening the dialog restores all selections, checkboxes
+  and date ranges, so refining a query ("same area, one more period") does
+  not mean re-entering everything. Nothing is written to disk: after a QGIS
+  restart (or a plugin reload) every dialog starts from its defaults again.
+  *Cancel* leaves the remembered state untouched.
+* When the reopened dialog contains filters that differ from the defaults,
+  a green notice at the top says so and counts them, so a forgotten filter
+  further down the scrollable form is not missed.
+* **Obnovit výchozí** (left of OK/Cancel) resets the whole form to its
+  defaults: the map-extent restriction checked, *PIAN – přesnost* back to
+  its three pre-selected levels (where the data type has it), everything
+  else empty. The reset applies to the form only — the remembered state
+  changes when you confirm with OK.
+* Each picker has a small **✕** (*Vymazat výběr*; *Vrátit výchozí výběr*
+  for *PIAN – přesnost*) that returns just that
+  filter to its default — empty for almost all filters, the three
+  pre-selected levels for *PIAN – přesnost*; it is disabled while the
+  filter already is at its default. To drop the *PIAN – přesnost*
+  restriction entirely, uncheck all levels in its *Vybrat…* dialog.
+
 #### Availability per entity
 
 | Filter (Czech UI label) | Events | Sites | Ind. finds | API parameter |
@@ -167,7 +191,10 @@ filter in place, otherwise you will hit the record cap (see 4.5).
 > *odchylka desítky metrů* and *odchylka stovky metrů* checked, so an
 > otherwise untouched dialog already sends `f_pian_presnost`. Records
 > localised only to a cadastral territory are excluded until you open the
-> picker and add that level yourself.
+> picker and add that level yourself. *Obnovit výchozí* brings the three
+> levels back; the picker's ✕ returns them too (it restores the filter's
+> default). To have no accuracy restriction at all, uncheck all levels
+> in the picker's *Vybrat…* dialog.
 
 #### Date ranges
 

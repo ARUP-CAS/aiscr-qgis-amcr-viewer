@@ -31,6 +31,9 @@ changelog=
    * The login state is verified before each download via /api/user/islogged; an expired session is renewed automatically
    * When a logged-in download falls back to anonymous access, a message bar warning says so (only access level A data)
    * Removing the stored credentials also logs the user out of the Digital Archive
+   * The filter dialog remembers the last confirmed filters per data type for the QGIS run and restores them on reopening
+   * New Obnovit výchozí button resets the filter form to its defaults, including the pre-selected PIAN accuracy levels
+   * Each codelist filter has a ✕ button that returns that single filter to its default (empty, or the three pre-selected levels for PIAN – přesnost); a notice announces restored filters and their count
   v2.1.4 (2026-10-01)
    * Removed unused generated resources.py and the bundled flake8 config, so the plugin passes the plugins.qgis.org scan without custom configuration
   v2.1.3 (2026-10-01)
