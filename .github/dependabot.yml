@@ -1,0 +1,16 @@
+# Dependabot hlídá jen GitHub Actions: akce jsou ve workflow připnuté
+# na SHA s komentářem verze a Dependabot umí obojí povýšit naráz.
+# Plugin nemá pip/npm manifest a verze nástrojů (ruff, flake8 …) se
+# v workflow drží napevno vědomě – viz AGENTS.md.
+# Vzor: aiscr-management/.github/dependabot.yml
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    target-branch: main
+    commit-message:
+      prefix: "ci"
