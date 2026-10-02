@@ -53,5 +53,13 @@
   ruff, smoke test in `qgis/qgis:ltr` and `:stable` – unchanged plugin
   code, must stay green) and `openspec validate add-daily-api-monitor
   --strict`; verify all clean
-- [ ] 4.3 After merge into `main`: manual `workflow_dispatch` on `main`,
+- [x] 4.3 After merge into `main`: manual `workflow_dispatch` on `main`,
   inspect the summary and that no issue was opened on a clean run
+  - Run 37059874538 on `main` (02144d8), 2026-10-02: not a clean run –
+    `api.aiscr.cz/2.2/oai` returns `amcr:amcr` for `metadataPrefix=oai_dc`
+    since that evening (`2.0`/`2.1` correct). Contract job FAIL on all 17
+    OAI sets, live job FAIL on all 17 OAI `fetch_set`; digiarchiv facets
+    and downloads OK. Report opened issue #89 with label `api-monitor`,
+    deployed version, 34 failing checks and run link; run ended red as
+    designed. The clean-run path (no issue / issue closed) was verified
+    by the dry run in 3.2 and waits for the API fix.
