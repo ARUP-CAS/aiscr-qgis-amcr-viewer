@@ -27,7 +27,7 @@ changelog=
   v2.2.0 (2026-09-02)
    * Filter labels unified: "Specifikace nálezu" renamed to "Materiál" to match the attribute alias
    * README rewritten to match the current state of the code
-   * Tables for Akce and Lokality contain a field with feature weight, when Komponenty rendering is enabled
+   * Tables for Akce and Lokality contain a field with feature weight, when Komponenty rendering is enabled; the weights of one documentation unit sum to 1 also with period/area filters
    * The login state is verified before each download via /api/user/islogged; an expired session is renewed automatically
    * When a logged-in download falls back to anonymous access, a message bar warning says so (only access level A data)
    * Removing the stored credentials also logs the user out of the Digital Archive

@@ -289,12 +289,84 @@ def odhlaseni():
     return "odhlášení, chyba sítě → zahozeno lokálně, bez session → nic"
 
 
+def vaha_komponent():
+    """
+    _component_entries: the weight is 1/n of the components that pass
+    the predicate, so the weights of one documentation unit sum to 1
+    even with a period/area filter active.
+
+    The cases come from the spec of the fix (issue #55); the sums are
+    compared with a tolerance because 1/3 weights add up to 0.999…
+    """
+    tools = amcr_viewer.amcr_tools
+
+    def komponenta(ident, areal=None, obdobi=None):
+        return {
+            "ident_cely": ident,
+            "komponenta_areal": ({"id": areal} if areal else None),
+            "komponenta_obdobi": ({"id": obdobi} if obdobi else None),
+        }
+
+    dj_meta = {"dj_id": "X-M-000001"}
+
+    # 4 components, no filter: 4 features, each 0.25
+    komps = [komponenta(f"K{i}") for i in range(4)]
+    zaznamy = tools._component_entries(dj_meta, komps, lambda k: True)
+    assert len(zaznamy) == 4, len(zaznamy)
+    assert all(z["vaha"] == 0.25 for z in zaznamy), \
+        [z["vaha"] for z in zaznamy]
+
+    # Period filter keeps 1 of 4: single feature with weight 1
+    komps = [
+        komponenta("K0", obdobi="neolit"),
+        komponenta("K1"), komponenta("K2"), komponenta("K3"),
+    ]
+    zaznamy = tools._component_entries(
+        dj_meta, komps, lambda k: k["komponenta_obdobi"] is not None
+    )
+    assert len(zaznamy) == 1, len(zaznamy)
+    assert zaznamy[0]["vaha"] == 1.0, zaznamy[0]["vaha"]
+
+    # Filter keeps 2 of 3: 2 features, each 0.5, sum 1 within tolerance
+    komps = [
+        komponenta("K0", obdobi="neolit"), komponenta("K1", obdobi="bronz"),
+        komponenta("K2"),
+    ]
+    zaznamy = tools._component_entries(
+        dj_meta, komps, lambda k: k["komponenta_obdobi"] is not None
+    )
+    assert len(zaznamy) == 2, len(zaznamy)
+    assert all(z["vaha"] == 0.5 for z in zaznamy), \
+        [z["vaha"] for z in zaznamy]
+    assert abs(sum(z["vaha"] for z in zaznamy) - 1) < 1e-9
+
+    # Sum with tolerance also for an indivisible split (1/3)
+    komps = [komponenta(f"K{i}") for i in range(3)]
+    zaznamy = tools._component_entries(dj_meta, komps, lambda k: True)
+    assert abs(sum(z["vaha"] for z in zaznamy) - 1) < 1e-9
+
+    # No components: one entry with empty component fields, weight 1
+    zaznamy = tools._component_entries(dj_meta, [], lambda k: True)
+    assert len(zaznamy) == 1, zaznamy
+    assert zaznamy[0]["vaha"] == 1, zaznamy[0]["vaha"]
+    assert zaznamy[0]["komponenta_id"] == ""
+
+    # The shared DJ metadata and component fields travel along
+    komps = [komponenta("K0", areal="sidelni", obdobi="neolit")]
+    zaznamy = tools._component_entries(dj_meta, komps, lambda k: True)
+    assert zaznamy[0]["dj_id"] == "X-M-000001"
+    assert zaznamy[0]["komponenta_id"] == "K0"
+
+    return "4×0.25; 1/4 → 1.0; 2/3 → 2×0.5; prázdné → 1"
+
+
 zkouska("scoped enumy", enumy)
 zkouska("UpdateCodelistsTask", uloha)
 zkouska("filtrační dialogy", dialogy)
 zkouska("filtr podle data", filtr_datumu)
 zkouska("stav přihlášení", prihlasovaci_stav)
 zkouska("odhlášení", odhlaseni)
+zkouska("váha komponent", vaha_komponent)
 
 qgs.exitQgis()
 
