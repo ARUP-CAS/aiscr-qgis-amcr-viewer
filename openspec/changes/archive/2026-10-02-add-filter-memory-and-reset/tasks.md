@@ -66,11 +66,17 @@
   test in `qgis/qgis:ltr` and `qgis/qgis:stable`; delete
   `amcr_viewer/__pycache__` afterwards
 - [x] 4.2 `openspec validate add-filter-memory-and-reset --strict` passes
-- [ ] 4.3 Manual test in QGIS 3.44 and QGIS 4 (user): spec scenarios –
+- [x] 4.3 Manual test in QGIS 3.44 and QGIS 4 (user): spec scenarios –
   reopen after a download, Cancel, reset + OK / Cancel, `✕` on one
   picker and on PIAN, notice text, separate state per data type,
   *Aktualizovat hesláře* between two openings, defaults after a QGIS
   restart
-- [ ] 4.4 Archive before merge:
+  - User (Fieldwork events): everything worked except two points – the
+    notice started with an odd "ℹ" and `✕` on PIAN emptied it instead
+    of restoring the default. Both fixed (commit d5e520d) and re-tested
+    by the user on Fieldwork events. Sites and Individual finds share the
+    same dialog code; they are covered by the smoke test only, not
+    visually.
+- [x] 4.4 Archive before merge:
   `openspec archive add-filter-memory-and-reset --skip-specs` in the same
   PR
