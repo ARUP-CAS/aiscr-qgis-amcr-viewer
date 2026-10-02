@@ -7,7 +7,7 @@ from qgis.core import (
     QgsTask,
 )
 from qgis.gui import QgsDateEdit
-from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtCore import QDate, QSettings, Qt
 from qgis.PyQt.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -24,6 +24,7 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -62,6 +63,19 @@ DATE_OPEN_TO = "9999-12-31"
 
 # Shown by a date picker that is left empty
 DATE_NULL_TEXT = "neomezeno"
+
+# The non-empty defaults of the form: PIAN – přesnost pre-selects the
+# three levels better than a cadastral territory, and the map-extent
+# restriction is on. Everything else starts empty.
+DEFAULT_CODES = {
+    "pian_presnost": ["HES-000861", "HES-000862", "HES-000863"],
+}
+DEFAULT_CHECKS = {"bbox": True}
+
+# The last OK-confirmed form state per data type, alive for the QGIS
+# run only: re-importing the plugin (a restart, Plugin Reloader) drops
+# the dict, which is exactly the required lifetime.
+_REMEMBERED_STATE = {}
 
 
 # Keep Python references to running tasks. QgsTaskManager only holds the
@@ -234,15 +248,29 @@ class AmcrFilterDialog(QDialog):
             'nalezce': [],
         }
 
+        # Pickers registered by setup_picker():
+        # cache_key -> (data_source, display_field, clear button)
+        self.pickers = {}
+
         # Date range pickers, filled by setup_date_range():
         # (API field, label for messages, 'from' widget, 'to' widget)
         self.date_ranges = []
 
         layout = QVBoxLayout()
 
+        # Notice shown when a remembered state was restored
+        self.lbl_notice = QLabel()
+        self.lbl_notice.setWordWrap(True)
+        self.lbl_notice.setStyleSheet(
+            "color: #1b5e20; background-color: #e8f5e9; "
+            "border: 1px solid #a5d6a7; border-radius: 4px; padding: 6px;"
+        )
+        self.lbl_notice.setVisible(False)
+        layout.addWidget(self.lbl_notice)
+
         # Filter by current map canvas extent
         self.chk_bbox = QCheckBox("Omezit vyhledávání rozsahem okna")
-        self.chk_bbox.setChecked(True)
+        self.chk_bbox.setChecked(DEFAULT_CHECKS["bbox"])
         layout.addWidget(self.chk_bbox)
 
         # Positive/negative evidence – valid for Akce
@@ -457,6 +485,15 @@ class AmcrFilterDialog(QDialog):
             self.btn_update,
             QDialogButtonBox.ButtonRole.ActionRole
         )
+
+        # Reset the form to its defaults; the remembered state changes
+        # only on OK. ResetRole puts the button left of the OK/Cancel pair.
+        self.btn_reset = buttons.addButton(
+            QDialogButtonBox.StandardButton.RestoreDefaults
+        )
+        self.btn_reset.setText("Obnovit výchozí")
+        self.btn_reset.clicked.connect(self.action_reset)
+
         buttons.addButton(QDialogButtonBox.StandardButton.Ok)
         buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
 
@@ -465,6 +502,126 @@ class AmcrFilterDialog(QDialog):
         outer.addWidget(buttons)
 
         self.setLayout(outer)
+
+        # Restore the remembered state (defaults when there is none)
+        restored = _REMEMBERED_STATE.get(self.typ_dat)
+        if restored is None:
+            self._apply_state(self._default_state())
+        else:
+            self._apply_state(restored)
+            diff = self._diff_from_default(restored)
+            if diff:
+                self.lbl_notice.setText(
+                    "ℹ Načteny filtry z minulého hledání "
+                    f"(aktivní filtry: {diff})."
+                )
+                self.lbl_notice.setVisible(True)
+
+    def _default_state(self):
+        """A full snapshot of the default form state for this typ_dat."""
+        # Every checkbox defaults to off, except the ones DEFAULT_CHECKS
+        # turns on (the map-extent restriction)
+        checks = {name: False for name, _ in self._check_widgets()}
+        for name, value in DEFAULT_CHECKS.items():
+            if name in checks:
+                checks[name] = value
+
+        return {
+            "codes": {
+                key: (list(DEFAULT_CODES[key])
+                      if key in DEFAULT_CODES else [])
+                for key in self.pickers
+            },
+            "checks": checks,
+            "dates": {
+                api_field: (None, None)
+                for api_field, _, _, _ in self.date_ranges
+            },
+        }
+
+    def _check_widgets(self):
+        """(name, checkbox) of every checkbox, in a stable order."""
+        widgets = []
+        for name, attr in (
+            ("bbox", "chk_bbox"),
+            ("posevidence", "chk_posevidence"),
+            ("proj_akce", "chk_proj_akce"),
+            ("komponenty", "chk_komponenty"),
+        ):
+            if hasattr(self, attr):
+                widgets.append((name, getattr(self, attr)))
+        return widgets
+
+    def _snapshot(self):
+        """The whole form state as plain Python (codes/checks/dates)."""
+        return {
+            "codes": {key: list(codes)
+                      for key, codes in self.selection_cache.items()},
+            "checks": {name: chk.isChecked()
+                       for name, chk in self._check_widgets()},
+            "dates": {
+                api_field: (
+                    None if date_from.isNull()
+                    else date_from.date().toString("yyyy-MM-dd"),
+                    None if date_to.isNull()
+                    else date_to.date().toString("yyyy-MM-dd"),
+                )
+                for api_field, _, date_from, date_to in self.date_ranges
+            },
+        }
+
+    def _apply_state(self, state):
+        """Applies a snapshot; codes unknown to the codelists are
+        dropped and the picker texts are rebuilt from them."""
+        for key, codes in state.get("codes", {}).items():
+            if key in self.pickers:
+                self._set_picker(key, codes)
+
+        for name, chk in self._check_widgets():
+            chk.setChecked(state.get("checks", {}).get(name, False))
+
+        stored = state.get("dates", {})
+        for api_field, _, date_from, date_to in self.date_ranges:
+            iso_from, iso_to = stored.get(api_field, (None, None))
+            # clear(), not setEmpty(): an empty picker must stay
+            # isNull() so no filter is sent (see _date_edit)
+            if iso_from:
+                date_from.setDate(QDate.fromString(
+                    iso_from, "yyyy-MM-dd"))
+            else:
+                date_from.clear()
+            if iso_to:
+                date_to.setDate(QDate.fromString(
+                    iso_to, "yyyy-MM-dd"))
+            else:
+                date_to.clear()
+
+    def _diff_from_default(self, state):
+        """Number of form items in the snapshot that differ from
+        _default_state(): one per picker, checkbox and date row."""
+        diff = 0
+        defaults = self._default_state()
+
+        for key, codes in state.get("codes", {}).items():
+            if (key in defaults["codes"]
+                    and codes != defaults["codes"][key]):
+                diff += 1
+
+        for name, value in state.get("checks", {}).items():
+            if defaults["checks"].get(name) != value:
+                diff += 1
+
+        for api_field, bounds in state.get("dates", {}).items():
+            if defaults["dates"].get(api_field) != bounds:
+                diff += 1
+
+        return diff
+
+    def action_reset(self):
+        """Resets the form to its defaults (the remembered state is
+        changed only by OK, so Cancel after reset reverts it)."""
+        self._apply_state(self._default_state())
+        self.lbl_notice.setVisible(False)
 
     def setup_picker(self, label_text, cache_key, data_source, extra_btn=None):
         """
@@ -485,6 +642,16 @@ class AmcrFilterDialog(QDialog):
         btn = QPushButton("Vybrat...")
         btn.setFixedWidth(80)
 
+        # Empties this one filter; enabled only while something is
+        # selected (open_dialog re-evaluates it through _set_picker)
+        clear_btn = QToolButton()
+        clear_btn.setText("✕")
+        clear_btn.setToolTip("Vymazat výběr")
+        clear_btn.setEnabled(False)
+        clear_btn.clicked.connect(
+            lambda: self._set_picker(cache_key, [])
+        )
+
         # Nested handler: opens the selection dialog and saves the result
         def open_dialog():
             dlg = FilterableSelectionDialog(
@@ -494,38 +661,51 @@ class AmcrFilterDialog(QDialog):
                 self
             )
             if dlg.exec() == QDialog.DialogCode.Accepted:
-                codes, labels = dlg.get_selected_codes()
-                # Update the local cache with selected IDs
-                self.selection_cache[cache_key] = codes
-                # Update the display field with the selected item names
-                if labels:
-                    display_field.setText(", ".join(labels))
-                else:
-                    display_field.clear()
-
-        # Special case: pre-select default PIAN accuracy levels
-        if cache_key == 'pian_presnost':
-            display_field.setText(
-                "odchylka jednotky metrů, odchylka desítky metrů, "
-                "odchylka stovky metrů"
-            )
-            self.selection_cache[cache_key] = [
-                'HES-000861',
-                'HES-000862',
-                'HES-000863',
-            ]
+                codes, _labels = dlg.get_selected_codes()
+                self._set_picker(cache_key, codes)
 
         btn.clicked.connect(open_dialog)
 
         row_layout.addWidget(display_field)
         row_layout.addWidget(btn)
+        row_layout.addWidget(clear_btn)
 
         # Optionally append an extra button (e.g. a refresh button)
         if extra_btn:
             row_layout.addWidget(extra_btn)
 
         row_widget.setLayout(row_layout)
+
+        # One place knows the widgets behind every picker, so the cache
+        # and the display text can never drift apart
+        self.pickers[cache_key] = (data_source, display_field, clear_btn)
+
         return row_widget
+
+    def _set_picker(self, cache_key, codes):
+        """
+        Sets one picker: stores the codes, rebuilds the display text from
+        the current codelist (a label renamed by Aktualizovat hesláře
+        shows its new name, an unknown code is dropped) and re-enables
+        the clear button only for a non-empty selection.
+        """
+        data_source, display_field, clear_btn = self.pickers[cache_key]
+
+        # Keep the order the user picked, drop codes the current
+        # codelist no longer knows
+        code_to_label = {v: k for k, v in data_source.items()}
+        valid_codes = [code for code in codes if code in code_to_label]
+
+        # Rebuild the labels the same way the selection dialog shows
+        # them: sorted by name
+        labels = sorted(code_to_label[code] for code in valid_codes)
+
+        self.selection_cache[cache_key] = valid_codes
+        if labels:
+            display_field.setText(", ".join(labels))
+        else:
+            display_field.clear()
+        clear_btn.setEnabled(bool(valid_codes))
 
     def setup_date_range(self, title, rows):
         """
@@ -612,6 +792,9 @@ class AmcrFilterDialog(QDialog):
                 "nebo jedno z polí vyprázdněte."
             )
             return
+
+        # Remember the confirmed state only after the date check passed
+        _REMEMBERED_STATE[self.typ_dat] = self._snapshot()
 
         super().accept()
 

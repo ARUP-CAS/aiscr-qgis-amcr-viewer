@@ -360,10 +360,281 @@ def vaha_komponent():
     return "4×0.25; 1/4 → 1.0; 2/3 → 2×0.5; prázdné → 1"
 
 
+def vychozi_filtry():
+    """
+    A fresh dialog starts from the defaults: the map-extent restriction
+    checked, PIAN – přesnost pre-selected for akce and lokalita, and
+    nothing (not even PIAN) sent for samostatny_nalez.
+    """
+    _stubuj_varovani()
+    try:
+        pian = ["HES-000861", "HES-000862", "HES-000863"]
+        for typ, ma_pian in (("akce", True), ("lokalita", True),
+                             ("samostatny_nalez", False)):
+            okno = dialog.AmcrFilterDialog(typ)
+            assert okno.get_bbox() == "true", typ
+            assert okno.get_komponenty() == "false", typ
+            if ma_pian:
+                assert okno.selection_cache["pian_presnost"] == pian, typ
+                assert okno.get_filters()["f_pian_presnost"] == pian, typ
+            else:
+                assert "f_pian_presnost" not in okno.get_filters(), typ
+            okno.close()
+        return ("PIAN 861/862/863 u akcí a lokalit, u nálezů bez "
+                "omezení, bbox zapnutý")
+    finally:
+        dialog._REMEMBERED_STATE.clear()
+
+
+def _stubuj_varovani():
+    # A modal warning would block the offscreen run forever
+    dialog.QMessageBox.warning = staticmethod(lambda *a, **k: None)
+
+
+def _kody(codelist, n=1):
+    """First n real codes of a codelist (label -> code dict)."""
+    return [code for code in codelist.values() if code][:n]
+
+
+def _napln(okno, typ):
+    """Fills a dialog with a non-default state for round-trip tests."""
+    okno._set_picker("kraj", _kody(dialog.KRAJE))
+    okno._set_picker("obdobi", _kody(dialog.OBDOBI, 2))
+    okno.chk_bbox.setChecked(False)
+    if typ == "akce":
+        okno.chk_posevidence.setChecked(True)
+        okno.chk_proj_akce.setChecked(True)
+        okno._set_picker("typ_akce", _kody(dialog.TYP_AKCE))
+        okno.date_ranges[0][2].setDate(QDate(2016, 1, 1))
+        okno.date_ranges[0][3].setDate(QDate(2017, 12, 31))
+    if typ == "lokalita":
+        okno.chk_komponenty.setChecked(True)
+        okno._set_picker("typ_lokality", _kody(dialog.TYP_LOKALITY))
+    if typ == "samostatny_nalez":
+        okno._set_picker("druh_nalezu", _kody(dialog.DRUH_NALEZU))
+        okno.date_ranges[0][3].setDate(QDate(2020, 6, 30))
+
+
+def pamet_snapshotu():
+    """
+    Snapshot -> apply on a fresh dialog keeps get_filters(),
+    get_bbox() and get_komponenty() identical; a code unknown to the
+    current codelist is dropped on the way.
+    """
+    _stubuj_varovani()
+    try:
+        for typ in ("akce", "lokalita", "samostatny_nalez"):
+            okno = dialog.AmcrFilterDialog(typ)
+            _napln(okno, typ)
+            stav = okno.get_filters()
+            snapshot = okno._snapshot()
+            okno.close()
+
+            obnovene = dialog.AmcrFilterDialog(typ)
+            obnovene._apply_state(snapshot)
+            assert obnovene._snapshot() == snapshot, typ
+            assert obnovene.get_filters() == stav, typ
+            assert obnovene.get_bbox() == okno.get_bbox(), typ
+            assert obnovene.get_komponenty() == okno.get_komponenty(), typ
+            obnovene.close()
+
+        # Unknown code: dropped, not sent
+        okno = dialog.AmcrFilterDialog("akce")
+        kraj = _kody(dialog.KRAJE)
+        okno._set_picker("kraj", kraj + ["XX-NEEXISTUJE"])
+        assert okno.selection_cache["kraj"] == kraj
+        assert okno.get_filters()["f_kraj"] == kraj
+        okno.close()
+
+        # The same through a remembered state, as after a codelist
+        # update removed the code: dropped on opening, the picker text
+        # is the current codelist label
+        stitek = next(k for k, v in dialog.KRAJE.items() if v == kraj[0])
+        stav = dialog.AmcrFilterDialog("akce")._snapshot()
+        stav["codes"]["kraj"] = kraj + ["XX-NEEXISTUJE"]
+        dialog._REMEMBERED_STATE["akce"] = stav
+        okno = dialog.AmcrFilterDialog("akce")
+        assert okno.get_filters()["f_kraj"] == kraj
+        assert okno.pickers["kraj"][1].text() == stitek
+        okno.close()
+        return "round-trip všech tří typů, neznámý kód zahozen"
+    finally:
+        dialog._REMEMBERED_STATE.clear()
+
+
+def pamet_potvrzeni():
+    """
+    OK remembers the form state for the next opening of the same data
+    type; Cancel and a refused reversed date range do not; another
+    data type starts from the defaults.
+    """
+    _stubuj_varovani()
+    try:
+        okno = dialog.AmcrFilterDialog("akce")
+        _napln(okno, "akce")
+        potvrzene = okno.get_filters()
+        okno.accept()
+        okno.close()
+
+        # OK -> reopen restores the same filters
+        znovu = dialog.AmcrFilterDialog("akce")
+        assert znovu.get_filters() == potvrzene
+        assert znovu.get_bbox() == "false"
+
+        # Another data type starts from the defaults
+        lokalita = dialog.AmcrFilterDialog("lokalita")
+        assert "f_kraj" not in lokalita.get_filters()
+        assert lokalita.get_bbox() == "true"
+        lokalita.close()
+
+        # Cancel keeps the remembered state
+        znovu._set_picker("kraj", [])
+        znovu.chk_bbox.setChecked(True)
+        znovu.reject()
+        znovu.close()
+        po_zruseni = dialog.AmcrFilterDialog("akce")
+        assert po_zruseni.get_filters() == potvrzene
+
+        # A reversed range is refused and the state stays unchanged
+        zapamatovano = dialog._REMEMBERED_STATE["akce"]
+        po_zruseni.date_ranges[0][2].setDate(QDate(2018, 1, 1))
+        po_zruseni.date_ranges[0][3].setDate(QDate(2017, 1, 1))
+        po_zruseni.accept()
+        assert po_zruseni.result() == 0, "obrácené rozmezí přijato"
+        assert dialog._REMEMBERED_STATE["akce"] == zapamatovano
+        po_zruseni.close()
+        return ("OK obnoví, Cancel i obrácené rozmezí ne, jiný typ "
+                "od výchozích")
+    finally:
+        dialog._REMEMBERED_STATE.clear()
+
+
+def obnoveni_vychozich():
+    """
+    Obnovit výchozí resets the form only: reset + OK behaves like a
+    fresh dialog, reset + Cancel keeps the remembered state.
+    """
+    _stubuj_varovani()
+    try:
+        # Default output, captured before anything is remembered
+        okno = dialog.AmcrFilterDialog("akce")
+        vychozi = okno.get_filters()
+        vychozi_bbox = okno.get_bbox()
+        vychozi_komponenty = okno.get_komponenty()
+        okno.close()
+
+        # A remembered non-default state
+        okno = dialog.AmcrFilterDialog("akce")
+        _napln(okno, "akce")
+        potvrzene = okno.get_filters()
+        okno.accept()
+        okno.close()
+
+        # Reset + Cancel: reopening shows the remembered state
+        okno = dialog.AmcrFilterDialog("akce")
+        okno.action_reset()
+        assert okno.get_filters() == vychozi
+        okno.reject()
+        okno.close()
+        okno = dialog.AmcrFilterDialog("akce")
+        assert okno.get_filters() == potvrzene
+        okno.close()
+
+        # Reset + OK: the sent filters and the next opening are default
+        okno = dialog.AmcrFilterDialog("akce")
+        okno.action_reset()
+        assert okno.get_filters() == vychozi
+        assert okno.get_bbox() == vychozi_bbox
+        assert okno.get_komponenty() == vychozi_komponenty
+        okno.accept()
+        okno.close()
+        okno = dialog.AmcrFilterDialog("akce")
+        assert okno.get_filters() == vychozi
+        okno.close()
+        return "reset + OK = čerstvý dialog, reset + Cancel zachová"
+    finally:
+        dialog._REMEMBERED_STATE.clear()
+
+
+def vymazani_vyberu():
+    """
+    The ✕ button empties only its own filter and is disabled while
+    empty; clearing PIAN – přesnost removes f_pian_presnost.
+    """
+    _stubuj_varovani()
+    try:
+        okno = dialog.AmcrFilterDialog("lokalita")
+        okno._set_picker("kraj", _kody(dialog.KRAJE))
+        okno._set_picker("obdobi", _kody(dialog.OBDOBI, 2))
+        pred = okno.get_filters()
+        assert "f_kraj" in pred and "f_obdobi" in pred
+
+        okno.pickers["kraj"][2].click()
+        assert okno.selection_cache["kraj"] == []
+        po = okno.get_filters()
+        assert "f_kraj" not in po
+        assert po["f_obdobi"] == pred["f_obdobi"]
+        assert not okno.pickers["kraj"][2].isEnabled()
+        okno.close()
+
+        okno = dialog.AmcrFilterDialog("akce")
+        assert "f_pian_presnost" in okno.get_filters()
+        okno.pickers["pian_presnost"][2].click()
+        assert okno.selection_cache["pian_presnost"] == []
+        assert "f_pian_presnost" not in okno.get_filters()
+        okno.close()
+        return "✕ maže jen svůj filtr, PIAN → bez omezení"
+    finally:
+        dialog._REMEMBERED_STATE.clear()
+
+
+def upozorneni_obnovy():
+    """
+    The notice is hidden for a fresh dialog and for a remembered
+    default state; with two filters set it is shown with the count 2
+    and hidden again by Obnovit výchozí.
+    """
+    _stubuj_varovani()
+    try:
+        okno = dialog.AmcrFilterDialog("akce")
+        assert okno.lbl_notice.isHidden()
+        okno.close()
+
+        # A remembered default state is not worth a notice
+        okno = dialog.AmcrFilterDialog("akce")
+        okno.accept()
+        okno.close()
+        okno = dialog.AmcrFilterDialog("akce")
+        assert okno.lbl_notice.isHidden()
+        okno.close()
+
+        # Two non-default filters -> a notice with the count 2
+        okno = dialog.AmcrFilterDialog("akce")
+        okno._set_picker("kraj", _kody(dialog.KRAJE))
+        okno._set_picker("obdobi", _kody(dialog.OBDOBI))
+        okno.accept()
+        okno.close()
+        okno = dialog.AmcrFilterDialog("akce")
+        assert not okno.lbl_notice.isHidden()
+        assert "aktivní filtry: 2" in okno.lbl_notice.text()
+        okno.action_reset()
+        assert okno.lbl_notice.isHidden()
+        okno.close()
+        return "skryté pro výchozí, viditelné s počtem 2, reset skryje"
+    finally:
+        dialog._REMEMBERED_STATE.clear()
+
+
 zkouska("scoped enumy", enumy)
 zkouska("UpdateCodelistsTask", uloha)
 zkouska("filtrační dialogy", dialogy)
 zkouska("filtr podle data", filtr_datumu)
+zkouska("výchozí filtry", vychozi_filtry)
+zkouska("paměť snapshotu", pamet_snapshotu)
+zkouska("paměť potvrzení", pamet_potvrzeni)
+zkouska("obnovení výchozích", obnoveni_vychozich)
+zkouska("vymazání výběru", vymazani_vyberu)
+zkouska("upozornění obnovy", upozorneni_obnovy)
 zkouska("stav přihlášení", prihlasovaci_stav)
 zkouska("odhlášení", odhlaseni)
 zkouska("váha komponent", vaha_komponent)
