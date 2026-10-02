@@ -75,12 +75,15 @@ class UpdateCodelistsTask(QgsTask):
         super().__init__(description, QgsTask.Flag.CanCancel)
         self.success = False
         self.exception = None
+        # Codelists that failed to download and kept their previous values
+        self.failed_sets = []
 
     def run(self):
         """Runs in a background thread."""
         try:
             # Call the download function with the task reference
-            self.success = download_heslare(task=self)
+            self.success = download_heslare(
+                task=self, failed=self.failed_sets)
             return self.success
         except Exception as e:
             self.exception = e
@@ -91,10 +94,17 @@ class UpdateCodelistsTask(QgsTask):
         if result:
             # Safely update the global variables in the main thread
             refresh_globals()
-            QgsMessageLog.logMessage(
-                "Hesláře AMČR byly úspěšně aktualizovány.",
-                "AMČR", Qgis.MessageLevel.Info
-            )
+            if self.failed_sets:
+                QgsMessageLog.logMessage(
+                    "Hesláře AMČR aktualizovány částečně, beze změny "
+                    f"zůstaly: {', '.join(self.failed_sets)}",
+                    "AMČR", Qgis.MessageLevel.Warning
+                )
+            else:
+                QgsMessageLog.logMessage(
+                    "Hesláře AMČR byly úspěšně aktualizovány.",
+                    "AMČR", Qgis.MessageLevel.Info
+                )
         else:
             if self.isCanceled():
                 QgsMessageLog.logMessage(
@@ -629,6 +639,16 @@ class AmcrFilterDialog(QDialog):
 
         def on_completed():
             _cleanup()
+            if task.failed_sets:
+                QMessageBox.warning(
+                    parent_win,
+                    "Hesláře aktualizovány částečně",
+                    "Některé hesláře se nepodařilo stáhnout, "
+                    "ponechány byly jejich předchozí hodnoty:\n"
+                    + "\n".join(f"• {name}" for name in task.failed_sets)
+                    + "\n\nPodrobnosti jsou v panelu Zprávy, záložka AMČR."
+                )
+                return
             QMessageBox.information(
                 parent_win,
                 "Hotovo",

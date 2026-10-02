@@ -25,7 +25,7 @@ Nepotřebné body můžeš smazat. Komentáře (<!-- ... -->) se v PR nezobrazuj
 
 ## Kontrolní seznam
 - [ ] Změny jsou v souladu se stylem projektu (viz `AGENTS.md`)
-- [ ] Při změně funkcí povýšena verze v `amcr_viewer/metadata.txt` a doplněn `changelog`
+- [ ] Při změně funkcí povýšena verze v `amcr_viewer/metadata.txt` (+ `changelog`) a v `CITATION.cff` (`version`, `date-released`)
 - [ ] Otestováno v QGIS (min. podporovaná verze 3.44)
 - [ ] PR míří do správné cílové větve
 - [ ] Větev odpovídá konvenci (`feat/ fix/ docs/ chore/<téma>`, AI `agents/<jméno>/<téma>`)

@@ -1,0 +1,65 @@
+schema: spec-driven
+
+# Seeded from aiscr-management
+# .agents/canonical_configs/templates/openspec/config_seed.yaml;
+# from now on the content is owned by this repository.
+
+context: |
+  Repository: aiscr-qgis-amcr-viewer — QGIS plugin (AMČR Viewer) for
+  downloading and visualising data from the AMČR Digital Archive
+  (digiarchiv.aiscr.cz).
+
+  OpenSpec posture: change-tracked.
+  This is the local reading of a posture declared and owned by the
+  management hub (aiscr-management, .agents/sync/repos.toml):
+    - change-tracked — change-scoped planning artifacts live under
+      `openspec/changes/`; no durable capability specs are maintained here.
+  Do not edit this line to unblock work in progress. Changing posture is
+  a decision taken deliberately with the hub and then applied here.
+
+  When OpenSpec fires: behaviour-changing work (user-visible behaviour,
+  layer attributes, the digiarchiv API contract the plugin relies on,
+  stored settings), cross-repo work, and governance-touching work. Not
+  typo and formatting fixes, dependency or tool-pin bumps that change no
+  behaviour, or refreshing a generated surface from its source.
+
+  Repository conventions: `AGENTS.md` is the single source of truth
+  (Qt5/Qt6 rules, versioning, branches, checks). Plugin code lives in
+  `amcr_viewer/` (entry point `amcr_viewer.py`, API and layers in
+  `amcr_tools.py`, dialogs in `amcr_dialog.py`, codelists in
+  `amcr_codelists.py`). User documentation is `README.md` (English);
+  planning artifacts, commits and PRs are in Czech or English as the
+  author prefers, code and identifiers in English.
+
+rules:
+  proposal:
+    - State what changes for a user of the plugin, not only in the code
+    - Name the affected modules under amcr_viewer/ explicitly
+    - Say when the change depends on or affects the digiarchiv API or
+      another AIS CR repository, and where
+  specs:
+    - Use RFC 2119 keywords (SHALL/MUST/SHOULD/MAY)
+    - Use Given/When/Then scenarios for testable contracts
+    - Describe behaviour the plugin guarantees, not how the code does it
+  design:
+    - Record the alternatives considered and why the chosen one won
+    - Respect the QGIS 3.44 minimum and Qt5/Qt6 rules from AGENTS.md
+    - Name the verification that will show the change worked
+  tasks:
+    - Order tasks so each one is independently verifiable
+    - Name the command or check that proves each group is done
+    - Include the version bump (metadata.txt + CITATION.cff) when
+      behaviour changes
+    - Include a final verification task that runs the checks from
+      AGENTS.md (check_sources, bandit, detect-secrets, flake8, ruff,
+      pyqgis4-checker, smoke test in qgis/qgis:ltr and :stable)
+
+operations:
+  apply:
+    guidance:
+      - Completed artifacts are not approval to implement; wait for an
+        explicit request to apply the change
+  archive:
+    guidance:
+      - Posture is change-tracked, so archive with --skip-specs (no
+        openspec/specs/ tree is maintained)

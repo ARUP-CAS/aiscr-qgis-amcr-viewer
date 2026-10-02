@@ -28,6 +28,7 @@ env:
   DETECT_SECRETS: detect-secrets==1.5.0
   FLAKE8: flake8==7.3.0
   RUFF: ruff==0.16.5
+  OPENSPEC: 1.14.0
 
 jobs:
   # --------------------------------------------------------------------
@@ -74,10 +75,10 @@ jobs:
           print('detect-secrets: bez nálezů')
           "
 
-      # Na plugins.qgis.org je informativní, tady blokuje – konfigurace
-      # v amcr_viewer/.flake8 je stejná pro obě místa.
+      # Na plugins.qgis.org je informativní, tady blokuje. Bez konfigurace,
+      # tj. se stejnými výchozími pravidly jako scanner.
       - name: Flake8
-        run: flake8 --config amcr_viewer/.flake8 amcr_viewer/
+        run: flake8 --isolated amcr_viewer/
 
       # Nad rámec plugins.qgis.org; konfigurace v pyproject.toml
       - name: Ruff
@@ -109,6 +110,24 @@ jobs:
             echo "::error::pyqgis4-checker nahlásil nálezy, viz log výše"
             exit 1
           fi
+
+  # --------------------------------------------------------------------
+  # OpenSpec – artefakty změn v openspec/ musí projít validací
+  # --------------------------------------------------------------------
+  openspec:
+    name: OpenSpec
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # Verze CLI napevno – formát validace se mezi verzemi mění.
+      # Node je v ubuntu-latest předinstalovaný.
+      - name: openspec validate
+        run: |
+          npx --yes @fission-ai/openspec@${{ env.OPENSPEC }} \
+            validate --all --strict --no-interactive
 
   # --------------------------------------------------------------------
   # 3. Načtení pluginu ve skutečném QGIS, v obou podporovaných verzích
@@ -147,14 +166,27 @@ jobs:
       - name: Zip plugin
         run: zip -r amcr_viewer.zip amcr_viewer -x "*.git*"
 
-      # Kontrola obsahu ZIPu. Config soubory pro scanner musí být uvnitř
-      # vedle metadata.txt, jinak je plugins.qgis.org nenajde – a některé
-      # nástroje skryté soubory tiše vynechávají.
+      # Verze v CITATION.cff se povyšuje ručně spolu s metadata.txt a snadno
+      # se zapomene – tag by pak nesl v citaci jinou verzi než plugin
+      - name: Verify CITATION.cff version
+        run: |
+          plugin=$(sed -n 's/^version=//p' amcr_viewer/metadata.txt \
+                   | tr -d "\r\"' ")
+          citace=$(sed -n 's/^version://p' CITATION.cff \
+                   | tr -d "\r\"' ")
+          echo "metadata.txt: '$plugin', CITATION.cff: '$citace'"
+          if [ -z "$plugin" ] || [ "$plugin" != "$citace" ]; then
+            echo "::error file=CITATION.cff::verze '$citace' neodpovídá" \
+                 "metadata.txt ('$plugin')"
+            exit 1
+          fi
+
+      # Kontrola obsahu ZIPu: povinné soubory jsou uvnitř, git soubory ne.
       - name: Verify archive contents
         run: |
           unzip -l amcr_viewer.zip
           for soubor in amcr_viewer/metadata.txt amcr_viewer/__init__.py \
-                        amcr_viewer/.flake8; do
+                        amcr_viewer/LICENSE; do
             unzip -l amcr_viewer.zip | grep -qF " $soubor" \
               || { echo "::error::v ZIPu chybí $soubor"; exit 1; }
           done

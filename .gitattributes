@@ -1,0 +1,10 @@
+# Textové soubory v repozitáři s LF; vzor: aiscr-management
+# (quality_baseline/foundations/gitattributes.fragment)
+* text=auto eol=lf
+
+# Heslář generuje plugin (BOM + CRLF kvůli Excelu) – ukládat bajt po bajtu
+amcr_viewer/codelists/heslar.csv -text
+
+# Binární soubory
+*.png binary
+*.zip binary
