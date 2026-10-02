@@ -17,9 +17,36 @@ Zdroj dat: https://digiarchiv.aiscr.cz/ · Nápověda: https://amcr-help.aiscr.c
 Tento repozitář je jedním ze **sourozeneckých repozitářů** ekosystému AIS CR.
 Centrální governance a AI konfigurace spravuje hub **`aiscr-management`**; konvence
 v tomto souboru jsou s tímto vzorem sladěné a zjednodušené pro potřeby jednoho
-QGIS pluginu. Těžkou mašinerii hubu (složka `.agents/`, OpenSpec, sync skripty,
-multi-assistant generování) tento repozitář **záměrně nepřebírá**. Při širších
-otázkách governance má přednost vzor z `aiscr-management`.
+QGIS pluginu. Z hubu přebírá **OpenSpec** ve stupni `change-tracked` (viz
+níže). Ostatní mašinerii hubu (složka `.agents/`, sync skripty, vlastní
+schémata OpenSpec, multi-assistant generování) tento repozitář **záměrně
+nepřebírá**. Při širších otázkách governance má přednost vzor
+z `aiscr-management`.
+
+## OpenSpec
+
+Repozitář používá OpenSpec ve stupni **`change-tracked`**: plánovací
+artefakty změn (`proposal.md`, delta spec, `design.md`, `tasks.md`) žijí
+v `openspec/changes/<slug>/`, trvalé specifikace v `openspec/specs/` se
+**neudržují**. Stupeň a kontext pro agenty jsou v `openspec/config.yaml`;
+změna stupně se dělá vědomě společně s hubem, ne v rámci rozpracované práce.
+
+- **Kdy založit změnu:** práce, která mění chování (co uživatel vidí,
+  atributy vrstev, kontrakt s API digiarchivu, uložená nastavení), zasahuje
+  víc repozitářů nebo mění pravidla / AI konfiguraci / CI.
+- **Kdy ne:** překlepy a formátování, bump závislostí či pinů nástrojů bez
+  změny chování, přegenerování odvozených souborů.
+- **Postup:** `openspec new change <slug>` → artefakty → `openspec validate
+  <slug> --strict` → implementace (až na výslovný pokyn) → po merge
+  `openspec archive <slug> --skip-specs` (archiv
+  `openspec/changes/archive/RRRR-MM-DD-<slug>/`).
+- Artefakty změny jdou **ve stejném PR** jako implementace; v popisu PR
+  odkaž na adresář změny.
+- Používá se vestavěné schéma `spec-driven`; vlastní schémata hubu se sem
+  nepřenášejí. CLI: `npx @fission-ai/openspec@1.14.0` (nebo lokálně
+  nainstalované `openspec`); bez CLI lze artefakty psát i ručně.
+- Asistentské povrchy (`.claude/`, `.github/prompts/` …) doručuje sync
+  z hubu; v tomto repozitáři se ručně nezakládají ani necommitují.
 
 ## Struktura repozitáře
 
@@ -33,7 +60,8 @@ amcr_viewer/            # vlastní kód pluginu (toto se balí do releasu)
   metadata.txt          # metadata pluginu + verze + changelog
   i18n/                 # překlady (.ts)
   *.png                 # ikony
-.github/workflows/      # CI – release pluginu
+.github/workflows/      # CI – kontroly kvality a release pluginu
+openspec/               # OpenSpec – konfigurace a plánovací artefakty změn
 README.md               # uživatelská dokumentace (anglicky)
 ```
 
@@ -140,6 +168,9 @@ flatpak run --command=sh org.qgis.qgis -c \
 - Verze pluginu žije v **`amcr_viewer/metadata.txt`** (`version=`).
 - **Při každé změně chování / nové funkci** povyš verzi a doplň položku do
   `changelog=` v `metadata.txt` (formát `vX.Y.Z (RRRR-MM-DD)` + odrážky).
+- Současně povyš i **`CITATION.cff`** v kořeni repozitáře: `version:` na
+  stejnou verzi jako v `metadata.txt` a `date-released:` na datum releasu.
+  Oba soubory musí mít stejnou verzi, než se založí tag.
 - Datum v changelogu ber z **deterministického zdroje**, ne z paměti, např.
   `python -c "import datetime; print(datetime.date.today().isoformat())"`.
 - Release se spouští **pushnutím tagu `vX.Y.Z`**, ne publikací releasu
@@ -160,6 +191,7 @@ flatpak run --command=sh org.qgis.qgis -c \
 - PR musí mířit do správné `version/v2.x.y` větve.
 - Před požádáním o review projdi kontrolní seznam v šabloně (zejména bump verze
   v `metadata.txt`, pokud měníš chování).
+- Mění-li PR chování, obsahuje i odpovídající změnu v `openspec/changes/`.
 - V popisu PR uveď **podíl AI** (např. „text navržen AI, ručně zkontrolováno")
   a odkaz na související issue, pokud existuje.
 
@@ -189,7 +221,7 @@ tohle:
 | **Lint a bezpečnost** | `check_sources.py`, bandit, detect-secrets, flake8, ruff |
 | **Kompatibilita s Qt6** | `pyqgis4-checker` v dockeru |
 | **Smoke test** | `smoke_test.py` v `qgis/qgis:ltr` i `qgis/qgis:stable` |
-| **Balíček pluginu** | sestaví ZIP, ověří obsah, přiloží jako artefakt |
+| **Balíček pluginu** | ověří shodu verze v `CITATION.cff` a `metadata.txt`, sestaví ZIP, ověří obsah, přiloží jako artefakt |
 
 Smoke test běží v obou podporovaných řadách: `ltr` je QGIS 3.44 na Qt5,
 `stable` je QGIS 4.x na Qt6.
@@ -205,7 +237,7 @@ pip install bandit detect-secrets flake8 ruff
 python3 tests/check_sources.py
 bandit -r amcr_viewer/
 detect-secrets scan --all-files amcr_viewer/
-flake8 --config amcr_viewer/.flake8 amcr_viewer/
+flake8 --isolated amcr_viewer/
 ruff check .
 
 # smoke test v obou verzích QGIS (docker, bez instalace čehokoli)
@@ -222,11 +254,12 @@ Na co si dát pozor:
   v logu. Workflow proto kontroluje, že log obsahuje jen hlavičku.
 - **`detect-secrets` bez `--all-files` prohledá jen soubory sledované
   gitem** a o nesledovaném souboru mlčí. Vypadá to jako čistý výsledek.
-- **Konfigurace lintů je rozdělená schválně.** `amcr_viewer/.flake8` leží
-  vedle `metadata.txt`, protože scanner na plugins.qgis.org hledá config
-  soubory jen v kořeni balíčku uvnitř ZIPu; díky tomu platí stejná pravidla
-  v CI, lokálně i při uploadu. Konfigurace ruffu je naopak v kořenovém
-  `pyproject.toml` – ruff se do balíčku pluginu nedistribuuje.
+- **Flake8 běží bez konfigurace** (`--isolated`), tedy se stejnými
+  výchozími pravidly jako scanner na plugins.qgis.org. Do balíčku nepatří
+  `.flake8`, `.bandit` ani `.secrets.baseline`: scanner by plugin označil
+  jako „Validated (configured)“ a nález je lepší opravit v kódu.
+  Konfigurace ruffu je v kořenovém `pyproject.toml` – ruff se do balíčku
+  pluginu nedistribuuje.
   Viz https://plugins.qgis.org/docs/security-scanning/config-files
 - **Verze nástrojů jsou v workflow napevno.** Výchozí sada pravidel ruffu se
   mezi verzemi mění, takže bez pinu by CI začalo padat samo od sebe.

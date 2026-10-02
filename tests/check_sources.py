@@ -23,10 +23,6 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BALICEK = os.path.join(ROOT, "amcr_viewer")
 
-# Files that belong in the plugin package even though the upload scanner
-# would otherwise call them hidden
-POVOLENE_SKRYTE = {".flake8", ".bandit", ".secrets.baseline"}
-
 # Extensions that have no business inside a plugin package
 PODEZRELE = {".exe", ".dll", ".so", ".dylib", ".sh", ".bat", ".cmd",
              ".pyc", ".pyd", ".jar", ".bin"}
@@ -72,7 +68,9 @@ for cesta in vsechny_soubory():
     if rezim & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
         nalezy.append(f"{zkratka(cesta)}: spustitelná práva "
                       f"({stat.filemode(rezim)})")
-    if jmeno.startswith(".") and jmeno not in POVOLENE_SKRYTE:
+    # No exceptions: scanner config files (.flake8, .bandit,
+    # .secrets.baseline) would mark the upload "Validated (configured)"
+    if jmeno.startswith("."):
         nalezy.append(f"{zkratka(cesta)}: skrytý soubor v balíčku pluginu")
     if os.path.splitext(jmeno)[1].lower() in PODEZRELE:
         nalezy.append(f"{zkratka(cesta)}: podezřelý typ souboru")

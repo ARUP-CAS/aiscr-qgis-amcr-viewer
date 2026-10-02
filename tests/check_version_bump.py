@@ -161,7 +161,8 @@ def main():
         nalezy.append(
             f"{CITATION}: date-released couvlo ({stare_datum} -> "
             f"{nove_datum})")
-    elif nove_datum == stare_datum and stara_citation_verze != nova_citation_verze:
+    elif (nove_datum == stare_datum
+          and stara_citation_verze != nova_citation_verze):
         nalezy.append(
             f"{CITATION}: version se změnila, ale date-released zůstalo "
             f"na {stare_datum}")
