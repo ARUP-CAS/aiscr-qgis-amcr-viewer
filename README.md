@@ -212,7 +212,10 @@ from a genuinely empty result.
 The controlled vocabularies behind the pickers are cached in
 `amcr_viewer/codelists/heslar.csv` and ship with the plugin. Click
 **Aktualizovat hesláře 🔄** to rebuild the file from the live APIs; it runs as
-a background QGIS task with a progress bar and takes a few minutes.
+a background QGIS task with a progress bar and takes a few minutes. A
+codelist that fails to download or comes back empty keeps its previous values
+instead of being wiped; when the update finishes, a warning lists the affected
+codelists.
 
 Most codelists come from the AMČR **OAI-PMH** endpoint. Two are built from
 Digiarchiv **search facets** instead, because they are lists of people rather
@@ -226,7 +229,8 @@ activity area of each component into the output layer.
 
 > ⚠ With components loaded, spatial features are **duplicated** — one feature
 > per component. Areas and feature counts computed on such a layer are
-> misleading.
+> misleading. Weight such computations (e.g. a heatmap) by the `prvek_vaha`
+> field (see 3.4): the weights of one documentation unit sum to 1.
 
 Note that *Období* and *Areál* also act as component filters even when the
 box is unchecked: a documentation unit whose components match nothing is
@@ -369,6 +373,9 @@ amcr_viewer/            the plugin package (this is what gets zipped)
 tests/
   check_sources.py      source hygiene checks (no QGIS needed)
   smoke_test.py         loads the plugin in a real, headless QGIS
+  check_version_bump.py release-PR guard: version bump, changelog entry and
+                        matching versions in metadata.txt, CITATION.cff
+                        and the branch name
 .github/workflows/      CI (code quality, release packaging)
 pyproject.toml          ruff configuration
 AGENTS.md               contributor and AI-agent guidelines
@@ -428,6 +435,7 @@ not:
 | --- | --- |
 | **Lint a bezpečnost** | `tests/check_sources.py`, bandit, detect-secrets, flake8, ruff |
 | **Kompatibilita s Qt6** | `pyqgis4-checker` in dry-run mode |
+| **OpenSpec** | validates change artefacts in `openspec/changes/` |
 | **Smoke test** | loads the plugin in headless QGIS — both `ltr` (Qt 5) and `stable` (Qt 6) |
 | **Balíček pluginu** | builds `amcr_viewer.zip`, asserts its contents, uploads it as an artifact |
 
