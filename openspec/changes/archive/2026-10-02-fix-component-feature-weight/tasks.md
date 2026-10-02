@@ -29,6 +29,9 @@
 - [x] 3.1 Run the full local check set from `AGENTS.md` (check_sources,
   bandit, detect-secrets `--all-files`, flake8 `--isolated`, ruff,
   pyqgis4-checker log empty, smoke test ltr + stable); verify all clean
-- [ ] 3.2 Manual test in QGIS (user): akce in a small window with *Načíst
+- [x] 3.2 Manual test in QGIS (user): akce in a small window with *Načíst
   komponenty* and one period filter; verify in the attribute table that
   `prvek_vaha` sums to 1 per `dj_id`
+  - Verified by the maintainer 2026-10-02: akce and lokality with
+    *Načíst komponenty*, without and with a period filter – weights sum
+    to 1 per DJ and are computed only from the filtered components
