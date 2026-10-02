@@ -28,6 +28,7 @@ env:
   DETECT_SECRETS: detect-secrets==1.5.0
   FLAKE8: flake8==7.3.0
   RUFF: ruff==0.16.5
+  OPENSPEC: 1.14.0
 
 jobs:
   # --------------------------------------------------------------------
@@ -109,6 +110,24 @@ jobs:
             echo "::error::pyqgis4-checker nahlásil nálezy, viz log výše"
             exit 1
           fi
+
+  # --------------------------------------------------------------------
+  # OpenSpec – artefakty změn v openspec/ musí projít validací
+  # --------------------------------------------------------------------
+  openspec:
+    name: OpenSpec
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # Verze CLI napevno – formát validace se mezi verzemi mění.
+      # Node je v ubuntu-latest předinstalovaný.
+      - name: openspec validate
+        run: |
+          npx --yes @fission-ai/openspec@${{ env.OPENSPEC }} \
+            validate --all --strict --no-interactive
 
   # --------------------------------------------------------------------
   # 3. Načtení pluginu ve skutečném QGIS, v obou podporovaných verzích
