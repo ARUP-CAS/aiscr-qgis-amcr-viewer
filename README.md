@@ -106,12 +106,16 @@ to see.
 * They are then saved encrypted in the **QGIS Authentication Manager** (DPAPI
   on Windows, Keychain on macOS, encrypted SQLite on Linux). QGIS will ask for
   its master password.
-* Stored credentials are reused across QGIS sessions. If the session cookie
-  expires mid-download, the plugin re-authenticates automatically and repeats
-  the request.
+* Stored credentials are reused across QGIS sessions. The plugin checks
+  the login state before every download (via the `islogged` endpoint)
+  and, when the session cookie has expired, re-authenticates
+  automatically. If re-authentication is not possible, a warning in the
+  message bar says the download runs anonymously (access level A only);
+  a failed check never blocks the download.
 * Reopening the login dialog lets you change the e-mail (leave the password
   blank to keep the stored one) or remove the credentials entirely
-  (*Odebrat uložené přihlašovací údaje*).
+  (*Odebrat uložené přihlašovací údaje*). Removing them also logs you out
+  of the Digital Archive, so the next download runs anonymously.
 
 ### 3.3 The filter dialog
 
@@ -347,6 +351,8 @@ AGENTS.md               contributor and AI-agent guidelines
 | Purpose | Endpoint | Notes |
 | --- | --- | --- |
 | Login | `POST https://digiarchiv.aiscr.cz/api/user/login` | Returns a session cookie. Errors arrive with HTTP 200 and an `error` key. |
+| Logout | `GET https://digiarchiv.aiscr.cz/api/user/logout` | Called when the stored credentials are removed. |
+| Login state | `GET https://digiarchiv.aiscr.cz/api/user/islogged` | `{"remaining": <s>}` when logged in, `{"error":"nologged"}` otherwise; checked before each download. |
 | Search | `GET https://digiarchiv.aiscr.cz/api/search/query` | `entity=akce\|lokalita\|samostatny_nalez\|pian`, `mapa=true`, paginated. |
 | Translations | `GET https://digiarchiv.aiscr.cz/api/assets/i18n/cs.json` | Code → Czech label; cached in memory for the session. |
 | Codelists | `GET https://api.aiscr.cz/2.2/oai` | OAI-PMH `ListRecords`, with resumption tokens. |

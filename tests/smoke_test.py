@@ -19,6 +19,8 @@ import os
 import sys
 import traceback
 
+import requests
+
 # Offscreen, otherwise the dialogs need an X server
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -117,10 +119,182 @@ def filtr_datumu():
     return hodnota
 
 
+class FalesnaSession:
+    """Offline stand-in for requests.Session: returns canned JSON
+    bodies for GET /api/user/islogged and counts the requests."""
+
+    def __init__(self, tela):
+        # tela: a list of (body, exception) pairs – one per GET call,
+        # consumed in order; None body means raise the exception
+        self.tela = list(tela)
+        self.get_volani = 0
+
+    def get(self, url, timeout=0):
+        self.get_volani += 1
+        polozka = self.tela.pop(0)
+        # A bare dict is a plain body; (None, exception) means raise
+        if isinstance(polozka, tuple):
+            tela, vyjimka = polozka
+        else:
+            tela, vyjimka = polozka, None
+        if tela is None and vyjimka is not None:
+            raise vyjimka
+
+        class Odpoved:
+            def __init__(self, tela):
+                self.telo = tela
+                self.text = str(tela)
+
+            def json(self):
+                if isinstance(self.telo, Exception):
+                    raise self.telo
+                return self.telo
+
+        return Odpoved(tela)
+
+
+def prihlasovaci_stav():
+    """
+    _ensure_logged_in with a fake session and monkeypatched login /
+    credentials / _get_session – everything stays offline.
+
+    Each case: (name, expected status, islogged bodies of the current
+    session, islogged bodies after re-login, fake login result,
+    stored credentials, expected number of islogged GETs).
+    """
+    pripady = [
+        # Valid session – no re-login, no extra request
+        ("platná session", "logged_in",
+         [{"remaining": 3500}], [], None, ("", ""), 1),
+        # nologged + successful re-login, verified again
+        ("expired + re-login", "relogged",
+         [{"error": "nologged"}], [{"remaining": 1800}],
+         "session", ("uzivatel", "heslo"), 1),
+        # nologged + failed re-login
+        ("expired + selhaný re-login", "fallback",
+         [{"error": "nologged"}], [], None, ("uzivatel", "heslo"), 1),
+        # nologged + no stored credentials
+        ("expired bez údajů", "fallback",
+         [{"error": "nologged"}], [], None, ("", ""), 1),
+        # No session and no credentials – no request at all
+        ("anonym bez údajů", "anonymous",
+         [], [], None, ("", ""), 0),
+        # Network error during the check
+        ("chyba sítě", "unknown",
+         [(None, requests.exceptions.ConnectionError("probe"))],
+         [], None, ("", ""), 1),
+        # 200 but invalid JSON
+        ("neplatný JSON", "unknown",
+         [(None, ValueError("Invalid JSON"))],
+         [], None, ("", ""), 1),
+    ]
+
+    tools = amcr_viewer.amcr_tools
+    puvodni = (tools.login_to_api, tools._get_session,
+               dialog.LoginDialog.__dict__["get_credentials"])
+    try:
+        return _prihlasovaci_stav(pripady, tools)
+    finally:
+        # Leave the modules as they were found, even when a case fails
+        (tools.login_to_api, tools._get_session,
+         dialog.LoginDialog.get_credentials) = puvodni
+        tools.AMCR_SESSION = None
+
+
+def _prihlasovaci_stav(pripady, tools):
+    """Runs the cases of prihlasovaci_stav()."""
+    vysledky = []
+    for (nazev, ocekavano, tela, tela_po_loginu, login_vysledek,
+         kredity, get_volani) in pripady:
+
+        # The current session (None = _get_session returns None);
+        # a successful fake re-login produces a new fake session
+        session = FalesnaSession(tela) if tela else None
+        login_hodnota = FalesnaSession(tela_po_loginu) \
+            if login_vysledek else None
+
+        tools.AMCR_SESSION = session
+
+        def fake_login(hodnota):
+            # Like the real login_to_api: stores the session globally
+            def login(uzivatel, heslo):
+                if hodnota is not None:
+                    tools.AMCR_SESSION = hodnota
+                return hodnota
+            return login
+
+        tools.login_to_api = fake_login(login_hodnota)
+        tools._get_session = (lambda s: lambda: s)(session) \
+            if session else (lambda: None)
+        dialog.LoginDialog.get_credentials = staticmethod(
+            (lambda k: lambda: k)(kredity)
+        )
+
+        stav = tools._ensure_logged_in()
+        assert stav == ocekavano, f"{nazev}: {stav} != {ocekavano}"
+
+        # The old session object must have been used for the checks
+        if session is not None:
+            assert session.get_volani == get_volani, \
+                f"{nazev}: {session.get_volani} != {get_volani}"
+
+        # The returned fake login session must become the global one
+        # and its login state must have been verified as well
+        if ocekavano == "relogged":
+            assert login_hodnota is not None
+            assert tools.AMCR_SESSION is login_hodnota
+            assert login_hodnota.get_volani == 1, \
+                f"{nazev}: nová session nebyla ověřena"
+
+        vysledky.append(f"{nazev} → {stav}")
+
+    return ", ".join(vysledky)
+
+
+def odhlaseni():
+    """logout_from_api with a fake session – offline."""
+    tools = amcr_viewer.amcr_tools
+    puvodni = tools.AMCR_SESSION
+    try:
+        # Logged-in session: one GET to /logout, session dropped
+        session = FalesnaSession([{"msg": "logged out"}])
+        session_get = session.get
+        urls = []
+
+        def get(url, timeout=0):
+            urls.append(url)
+            odpoved = session_get(url, timeout)
+            odpoved.raise_for_status = lambda: None
+            return odpoved
+
+        session.get = get
+        tools.AMCR_SESSION = session
+        assert tools.logout_from_api() is True
+        assert tools.AMCR_SESSION is None
+        assert urls and urls[0].endswith("/api/user/logout"), urls
+
+        # Network error: session still dropped locally
+        chyba = FalesnaSession(
+            [(None, requests.exceptions.ConnectionError("probe"))]
+        )
+        tools.AMCR_SESSION = chyba
+        assert tools.logout_from_api() is False
+        assert tools.AMCR_SESSION is None
+        assert chyba.get_volani == 1
+
+        # No session: nothing to do, no request
+        assert tools.logout_from_api() is True
+    finally:
+        tools.AMCR_SESSION = puvodni
+    return "odhlášení, chyba sítě → zahozeno lokálně, bez session → nic"
+
+
 zkouska("scoped enumy", enumy)
 zkouska("UpdateCodelistsTask", uloha)
 zkouska("filtrační dialogy", dialogy)
 zkouska("filtr podle data", filtr_datumu)
+zkouska("stav přihlášení", prihlasovaci_stav)
+zkouska("odhlášení", odhlaseni)
 
 qgs.exitQgis()
 
