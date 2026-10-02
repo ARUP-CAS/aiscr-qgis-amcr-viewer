@@ -57,6 +57,13 @@
 5. **Never log the response of `islogged?wantsUser=true`** – we do not use
    that parameter at all; only `remaining` (number) is logged.
 
+6. **Logout on credential removal** – new `logout_from_api()` in
+   `amcr_tools.py` called from `LoginDialog._forget_credentials`. The local
+   session is dropped first and unconditionally; the server call is best
+   effort (a failure is logged and reported in the dialog text). Without
+   it, the in-memory session would keep downloading logged-in data until
+   QGIS restarts even though the user believes he is "forgotten".
+
 ## Risks / Trade-offs
 
 - [Extra request per download] → only for logged-in / credential users; cost

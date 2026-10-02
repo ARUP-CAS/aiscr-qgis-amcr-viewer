@@ -157,6 +157,33 @@ def _get_session() -> requests.Session | None:
     return AMCR_SESSION
 
 
+def logout_from_api() -> bool:
+    """
+    Logs the current session out on the server (GET /api/user/logout)
+    and drops it from memory, so the next download runs anonymously
+    (or logs in again only if credentials are stored).
+    The local session is dropped even when the server cannot be
+    reached. Returns True when the server confirmed the logout or there
+    was no session at all.
+    """
+    global AMCR_SESSION
+    session = AMCR_SESSION
+    AMCR_SESSION = None
+    if session is None:
+        return True
+
+    url = "https://digiarchiv.aiscr.cz/api/user/logout"
+    try:
+        response = session.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        _log(f"Odhlášení na serveru se nezdařilo: {e} – session "
+             "zahozena jen lokálně.", Qgis.MessageLevel.Warning)
+        return False
+    _log("Uživatel odhlášen.")
+    return True
+
+
 def _check_islogged(session) -> bool | None:
     """
     Asks the server whether the session is logged in

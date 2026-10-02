@@ -55,3 +55,16 @@ download using the current session.
 #### Scenario: Login-state endpoint unreachable
 - **WHEN** the login-state request fails with a network error
 - **THEN** a warning is written to the log and the download is attempted as usual
+
+### Requirement: Removing stored credentials logs the user out
+When the user removes the stored credentials, the plugin SHALL log the
+current session out on the server and discard it, so that later downloads
+run anonymously without restarting QGIS.
+
+#### Scenario: Credentials removed while logged in
+- **WHEN** the user removes the stored credentials while a logged-in session exists
+- **THEN** the session is logged out on the server and the next download is anonymous without a warning
+
+#### Scenario: Server unreachable during logout
+- **WHEN** the logout request fails with a network error
+- **THEN** the session is still discarded locally and the user is told the next download will be anonymous

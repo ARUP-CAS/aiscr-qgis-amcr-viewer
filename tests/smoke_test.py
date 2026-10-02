@@ -251,11 +251,50 @@ def _prihlasovaci_stav(pripady, tools):
     return ", ".join(vysledky)
 
 
+def odhlaseni():
+    """logout_from_api with a fake session – offline."""
+    tools = amcr_viewer.amcr_tools
+    puvodni = tools.AMCR_SESSION
+    try:
+        # Logged-in session: one GET to /logout, session dropped
+        session = FalesnaSession([{"msg": "logged out"}])
+        session_get = session.get
+        urls = []
+
+        def get(url, timeout=0):
+            urls.append(url)
+            odpoved = session_get(url, timeout)
+            odpoved.raise_for_status = lambda: None
+            return odpoved
+
+        session.get = get
+        tools.AMCR_SESSION = session
+        assert tools.logout_from_api() is True
+        assert tools.AMCR_SESSION is None
+        assert urls and urls[0].endswith("/api/user/logout"), urls
+
+        # Network error: session still dropped locally
+        chyba = FalesnaSession(
+            [(None, requests.exceptions.ConnectionError("probe"))]
+        )
+        tools.AMCR_SESSION = chyba
+        assert tools.logout_from_api() is False
+        assert tools.AMCR_SESSION is None
+        assert chyba.get_volani == 1
+
+        # No session: nothing to do, no request
+        assert tools.logout_from_api() is True
+    finally:
+        tools.AMCR_SESSION = puvodni
+    return "odhlášení, chyba sítě → zahozeno lokálně, bez session → nic"
+
+
 zkouska("scoped enumy", enumy)
 zkouska("UpdateCodelistsTask", uloha)
 zkouska("filtrační dialogy", dialogy)
 zkouska("filtr podle data", filtr_datumu)
 zkouska("stav přihlášení", prihlasovaci_stav)
+zkouska("odhlášení", odhlaseni)
 
 qgs.exitQgis()
 

@@ -1033,6 +1033,10 @@ class LoginDialog(QDialog):
         self.accept()
 
     def _forget_credentials(self):
+        # Lazy import to avoid an import cycle
+        # (amcr_tools imports LoginDialog lazily as well)
+        from . import amcr_tools
+
         settings = QSettings()
         existing_id = settings.value(self.SETTINGS_KEY, "")
         if existing_id:
@@ -1040,11 +1044,17 @@ class LoginDialog(QDialog):
                 existing_id
             )
             settings.remove(self.SETTINGS_KEY)
-        QMessageBox.information(
-            self,
-            "Hotovo",
-            "Uložené přihlašovací údaje byly odebrány."
-        )
+
+        # Without credentials the session in memory would otherwise stay
+        # logged in until QGIS is restarted
+        if amcr_tools.logout_from_api():
+            zprava = ("Uložené přihlašovací údaje byly odebrány "
+                      "a uživatel byl odhlášen.")
+        else:
+            zprava = ("Uložené přihlašovací údaje byly odebrány. Server "
+                      "se nepodařilo kontaktovat, další stahování ale "
+                      "proběhne anonymně.")
+        QMessageBox.information(self, "Hotovo", zprava)
         self.reject()
 
     # ------------------------------------------------------------------

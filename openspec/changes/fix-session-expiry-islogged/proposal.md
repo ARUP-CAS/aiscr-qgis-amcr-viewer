@@ -19,6 +19,9 @@ manually in QGIS and against the live API).
 - When the re-login fails (or credentials are missing), the plugin warns in
   the QGIS message bar that the download runs anonymously and returns only
   records with access level A – not only in the log.
+- Removing the stored credentials (*Odebrat uložené přihlašovací údaje*)
+  also logs the session out on the server (`GET /api/user/logout`) and
+  drops it from memory; today it stays logged in until QGIS restarts.
 - When the check itself cannot be completed (network error, invalid JSON),
   the download is not blocked; the plugin logs a warning and proceeds.
 - The existing error-text based detection (`_is_auth_error`) stays as
@@ -47,7 +50,8 @@ Out of scope:
 
 ## Impact
 
-- Code: `amcr_viewer/amcr_tools.py` (new login-state check, call at the start
+- Code: `amcr_viewer/amcr_dialog.py` (logout when credentials are
+  removed); `amcr_viewer/amcr_tools.py` (logout helper, new login-state check, call at the start
   of `load_amcr_data`, message bar warning); `tests/smoke_test.py` (offline
   test of the check with a mocked HTTP session).
 - API: one extra `GET /api/user/islogged` per download, only when the user is
