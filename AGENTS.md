@@ -263,3 +263,60 @@ Na co si dát pozor:
   Viz https://plugins.qgis.org/docs/security-scanning/config-files
 - **Verze nástrojů jsou v workflow napevno.** Výchozí sada pravidel ruffu se
   mezi verzemi mění, takže bez pinu by CI začalo padat samo od sebe.
+
+### Denní kontrola API
+
+Workflow `.github/workflows/api_monitor.yml` jednou denně (05:17 UTC)
+a na ruční spuštění ověřuje, že API digiarchivu a AMČR OAI pořád vrací
+to, co plugin čte. Změny typu #67 se tak odhalí do druhého dne, ne až
+od uživatelů. Na pull requesty se schválně nespouští – PR nesmí
+zčervenat kvůli výpadku digiarchivu.
+
+| job | co dělá |
+|---|---|
+| **API kontrakt** | `tests/api_contract.py` – stejné dotazy jako plugin, kontrola klíčů, typů a tvarů odpovědí; jen `requests` |
+| **Plugin proti živému API** | `tests/api_plugin_live.py` v `qgis/qgis:ltr` – volá přímo `fetch_set` a `load_amcr_data` |
+| **Report** | jedno sledovací issue se štítkem `api-monitor` |
+
+Každá kontrola skončí jedním ze stavů:
+
+- **OK** – odpověď odpovídá očekávání,
+- **DRIFT** – API se změnilo, ale plugin to ustojí,
+- **FAIL** – změna, na které se plugin rozbije,
+- **UNAVAILABLE** – server nedostupný ani po opakování; výpadek, ne
+  změna API. Po prvním neúspěchu se daný server už nezkouší, takže
+  běh při výpadku skončí za pár sekund.
+
+Běh s FAIL nebo DRIFT na `main` založí issue `api-monitor`, nebo
+doplní komentář do otevřeného, pokud se změnil seznam selhaných
+kontrol. Další čistý běh issue zavře; samotné UNAVAILABLE ho
+nemění. Job, který nevyrobí výsledky, se počítá jako FAIL.
+
+Očekávání jsou zapsaná přímo v `tests/api_contract.py`. Jejich změna
+je běžná změna kódu přes PR – automaticky obnovovaný baseline by
+změnu API, kterou chceme vidět, tiše přijal.
+
+Lokálně:
+
+```sh
+uv run -q --no-project --with requests==2.34.2 \
+    python tests/api_contract.py
+
+docker run --rm -v "$PWD:/work:ro" -w /work \
+    --user "$(id -u):$(id -g)" -e HOME=/tmp \
+    -e AMCR_RESULTS_DIR=/tmp/results \
+    qgis/qgis:ltr python3 tests/api_plugin_live.py
+```
+
+Na co si dát pozor:
+
+- **`schedule` běží jen na výchozí větvi.** Verzní větev se dá ověřit
+  ručně: `gh workflow run api_monitor.yml --ref <větev>`; issue se
+  přitom nezakládá ani nezavírá.
+- **GitHub plánovaný workflow vypne po 60 dnech bez aktivity**
+  v repozitáři. Stačí jakýkoli push do `main`, i od dependabota.
+- **Testy běží anonymně**, pokrývají tedy jen záznamy s přístupností A.
+  Z přihlášení se ověřuje jen chybová cesta.
+- **Simulace výpadku:** `AMCR_DA_URL=http://127.0.0.1:9` a
+  `AMCR_OAI_URL=http://127.0.0.1:9/oai` – všechno má skončit
+  UNAVAILABLE s kódem 0.
