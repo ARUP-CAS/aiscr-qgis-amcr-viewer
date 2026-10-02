@@ -34,7 +34,7 @@ jobs:
       # 3. Založí koncept releasu i s přílohou
       #    Tagy s pomlčkou (v2.0.0-alpha.1) se označí jako pre-release.
       - name: Create draft release with asset
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: amcr_viewer.zip
           draft: true
